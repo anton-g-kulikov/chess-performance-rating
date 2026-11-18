@@ -51,7 +51,7 @@ each player's events.
   performances match FIDE's own arithmetic.
 - The pool is limited to current top-100 players. A player outside all three
   top-100 lists who had a great year won't appear.
-- **Rating** is the player's current rating from the top-100 list. If the player
+- **FIDE** is the player's current rating from the top-100 list. If the player
   isn't on that format's list, it's the rating going into their most recent
   event in that format.
 - The **Δ** column is TPR minus that rating.

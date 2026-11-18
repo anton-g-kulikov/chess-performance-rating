@@ -8,7 +8,7 @@ Rating periods: **December 2025 – November 2026** FIDE lists (12 periods). Pla
 
 Minimum 20 games. 130 players qualify; top 100 shown, full list in [`classical.csv`](classical.csv).
 
-| # | Player | Fed | TPR | True | Games | Score | Avg opp | Rating | Δ |
+| # | Player | Fed | TPR | True | Games | Score | Avg opp | FIDE | Δ |
 |--:|:--|:--|--:|--:|--:|--:|--:|--:|--:|
 | 1 | Sindarov, Javokhir | UZB | **2814** | 2814 | 69 | 44 (64%) | 2712 | 2782 | +32 |
 | 2 | Duda, Jan-Krzysztof | POL | **2785** | 2788 | 20 | 14.5 (73%) | 2610 | 2741 | +44 |
@@ -115,7 +115,7 @@ Minimum 20 games. 130 players qualify; top 100 shown, full list in [`classical.c
 
 Minimum 20 games. 106 players qualify; top 100 shown, full list in [`rapid.csv`](rapid.csv).
 
-| # | Player | Fed | TPR | True | Games | Score | Avg opp | Rating | Δ |
+| # | Player | Fed | TPR | True | Games | Score | Avg opp | FIDE | Δ |
 |--:|:--|:--|--:|--:|--:|--:|--:|--:|--:|
 | 1 | Sindarov, Javokhir | UZB | **2764** | 2770 | 104 | 66.5 (64%) | 2662 | 2755 | +9 |
 | 2 | Erigaisi Arjun | IND | **2756** | 2759 | 75 | 48.5 (65%) | 2646 | 2740 | +16 |
@@ -222,7 +222,7 @@ Minimum 20 games. 106 players qualify; top 100 shown, full list in [`rapid.csv`]
 
 Minimum 40 games. 73 players qualify.
 
-| # | Player | Fed | TPR | True | Games | Score | Avg opp | Rating | Δ |
+| # | Player | Fed | TPR | True | Games | Score | Avg opp | FIDE | Δ |
 |--:|:--|:--|--:|--:|--:|--:|--:|--:|--:|
 | 1 | Abdusattorov, Nodirbek | UZB | **2841** | 2850 | 78 | 55 (71%) | 2683 | 2819 | +22 |
 | 2 | Carlsen, Magnus | NOR | **2825** | 2834 | 46 | 32.5 (71%) | 2667 | 2860 | -35 |

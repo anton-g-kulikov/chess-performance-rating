@@ -8,7 +8,7 @@ Games from events that ended in **2026** (events ending January – October 2026
 
 Minimum 17 games. 125 players qualify; top 100 shown, full list in [`classical.csv`](classical.csv).
 
-| # | Player | Fed | TPR | True | Games | Score | Avg opp | Rating | Δ |
+| # | Player | Fed | TPR | True | Games | Score | Avg opp | FIDE | Δ |
 |--:|:--|:--|--:|--:|--:|--:|--:|--:|--:|
 | 1 | Sindarov, Javokhir | UZB | **2833** | 2831 | 55 | 35.5 (65%) | 2723 | 2782 | +51 |
 | 2 | Abdusattorov, Nodirbek | UZB | **2781** | 2788 | 61 | 38 (62%) | 2694 | 2772 | +9 |
@@ -115,7 +115,7 @@ Minimum 17 games. 125 players qualify; top 100 shown, full list in [`classical.c
 
 Minimum 17 games. 83 players qualify.
 
-| # | Player | Fed | TPR | True | Games | Score | Avg opp | Rating | Δ |
+| # | Player | Fed | TPR | True | Games | Score | Avg opp | FIDE | Δ |
 |--:|:--|:--|--:|--:|--:|--:|--:|--:|--:|
 | 1 | Nepomniachtchi, Ian | RUS | **2812** | 2814 | 19 | 12 (63%) | 2717 | 2748 | +64 |
 | 2 | Praggnanandhaa R | IND | **2780** | 2781 | 62 | 39.5 (64%) | 2678 | 2733 | +47 |
@@ -205,7 +205,7 @@ Minimum 17 games. 83 players qualify.
 
 Minimum 34 games. 53 players qualify.
 
-| # | Player | Fed | TPR | True | Games | Score | Avg opp | Rating | Δ |
+| # | Player | Fed | TPR | True | Games | Score | Avg opp | FIDE | Δ |
 |--:|:--|:--|--:|--:|--:|--:|--:|--:|--:|
 | 1 | Abdusattorov, Nodirbek | UZB | **2850** | 2864 | 52 | 38 (73%) | 2675 | 2819 | +31 |
 | 2 | Firouzja, Alireza | FRA | **2783** | 2798 | 65 | 44.5 (68%) | 2650 | 2797 | -14 |

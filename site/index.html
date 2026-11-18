@@ -265,7 +265,7 @@ tr.detail > td { padding: 0 16px 16px; text-align: left; white-space: normal; ba
         <dt>True</dt><dd>The rating at which the expected score against each actual opponent adds up to the actual score. It is the more precise measure when opponents' ratings are spread out, and it doesn't exist for 0% or 100%.</dd>
         <dt>Score</dt><dd>Points from rated games, with the percentage. Win 1, draw ½, loss 0.</dd>
         <dt>Avg opp</dt><dd>Average rating of the opponents faced. As in FIDE's own calculations, an opponent rated more than 400 points below the player counts as the player's rating minus 400.</dd>
-        <dt>Rating</dt><dd>The player's current FIDE rating in that format.</dd>
+        <dt>FIDE</dt><dd>The player's current FIDE rating in that format.</dd>
         <dt>Δ</dt><dd>TPR minus that rating. Green means playing above the FIDE rating, red below it.</dd>
       </dl>
     </div>
@@ -292,7 +292,7 @@ const COLS = [
   { key: "games", label: "Games", cls: "num hide-sm", dir: -1 },
   { key: "pct", label: "Score", cls: "num", dir: -1 },
   { key: "avg_opp", label: "Avg opp", cls: "num hide-sm", dir: -1 },
-  { key: "rating", label: "Rating", cls: "num hide-sm", dir: -1 },
+  { key: "rating", label: "FIDE", cls: "num hide-sm", dir: -1 },
   { key: "delta", label: "Δ", cls: "num", dir: -1 },
 ];
 

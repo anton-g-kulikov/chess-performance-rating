@@ -224,7 +224,7 @@ def write_outputs(out_dir: Path, rows_by_fmt: Dict[str, List[dict]], scope: str,
             f"Minimum {min_games[fmt]} games. {len(rows)} players qualify"
             + (f"; top {top} shown, full list in [`{fmt}.csv`]({fmt}.csv)." if len(rows) > top else "."),
             "",
-            "| # | Player | Fed | TPR | True | Games | Score | Avg opp | Rating | Δ |",
+            "| # | Player | Fed | TPR | True | Games | Score | Avg opp | FIDE | Δ |",
             "|--:|:--|:--|--:|--:|--:|--:|--:|--:|--:|",
         ]
         for r in rows[:top]:
