@@ -3,9 +3,8 @@
 An alternative to the FIDE rating. FIDE ratings accumulate: every result
 carries forward, so a rating reflects years of play and barely moves for
 players who rarely compete. These lists rank classical, rapid and blitz by
-**performance over the last 12 FIDE rating periods only**. Older results don't
-count, and a player without enough recent rated games isn't ranked at all,
-whatever their FIDE rating.
+**recent performance only**. Older results don't count, and a player without
+enough recent rated games isn't ranked at all, whatever their FIDE rating.
 
 There are two modes, like tennis's ranking and race:
 
