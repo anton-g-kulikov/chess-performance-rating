@@ -1,0 +1,46 @@
+name: Deploy to Firebase Hosting
+
+on:
+  push:
+    branches:
+      - main
+  # Runs every step except the deploy, so changes can be checked first
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Run tests
+        run: python -m unittest discover -s tests -t .
+
+      # The page is built from results/ and committed. Rebuilding it here
+      # catches a results change pushed without a fresh site/index.html.
+      - name: Check the page matches the results
+        run: |
+          python -m perfrating.web
+          if ! git diff --quiet -- site/; then
+            echo "::error::site/index.html is out of date. Run 'python -m perfrating.web' and commit it."
+            exit 1
+          fi
+
+      - name: Deploy to Firebase Hosting
+        if: github.event_name != 'pull_request'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+          channelId: live
+          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}

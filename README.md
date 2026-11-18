@@ -75,3 +75,18 @@ lists to `results/` (`results/YEAR/`). A finished year reads FIDE lists
 through April of the next year, to catch late-reported events. Pass `--exhaustive`
 to fetch every period instead of relying on FIDE's index of periods that have
 games. It's slower, and the two modes matched in spot checks.
+
+## Publishing
+
+The page is served by Firebase Hosting from `site/` (see `firebase.json`).
+
+- **Project:** `chess-performance-rating` (see `.firebaserc`), at
+  https://chess-performance-rating.web.app.
+- **By hand:** `firebase deploy --only hosting`. This needs `firebase login`.
+- **From GitHub:** `.github/workflows/deploy.yml` runs the tests and checks
+  that `site/index.html` matches `results/` on every pull request, and also
+  deploys Hosting on every push to `main`. It needs the repository secrets
+  `FIREBASE_SERVICE_ACCOUNT` and `FIREBASE_PROJECT_ID`.
+
+To publish new lists, rebuild them, run `python -m perfrating.web`, and commit
+`results/` and `site/` together.
