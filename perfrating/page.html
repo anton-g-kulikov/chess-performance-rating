@@ -122,6 +122,7 @@ tbody tr.row:hover { background: var(--accent-soft); }
 .rank { color: var(--muted); width: 44px; }
 .player { display: flex; align-items: baseline; gap: 8px; }
 .player .nm { font-weight: 600; }
+.sm-name { display: none; }
 .fed { font-size: 12px; font-weight: 700; letter-spacing: .05em; color: var(--muted); }
 td.tpr { font-family: var(--display); font-weight: 800; font-size: 18px; font-stretch: 85%; }
 .up { color: var(--up); } .down { color: var(--down); } .flat { color: var(--muted); }
@@ -160,7 +161,17 @@ tr.detail > td { padding: 0 16px 16px; text-align: left; white-space: normal; ba
   th:first-child, td:first-child { padding-left: 10px; }
   th:last-child, td:last-child { padding-right: 12px; }
   td.l { white-space: normal; }
-  .player { flex-wrap: wrap; gap: 0 6px; }
+  /* Player cell: takes the leftover width; name on one line, federation under it. */
+  td.pcell { width: 100%; max-width: 0; }
+  .player { display: block; min-width: 0; }
+  .player .chev { display: none; }
+  .player > .nm, .player > .fed { display: none; }
+  .sm-name { display: grid; min-width: 0; line-height: 1.3; }
+  .sm-name .sur { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sm-name .sub { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sm-name .fed { font-size: 11px; }
+  tbody tr.row td { padding-block: 8px; }
+  td.tpr { font-size: 17px; }
   .rank { width: 32px; }
   tr.detail > td { padding: 0 10px 12px; }
 }
@@ -319,7 +330,7 @@ function renderBody() {
     const dTxt = r.delta == null ? "—" : (r.delta > 0 ? "+" : r.delta < 0 ? "−" : "±") + Math.abs(r.delta);
     return `<tr class="row${open ? " open" : ""}" data-id="${r.fide_id}" tabindex="0" aria-expanded="${open}">
       <td class="rank num">${r.rank}</td>
-      <td class="l"><span class="player"><span class="chev" aria-hidden="true">›</span><span class="nm">${esc(r.name)}</span><span class="fed">${esc(r.fed)}</span></span></td>
+      <td class="l pcell"><span class="player"><span class="chev" aria-hidden="true">›</span><span class="nm">${esc(r.name)}</span><span class="fed">${esc(r.fed)}</span><span class="sm-name"><span class="sur">${esc(r.name.split(", ")[0])}</span><span class="sub">${r.name.includes(", ") ? esc(r.name.split(", ").slice(1).join(", ")) + " · " : ""}<span class="fed">${esc(r.fed)}</span></span></span></span></td>
       <td class="tpr num">${r.tpr}</td>
       <td class="num hide-sm">${r.true_perf ?? "—"}</td>
       <td class="num hide-sm">${r.games}</td>
