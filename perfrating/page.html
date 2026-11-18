@@ -195,7 +195,7 @@ tr.detail > td { padding: 0 16px 16px; text-align: left; white-space: normal; ba
 <div class="wrap">
   <header>
     <div class="eyebrow" id="eyebrow">FIDE rated games</div>
-    <h1>Who played best this year</h1>
+    <h1 id="headline">Who is playing best right now</h1>
     <p class="lede" id="lede">An alternative to the FIDE rating, which carries results forward for years. Here players are ranked only by recent performance, in classical, rapid and blitz. <strong>No recent games, no ranking.</strong></p>
   </header>
 
@@ -303,7 +303,14 @@ for (const m of DATA.modes) for (const f of FMTS) for (const r of m.lists[f].row
 const MONTH_FULL = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const longPeriod = (p) => `${MONTH_FULL[+p.slice(5, 7) - 1]} ${p.slice(0, 4)}`;
 
+function headline(m) {
+  if (!m.year) return "Who is playing best right now";
+  return (m.fraction ?? 1) >= 1 ? `Who played best in ${m.year}` : `Who is leading the ${m.year} race`;
+}
+
 function renderModes() {
+  $("headline").textContent = headline(M);
+  document.title = `${headline(M)} · Chess Performance Ratings`;
   $("modes").innerHTML = DATA.modes.map((m) =>
     `<button class="mode" role="tab" aria-selected="${m.id === state.mode}" data-m="${m.id}">${esc(m.label)}</button>`).join("");
   const first = M.periods[0], last = M.periods[M.periods.length - 1];
