@@ -1,8 +1,11 @@
 # Chess performance rating
 
-Rating lists for classical, rapid and blitz, ranked by each player's
-**performance over the last 12 FIDE rating periods only**. Older results and
-long-standing reputations don't count.
+An alternative to the FIDE rating. FIDE ratings accumulate: every result
+carries forward, so a rating reflects years of play and barely moves for
+players who rarely compete. These lists rank classical, rapid and blitz by
+**performance over the last 12 FIDE rating periods only**. Older results don't
+count, and a player without enough recent rated games isn't ranked at all,
+whatever their FIDE rating.
 
 **Current lists: [`results/README.md`](results/README.md)**, with the full
 tables in `results/{classical,rapid,blitz}.csv`. `site/index.html` is the same
