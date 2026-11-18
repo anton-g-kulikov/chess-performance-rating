@@ -14,6 +14,7 @@ Usage::
     python -m perfrating.build                # rolling: latest list, 12 periods
     python -m perfrating.build --end 2026-11 --months 12 --min-games 20,20,40
     python -m perfrating.build --year 2026    # calendar year, -> results/2026/
+    python -m perfrating.build --year 2019    # a finished year (2013 onwards)
 
 Steps:
 
@@ -22,6 +23,10 @@ Steps:
 2. For every player, find which rating periods in the window contain games
    in each format, then download FIDE's game-by-game rating calculations for
    those periods.
+   A finished year (before the current one) is built from FIDE's archived
+   monthly lists instead (``archive.py``): the pool is everyone in an open
+   top 100 at the start of each quarter of that year or in January of the
+   next, and each list's ``Gms`` column says which months to download.
 3. Pool every rated game per format and compute the performance rating
    (see ``performance.py``).  Players with fewer than the minimum number of
    games in a format are left out of that format's list.
@@ -41,6 +46,7 @@ from datetime import date
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from .archive import ListArchive, pool_months
 from .fide import FORMAT_ARRAYS, FORMAT_CODES, TOP_LISTS, FideClient
 from .parsers import Player, Tournament, parse_calculation, parse_period_arrays, parse_top_list
 from .performance import performance
@@ -136,14 +142,16 @@ def fetch_tournaments(client: FideClient, fide_id: int, period: str, fmt: str,
 
 
 def collect_player(client: FideClient, player: Player, periods: List[str],
-                   exhaustive: bool) -> Dict[str, List[dict]]:
-    todo = periods_with_games(client, player.fide_id, periods, exhaustive)
+                   exhaustive: bool, known: Optional[Dict[str, List[str]]] = None) -> Dict[str, List[dict]]:
+    """Events with games for one player.  ``known`` gives the periods with
+    games per format (from the list archive); otherwise they are looked up."""
+    todo = known if known is not None else periods_with_games(client, player.fide_id, periods, exhaustive)
     end_year = periods[-1][:4]
     result: Dict[str, List[dict]] = {}
     for fmt in FORMATS:
         events = []
         for period in todo[fmt]:
-            expect = not exhaustive and period[:4] == end_year
+            expect = known is not None or (not exhaustive and period[:4] == end_year)
             for t in fetch_tournaments(client, player.fide_id, period, fmt, expect):
                 if t.games:
                     d = asdict(t)
@@ -192,7 +200,7 @@ def fmt_score(x: float) -> str:
 
 
 def write_outputs(out_dir: Path, rows_by_fmt: Dict[str, List[dict]], scope: str,
-                  min_games: Dict[str, int], pool_size: int, top: int,
+                  min_games: Dict[str, int], pool_note: str, rating_note: str, top: int,
                   title: str = "Performance rating lists") -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     cols = ["rank", "name", "fed", "fide_id", "tpr", "true_perf", "games", "score",
@@ -208,13 +216,12 @@ def write_outputs(out_dir: Path, rows_by_fmt: Dict[str, List[dict]], scope: str,
     lines = [
         f"# {title}",
         "",
-        f"{scope} Player pool: the {pool_size} players on FIDE's current open top-100 "
-        "classical, rapid and blitz lists.",
+        f"{scope} Player pool: {pool_note}.",
         "",
         "**TPR** is the FIDE performance rating over all rated games in the window "
         "(average opponent + dp from the FIDE table). **True** is the rating whose "
         "expected score against the actual opponents equals the actual score. "
-        "**Δ** is TPR minus the player's current FIDE rating in that format.",
+        f"**FIDE** is the player's {rating_note}; **Δ** is TPR minus it.",
         "",
     ]
     for fmt, rows in rows_by_fmt.items():
@@ -288,7 +295,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         pool = {int(fid): {k: v for k, v in info.items() if k != "games"}
                 for fid, info in saved["players"].items()}
         games = {int(fid): info["games"] for fid, info in saved["players"].items()}
-        meta = {"periods": saved["periods"], "year": saved.get("year")}
+        meta = {k: saved[k] for k in ("periods", "year", "pool_note", "rating_note") if k in saved}
+        meta.setdefault("pool_note", current_pool_note(len(pool)))
+        meta.setdefault("rating_note", CURRENT_RATING_NOTE)
     else:
         pool, games, meta = fetch(args)
 
@@ -307,10 +316,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         }, ensure_ascii=False, separators=(",", ":")))
 
     rows_by_fmt = {fmt: build_rows(pool, games, fmt, meta["min_games"][fmt]) for fmt in FORMATS}
-    write_outputs(Path(args.out), rows_by_fmt, meta["scope"], meta["min_games"], len(pool),
-                  args.top, meta["title"])
+    write_outputs(Path(args.out), rows_by_fmt, meta["scope"], meta["min_games"], meta["pool_note"],
+                  meta["rating_note"], args.top, meta["title"])
     (Path(args.out) / "meta.json").write_text(json.dumps(
-        {k: meta[k] for k in ("title", "scope", "periods", "min_games", "year", "fraction") if k in meta},
+        {k: meta[k] for k in ("title", "scope", "periods", "min_games", "year", "fraction",
+                              "pool_note", "rating_note") if k in meta},
         indent=1, ensure_ascii=False) + "\n")
     for fmt, rows in rows_by_fmt.items():
         print(f"{fmt}: {len(rows)} qualify (min {meta['min_games'][fmt]}); leader: "
@@ -329,19 +339,29 @@ def fetch(args):
         end = date.fromisoformat(args.end + "-01") if args.end else latest
         periods = window(end, args.months)
 
-    pool: Dict[int, dict] = {}
-    for fmt, page in top_pages.items():
-        for p in parse_top_list(page):
-            entry = pool.setdefault(p.fide_id, {"name": p.name, "fed": p.fed, "ratings": {}})
-            entry["ratings"][fmt] = p.rating
-    print(f"pool: {len(pool)} players; periods {periods[0]} .. {periods[-1]}", file=sys.stderr)
+    past = bool(args.year) and args.year < latest.year
+    known: Dict[int, Dict[str, List[str]]] = {}
+    if past:
+        pool, known = archive_pool(args.year, periods)
+        notes = {"pool_note": past_pool_note(len(pool), args.year),
+                 "rating_note": f"rating on the January {args.year} list"}
+    else:
+        pool = {}
+        for fmt, page in top_pages.items():
+            for p in parse_top_list(page):
+                entry = pool.setdefault(p.fide_id, {"name": p.name, "fed": p.fed, "ratings": {}})
+                entry["ratings"][fmt] = p.rating
+        notes = {"pool_note": current_pool_note(len(pool)), "rating_note": CURRENT_RATING_NOTE}
+    print(f"pool: {len(pool)} players; periods {periods[0]} .. {periods[-1]}"
+          + (f"; {sum(len(v) for k in known.values() for v in k.values())} player-months with games" if past else ""),
+          file=sys.stderr)
 
     games: Dict[int, dict] = {}
 
     def job(fid: int):
         info = pool[fid]
         player = Player(fid, info["name"], info["fed"], 0)
-        return fid, collect_player(client, player, periods, args.exhaustive)
+        return fid, collect_player(client, player, periods, args.exhaustive, known.get(fid) if past else None)
 
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
         for i, (fid, data) in enumerate(ex.map(job, pool), 1):
@@ -351,16 +371,54 @@ def fetch(args):
             if i % 10 == 0 or i == len(pool):
                 print(f"  {i}/{len(pool)} players ({client.requests_made} requests)", file=sys.stderr)
 
-    # Ratings for formats where the player is outside the top 100: take the
-    # player's own rating from the latest event in that format, if any.
+    # Ratings missing from the lists used: take the player's own rating from
+    # an event in that format.  For the current lists that is the latest
+    # event; for a past year, the first one, i.e. the rating going into it.
+    pick = min if past else max
     for fid, info in pool.items():
         for fmt in FORMATS:
             if fmt not in info["ratings"] and games[fid][fmt]:
-                latest_ev = max(games[fid][fmt], key=lambda e: (e["period"], e["end"] or ""))
-                if latest_ev.get("ro"):
-                    info["ratings"][fmt] = int(latest_ev["ro"])
+                ev = pick(games[fid][fmt], key=lambda e: (e["period"], e["end"] or ""))
+                if ev.get("ro"):
+                    info["ratings"][fmt] = int(ev["ro"])
 
-    return pool, games, {"periods": periods, "year": args.year}
+    return pool, games, {"periods": periods, "year": args.year, **notes}
+
+
+CURRENT_RATING_NOTE = "current FIDE rating"
+
+
+def current_pool_note(n: int) -> str:
+    return f"the {n} players on FIDE's current open top-100 classical, rapid and blitz lists"
+
+
+def past_pool_note(n: int, year: int) -> str:
+    return (f"the {n} players in FIDE's open top 100 for classical, rapid or blitz on the "
+            f"January, April, July or October {year} list, or the January {year + 1} list")
+
+
+def archive_pool(year: int, periods: List[str]):
+    """Pool, ratings and months with games for a finished year, from FIDE's
+    archived monthly lists."""
+    archive = ListArchive()
+    pool: Dict[int, dict] = {}
+    for month in pool_months(year):
+        for fmt in FORMATS:
+            for r in archive.top(fmt, month):
+                # Later lists overwrite the name and federation: the latest spelling wins.
+                pool.setdefault(r.fide_id, {"ratings": {}}).update(name=r.name, fed=r.fed)
+    jan = date(year, 1, 1)
+    for fmt in FORMATS:
+        for fid, r in archive.by_id(fmt, jan, pool).items():
+            pool[fid]["ratings"][fmt] = r.rating
+    known: Dict[int, Dict[str, List[str]]] = {fid: {f: [] for f in FORMATS} for fid in pool}
+    for period in periods:
+        for fmt in FORMATS:
+            for fid, r in archive.by_id(fmt, date.fromisoformat(period), pool).items():
+                if r.gms:
+                    known[fid][fmt].append(period)
+    print(f"list archive: {archive.downloaded} lists downloaded", file=sys.stderr)
+    return pool, known
 
 
 if __name__ == "__main__":

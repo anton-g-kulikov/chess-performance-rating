@@ -20,5 +20,7 @@
   "blitz": 34
  },
  "year": 2026,
- "fraction": 0.8333333333333334
+ "fraction": 0.8333333333333334,
+ "pool_note": "the 164 players on FIDE's current open top-100 classical, rapid and blitz lists",
+ "rating_note": "current FIDE rating"
 }

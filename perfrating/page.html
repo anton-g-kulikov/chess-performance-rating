@@ -79,6 +79,18 @@ h1 {
 }
 .mode:hover { color: var(--ink); }
 .mode[aria-selected="true"] { background: var(--ink); color: var(--surface); }
+/* Older years: a select styled like the buttons, filled in when one of its years is shown. */
+.more { position: relative; display: inline-flex; }
+.more select {
+  appearance: none; border: 0; cursor: pointer; font: inherit; color: var(--muted); background: transparent;
+  border-radius: 7px; padding: 7px 30px 7px 14px;
+  font-family: var(--display); font-weight: 700; font-stretch: 88%; font-size: 16px;
+}
+.more select:hover { color: var(--ink); }
+.more::after { content: "▾"; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted); font-size: 13px; }
+.more.on select { background: var(--ink); color: var(--surface); }
+.more.on::after { color: var(--surface); }
+.formats.loading { opacity: .45; pointer-events: none; }
 .mode-note { margin: 0; font-size: 15px; color: var(--muted); }
 .mode-note strong { color: var(--ink); font-weight: 600; }
 
@@ -300,7 +312,7 @@ tr.detail > td { padding: 0 16px 16px; text-align: left; white-space: normal; ba
         <dt>True</dt><dd>The rating at which the expected score against each actual opponent adds up to the actual score. It is the more precise measure when opponents' ratings are spread out, and it doesn't exist for 0% or 100%.</dd>
         <dt>Score</dt><dd>Points from rated games, with the percentage. Win 1, draw ½, loss 0.</dd>
         <dt>Avg opp</dt><dd>Average rating of the opponents faced. As in FIDE's own calculations, an opponent rated more than 400 points below the player counts as the player's rating minus 400.</dd>
-        <dt>FIDE</dt><dd>The player's current FIDE rating in that format.</dd>
+        <dt>FIDE</dt><dd id="fide-col">The player's current FIDE rating in that format.</dd>
         <dt>Δ</dt><dd>TPR minus that rating. Green means playing above the FIDE rating, red below it.</dd>
       </dl>
     </div>
@@ -308,7 +320,7 @@ tr.detail > td { padding: 0 16px 16px; text-align: left; white-space: normal; ba
     <div class="mblock">
       <h3>Who is included</h3>
       <p id="pool-note"></p>
-      <p>Source: game-by-game rating calculations on <a href="https://ratings.fide.com" target="_blank" rel="noopener">ratings.fide.com</a>. Code: <a href="https://github.com/anton-g-kulikov/chess-performance-rating" target="_blank" rel="noopener">chess-performance-rating</a>.</p>
+      <p>Source: game-by-game rating calculations on <a href="https://ratings.fide.com" target="_blank" rel="noopener">ratings.fide.com</a>. Code: <a href="https://github.com/anton-g-kulikov/chess-performance-rating" target="_blank" rel="noopener">chess-performance-rating</a>. Contact: <a href="mailto:hello@chesstpr.com">hello@chesstpr.com</a>.</p>
     </div>
   </section>
 </div>
@@ -342,7 +354,15 @@ const score = (x) => {
 const shortName = (n) => { const [last, first] = n.split(", "); return first ? `${first.split(" ")[0]} ${last}` : n; };
 const period = (p) => `${MON[+p.slice(5, 7) - 1]} ${p.slice(0, 4)}`;
 
-for (const m of DATA.modes) for (const f of FMTS) for (const r of m.lists[f].rows) r.delta = r.rating ? r.tpr - r.rating : null;
+// Older years arrive later (see go()); each mode is prepared once its lists are in.
+function prepare(m) {
+  if (!m.lists || m.ready) return;
+  for (const f of FMTS) for (const r of m.lists[f].rows) r.delta = r.rating ? r.tpr - r.rating : null;
+  m.ready = true;
+}
+DATA.modes.forEach(prepare);
+// The rolling year and the five most recent years get buttons; older years go in the select.
+const BUTTONS = 6;
 
 const MONTH_FULL = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const longPeriod = (p) => `${MONTH_FULL[+p.slice(5, 7) - 1]} ${p.slice(0, 4)}`;
@@ -355,8 +375,13 @@ function headline(m) {
 function renderModes() {
   $("headline").textContent = headline(M);
   document.title = `${headline(M)} · Chess Performance Ratings`;
-  $("modes").innerHTML = DATA.modes.map((m) =>
-    `<button class="mode" role="tab" aria-selected="${m.id === state.mode}" data-m="${m.id}">${esc(m.label)}</button>`).join("");
+  const older = DATA.modes.slice(BUTTONS), inOlder = older.some((m) => m.id === state.mode);
+  $("modes").innerHTML = DATA.modes.slice(0, BUTTONS).map((m) =>
+    `<button class="mode" role="tab" aria-selected="${m.id === state.mode}" data-m="${m.id}">${esc(m.label)}</button>`).join("") +
+    (older.length ? `<span class="more${inOlder ? " on" : ""}"><select id="older" aria-label="Earlier years">` +
+      `<option value=""${inOlder ? "" : " selected"} disabled>Earlier</option>` +
+      older.map((m) => `<option value="${m.id}"${m.id === state.mode ? " selected" : ""}>${esc(m.label)}</option>`).join("") +
+      `</select></span>` : "");
   const first = M.periods[0], last = M.periods[M.periods.length - 1];
   const mins = `${M.min.classical} classical, ${M.min.rapid} rapid or ${M.min.blitz} blitz`;
   if (M.year) {
@@ -387,10 +412,14 @@ function renderMethod() {
       (months >= 12 ? ". " : `, so far through ${MONTH_FULL[months - 1]}. `) +
       `An event belongs to the year it ended in, even when FIDE rates it a month or two later. The minimum number of games grows through the year, in proportion to the months played` +
       (months >= 12 ? `: ${minsOf(race)} games.` : `: after ${months} of 12 months it is ${minsOf(race)} games, rising to the full-year minimum by December.`);
+    const years = DATA.modes.filter((m) => m.year && (m.fraction ?? 1) >= 1);
+    if (years.length) $("explain-race").textContent += ` Finished years go back to ${years[years.length - 1].year}, the first year covered by FIDE's archive of monthly rating lists. For those, the players are everyone in an open top 100 during the year, and the FIDE column is their rating at its start.`;
   } else {
     $("race-term").hidden = true; $("explain-race").hidden = true;
   }
-  $("pool-note").textContent = `The ${M.pool} players on FIDE's current open top-100 lists for classical, rapid and blitz. Every one of them is ranked in all three formats if they have enough games. Each list on this page shows its top ${M.lists.classical.rows.length}.`;
+  const poolNote = M.pool_note.charAt(0).toUpperCase() + M.pool_note.slice(1);
+  $("pool-note").textContent = `${poolNote}. Every one of them is ranked in all three formats if they have enough games. Each list on this page shows its top ${M.lists.classical.rows.length}.`;
+  $("fide-col").textContent = `The player's ${M.rating_note} in that format.`;
 
   const top = M.lists[state.fmt].rows[0];
   if (top) {
@@ -441,7 +470,7 @@ const kept = (id) => state.picks.some((p) => p.id === id);
 
 // Every player in any list, so a chip can name the player even where they aren't ranked.
 const PEOPLE = new Map();
-for (const m of DATA.modes) for (const f of FMTS) for (const r of m.lists[f].rows) PEOPLE.set(r.fide_id, { id: r.fide_id, name: r.name, fed: r.fed });
+for (const [id, [name, fed]] of Object.entries(DATA.people)) PEOPLE.set(+id, { id: +id, name, fed });
 
 // The one player the search points at: the only match in this list, or failing that
 // the only match anywhere (someone not ranked in this format). Null when it's ambiguous.
@@ -525,7 +554,10 @@ function renderBody() {
   }).join("");
 }
 
-function render() { renderModes(); renderFormats(); renderHead(); renderBody(); renderMethod(); }
+function render() {
+  $("formats").classList.remove("loading");
+  renderModes(); renderFormats(); renderHead(); renderBody(); renderMethod();
+}
 
 // The hash holds the view and the kept players' FIDE ids, so a comparison can be shared:
 // #y2026-blitz/1503014,2020009 is the 2026 blitz race with Carlsen and Caruana kept.
@@ -539,7 +571,17 @@ function go(mode, fmt, push) {
   state.fmt = FMTS.includes(fmt) ? fmt : "classical";
   state.open.clear();
   if (push) syncHash();
-  render();
+  if (M.lists) return render();
+  // An older year: show its heading straight away, then fetch its lists.
+  const want = M;
+  renderModes();
+  $("formats").classList.add("loading");
+  $("count").textContent = "";
+  $("body").innerHTML = `<tr><td colspan="${COLS.length}" class="empty">Loading ${esc(want.label)}…</td></tr>`;
+  fetch(want.src)
+    .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then((d) => { want.lists = d.lists; prepare(want); if (M === want) render(); })
+    .catch(() => { if (M === want) $("body").innerHTML = `<tr><td colspan="${COLS.length}" class="empty">Couldn't load ${esc(want.label)}. Check your connection and try again.</td></tr>`; });
 }
 
 function fromHash() {
@@ -552,6 +594,7 @@ function fromHash() {
 }
 
 $("modes").addEventListener("click", (e) => { const b = e.target.closest(".mode"); if (b) go(b.dataset.m, state.fmt, true); });
+$("modes").addEventListener("change", (e) => { if (e.target.id === "older" && e.target.value) go(e.target.value, state.fmt, true); });
 $("formats").addEventListener("click", (e) => { const b = e.target.closest(".fmt"); if (b) go(state.mode, b.dataset.f, true); });
 $("head").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-k]"); if (!b) return;

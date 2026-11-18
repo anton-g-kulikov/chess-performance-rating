@@ -20,5 +20,6 @@
   "rapid": 20,
   "blitz": 40
  },
- "year": null
+ "pool_note": "the 164 players on FIDE's current open top-100 classical, rapid and blitz lists",
+ "rating_note": "current FIDE rating"
 }

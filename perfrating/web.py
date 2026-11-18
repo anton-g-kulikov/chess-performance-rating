@@ -4,8 +4,9 @@
 
 Reads the rolling lists (``results/``, ``data/games.json``) and every
 calendar-year race that has been built (``results/YYYY/``,
-``data/games-YYYY.json``), and embeds the top rows of each list, with each
-player's events, into ``perfrating/page.html``.
+``data/games-YYYY.json``).  The rolling lists and the newest year are embedded
+in ``perfrating/page.html``; every older year is written to
+``site/data/yYYYY.json`` and loaded by the page when someone opens it.
 """
 
 from __future__ import annotations
@@ -52,6 +53,8 @@ def mode_data(results: Path, data: Path, top: int, mode_id: str, label: str) -> 
         "periods": meta["periods"],
         "min": meta["min_games"],
         "pool": len(players),
+        "pool_note": meta.get("pool_note") or f"the {len(players)} players on FIDE's current open top-100 classical, rapid and blitz lists",
+        "rating_note": meta.get("rating_note") or "current FIDE rating",
         "lists": lists,
     }
 
@@ -62,17 +65,42 @@ def main(argv=None) -> int:
     ap.add_argument("--out", default="site/index.html")
     args = ap.parse_args(argv)
 
+    out = Path(args.out)
+    data_dir = out.parent / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    for old in data_dir.glob("y*.json"):
+        old.unlink()
+
     modes = [mode_data(Path("results"), Path("data/games.json"), args.top, "", "Last 12 months")]
     for d in sorted(Path("results").glob("[0-9][0-9][0-9][0-9]"), reverse=True):
         data = Path(f"data/games-{d.name}.json")
         if data.exists() and (d / "meta.json").exists():
-            modes.append(mode_data(d, data, args.top, f"y{d.name}", f"{d.name} race"))
-    blob = json.dumps({"modes": modes}, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+            m = mode_data(d, data, args.top, f"y{d.name}", d.name)
+            if (m["fraction"] or 1) < 1:
+                m["label"] = f"{d.name} race"
+            modes.append(m)
+
+    # Everyone listed in any mode, so kept players and shared links can be
+    # named before their year is loaded.
+    people = {}
+    for m in modes:
+        for fmt in FORMATS:
+            for r in m["lists"][fmt]["rows"]:
+                people[r["fide_id"]] = [r["name"], r["fed"]]
+
+    # The rolling lists and the newest year go in the page; older years are
+    # separate files, fetched on demand.
+    for m in modes[2:]:
+        (data_dir / f"{m['id']}.json").write_text(
+            json.dumps({"lists": m.pop("lists")}, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+        m["src"] = f"data/{m['id']}.json"
+    blob = json.dumps({"modes": modes, "people": people}, ensure_ascii=False,
+                      separators=(",", ":")).replace("</", "<\\/")
     html = TEMPLATE.read_text(encoding="utf-8").replace("/*DATA*/null", blob)
-    out = Path(args.out)
-    out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(html, encoding="utf-8")
-    print(f"wrote {out} ({len(html) // 1024} KB, modes: {', '.join(m['label'] for m in modes)})")
+    lazy = sum(f.stat().st_size for f in data_dir.glob("y*.json"))
+    print(f"wrote {out} ({len(html) // 1024} KB, modes: {', '.join(m['label'] for m in modes)})"
+          + (f"; {len(modes) - 2} more in {data_dir}/ ({lazy // 1024} KB)" if len(modes) > 2 else ""))
     return 0
 
 

@@ -17,16 +17,20 @@ There are two modes, like tennis's ranking and race:
   December 2025 counts for 2025 even though FIDE rated it in January 2026.
   While the year is in progress, the minimum number of games scales with
   the months played so far (10 of 12 in mid-November gives 17 / 17 / 34).
+  Finished years go back to 2013 (`results/2013/` … `results/2025/`), the
+  first year covered by FIDE's archive of monthly rating lists.
 
-Each list is in `results/…/{classical,rapid,blitz}.csv`. `site/index.html`
-is a self-contained web page with both modes, sortable columns, search and
-each player's events.
+Each list is in `results/…/{classical,rapid,blitz}.csv`. The web page,
+[chesstpr.com](https://chesstpr.com), has both modes and every year, sortable
+columns, search, side-by-side players and each player's events.
 
 ## How it works
 
 1. **Player pool.** Players come from FIDE's current open top-100 lists for
-   classical, rapid and blitz, combined. Every player in the pool is ranked in
-   all three formats.
+   classical, rapid and blitz, combined. For a finished year, they come from
+   FIDE's archived lists instead: everyone in an open top 100 in any format
+   at the start of each quarter of that year or in January of the next.
+   Every player in the pool is ranked in all three formats.
 2. **Games.** For each player, the builder downloads FIDE's game-by-game rating
    calculations (`ratings.fide.com`) for the last 12 rating periods in each
    format. Only games FIDE actually rated (opponent rated, `n = 1`) are used.
@@ -49,9 +53,10 @@ each player's events.
   calculation records that opponent as *player's rating − 400* (marked `*`
   on FIDE's site). The builder uses the same capped value, so these
   performances match FIDE's own arithmetic.
-- The pool is limited to current top-100 players. A player outside all three
+- The pool is limited to top-100 players. A player outside all three
   top-100 lists who had a great year won't appear.
 - **FIDE** is the player's current rating from the top-100 list. If the player
   isn't on that format's list, it's the rating going into their most recent
-  event in that format.
+  event in that format. For a finished year, it's the rating on that year's
+  January list (or, failing that, going into their first event of the year).
 - The **Δ** column is TPR minus that rating.

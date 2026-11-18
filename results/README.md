@@ -2,7 +2,7 @@
 
 Rating periods: **December 2025 – November 2026** FIDE lists (12 periods). Player pool: the 164 players on FIDE's current open top-100 classical, rapid and blitz lists.
 
-**TPR** is the FIDE performance rating over all rated games in the window (average opponent + dp from the FIDE table). **True** is the rating whose expected score against the actual opponents equals the actual score. **Δ** is TPR minus the player's current FIDE rating in that format.
+**TPR** is the FIDE performance rating over all rated games in the window (average opponent + dp from the FIDE table). **True** is the rating whose expected score against the actual opponents equals the actual score. **FIDE** is the player's current FIDE rating; **Δ** is TPR minus it.
 
 ## Classical
 
