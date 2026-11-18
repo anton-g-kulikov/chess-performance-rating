@@ -454,11 +454,12 @@ function onlyMatch() {
 }
 
 // "+" keeps one player as a chip, clears the search and gets ready for the next name.
+const pickOf = (id) => { const p = PEOPLE.get(id); return { id, label: fullName(p.name), fed: p.fed }; };
 function keep(id) {
-  const p = PEOPLE.get(id); if (!p) return;
-  if (!kept(id)) state.picks.push({ id, label: fullName(p.name), fed: p.fed });
+  if (!PEOPLE.has(id)) return;
+  if (!kept(id)) state.picks.push(pickOf(id));
   state.q = ""; $("q").value = ""; $("q").focus();
-  renderBody();
+  syncHash(); renderBody();
 }
 
 function renderChips() {
@@ -526,22 +527,28 @@ function renderBody() {
 
 function render() { renderModes(); renderFormats(); renderHead(); renderBody(); renderMethod(); }
 
-const hashFor = () => (state.mode ? `${state.mode}-` : "") + state.fmt;
+// The hash holds the view and the kept players' FIDE ids, so a comparison can be shared:
+// #y2026-blitz/1503014,2020009 is the 2026 blitz race with Carlsen and Caruana kept.
+const hashFor = () => (state.mode ? `${state.mode}-` : "") + state.fmt +
+  (state.picks.length ? "/" + state.picks.map((p) => p.id).join(",") : "");
+function syncHash() { const h = "#" + hashFor(); if (location.hash !== h) history.replaceState(null, "", h); }
 
 function go(mode, fmt, push) {
   M = DATA.modes.find((m) => m.id === mode) || DATA.modes[0];
   state.mode = M.id;
   state.fmt = FMTS.includes(fmt) ? fmt : "classical";
   state.open.clear();
-  if (push && location.hash !== "#" + hashFor()) history.replaceState(null, "", "#" + hashFor());
+  if (push) syncHash();
   render();
 }
 
 function fromHash() {
-  const h = location.hash.slice(1);
-  const i = h.lastIndexOf("-");
-  if (i < 0) return go("", h, false);
-  go(h.slice(0, i), h.slice(i + 1), false);
+  const [view, ids = ""] = location.hash.slice(1).split("/");
+  // Unknown or repeated ids are dropped rather than breaking the page.
+  state.picks = [...new Set(ids.split(",").map(Number))].filter((id) => PEOPLE.has(id)).map(pickOf);
+  const i = view.lastIndexOf("-");
+  if (i < 0) return go("", view, false);
+  go(view.slice(0, i), view.slice(i + 1), false);
 }
 
 $("modes").addEventListener("click", (e) => { const b = e.target.closest(".mode"); if (b) go(b.dataset.m, state.fmt, true); });
@@ -572,7 +579,9 @@ $("addq").addEventListener("click", () => { const one = onlyMatch(); if (one) ke
 $("chips").addEventListener("click", (e) => {
   const x = e.target.closest("button[data-x]"); if (!x) return;
   state.picks.splice(+x.dataset.x, 1);
-  renderBody(); $("q").focus();
+  syncHash(); renderBody(); $("q").focus();
 });
+window.addEventListener("hashchange", fromHash);
+
 fromHash();
 </script>
