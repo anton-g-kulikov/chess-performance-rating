@@ -197,17 +197,28 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--months", type=int, default=12, help="number of rating periods (default 12)")
     ap.add_argument("--min-games", default="20,20,40",
                     help="minimum games for classical,rapid,blitz (default 20,20,40)")
-    ap.add_argument("--top", type=int, default=50, help="rows per list in the Markdown summary")
+    ap.add_argument("--top", type=int, default=100, help="rows per list in the Markdown summary")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--exhaustive", action="store_true",
                     help="fetch every period instead of using FIDE's list of periods with games")
     ap.add_argument("--cache", default=".cache/fide", help="cache directory ('' to disable)")
     ap.add_argument("--out", default="results")
     ap.add_argument("--data", default="data/games.json", help="where to save the raw games")
+    ap.add_argument("--from-data", action="store_true",
+                    help="rebuild the lists from --data without fetching anything")
     args = ap.parse_args(argv)
+    min_games = dict(zip(FORMATS, (int(x) for x in args.min_games.split(","))))
+
+    if args.from_data:
+        saved = json.loads(Path(args.data).read_text())
+        periods = saved["periods"]
+        pool = {int(fid): {k: v for k, v in info.items() if k != "games"}
+                for fid, info in saved["players"].items()}
+        games = {int(fid): info["games"] for fid, info in saved["players"].items()}
+        finish(pool, games, periods, min_games, args)
+        return 0
 
     client = FideClient(cache_dir=Path(args.cache) if args.cache else None)
-    min_games = dict(zip(FORMATS, (int(x) for x in args.min_games.split(","))))
 
     top_pages = {fmt: client.get("/a_top.php", {"list": TOP_LISTS[fmt]}, refresh=True)
                  for fmt in FORMATS}
@@ -251,12 +262,16 @@ def main(argv: Optional[List[str]] = None) -> int:
             "players": {str(fid): {**pool[fid], "games": games[fid]} for fid in pool},
         }, ensure_ascii=False, separators=(",", ":")))
 
+    finish(pool, games, periods, min_games, args)
+    return 0
+
+
+def finish(pool, games, periods, min_games, args) -> None:
     rows_by_fmt = {fmt: build_rows(pool, games, fmt, min_games[fmt]) for fmt in FORMATS}
     write_outputs(Path(args.out), rows_by_fmt, periods, min_games, len(pool), args.top)
     for fmt, rows in rows_by_fmt.items():
         print(f"{fmt}: {len(rows)} qualify; leader: "
               + (f"{rows[0]['name']} {rows[0]['tpr']}" if rows else "-"), file=sys.stderr)
-    return 0
 
 
 if __name__ == "__main__":

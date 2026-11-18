@@ -48,6 +48,7 @@ Python 3.9+ is needed; there are no third-party dependencies.
 ```sh
 python -m perfrating.build                       # latest FIDE list, 12 periods
 python -m perfrating.build --end 2026-11 --months 12 --min-games 20,20,40
+python -m perfrating.build --from-data           # re-rank saved games, no fetching
 python -m unittest discover -s tests -t .        # tests
 ```
 
