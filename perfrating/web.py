@@ -15,7 +15,7 @@ import json
 from pathlib import Path
 
 from .build import FORMATS
-from .performance import performance
+from .performance import dp, performance, round_p
 
 TEMPLATE = Path(__file__).with_name("page.html")
 
@@ -40,7 +40,8 @@ def mode_data(results: Path, data: Path, top: int, mode_id: str, label: str) -> 
         for r in rows[:top]:
             events = sorted(players[str(r["fide_id"])]["games"][fmt],
                             key=lambda e: (e["start"] or "", e["period"]), reverse=True)
-            lst.append({**r, "ev": [event_summary(e) for e in events]})
+            lst.append({**r, "dp": dp(round_p(r["score"], r["games"])),
+                        "ev": [event_summary(e) for e in events]})
         lists[fmt] = {"qualified": len(rows), "rows": lst}
     return {
         "id": mode_id,
