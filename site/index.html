@@ -101,11 +101,37 @@ h1 {
 
 /* Toolbar */
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
-.toolbar label { font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
-#q {
+/* Search: "+" keeps the current search as a chip, so several players share the table. */
+.finders { font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.qf { display: inline-flex; gap: 6px; }
+.finders input {
   font: inherit; font-size: 15px; color: var(--ink); background: var(--surface);
-  border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; width: min(280px, 70vw);
+  border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; width: min(240px, 60vw);
 }
+.finders input.nomatch { border-color: var(--down); }
+.addq {
+  appearance: none; font: inherit; font-size: 20px; font-weight: 600; line-height: 1; cursor: pointer;
+  width: 40px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--surface);
+}
+.addq:disabled { cursor: default; background: transparent; border-color: var(--line); color: var(--muted); }
+.chips { display: contents; }
+.chip {
+  display: inline-flex; align-items: center; gap: 2px; padding: 3px 3px 3px 10px; border-radius: 999px;
+  background: var(--accent-soft); border: 1px solid var(--accent); color: var(--ink); font-weight: 600;
+}
+.chip .fed { margin-left: 4px; }
+.chip.out { border-color: var(--line); background: transparent; color: var(--muted); }
+.chip button {
+  appearance: none; border: 0; background: transparent; cursor: pointer; color: var(--muted);
+  width: 26px; height: 26px; border-radius: 999px; font-size: 17px; line-height: 1;
+}
+.chip button:hover { color: var(--ink); background: var(--surface); }
+.keep {
+  appearance: none; font: inherit; font-size: 16px; font-weight: 600; line-height: 1; cursor: pointer; flex: none;
+  width: 26px; height: 26px; margin-left: 4px; align-self: center; border-radius: 6px;
+  border: 1px solid var(--accent); background: transparent; color: var(--accent);
+}
+.keep:hover { background: var(--accent); color: var(--surface); }
 .note { font-size: 14px; color: var(--muted); }
 
 /* Table */
@@ -172,6 +198,10 @@ tr.detail > td { padding: 0 16px 16px; text-align: left; white-space: normal; ba
 @media (max-width: 720px) {
   .formats { grid-template-columns: 1fr; }
   .lede, .mode-note, .method { max-width: none; }
+  .finders { flex: 1 1 100%; }
+  .finders label { flex: 1 1 100%; }
+  .qf { flex: 1 1 100%; }
+  .finders input { width: auto; flex: 1; min-width: 0; }
   .fmt { grid-template-columns: 1fr auto; align-items: baseline; padding: 12px 14px; }
   .fmt-top { display: contents; }
   .fmt-count { grid-column: 2; grid-row: 1; }
@@ -186,7 +216,8 @@ tr.detail > td { padding: 0 16px 16px; text-align: left; white-space: normal; ba
   td.l { white-space: normal; }
   /* Player cell: takes the leftover width; name on one line, federation under it. */
   td.pcell { width: 100%; max-width: 0; }
-  .player { display: block; min-width: 0; }
+  .player { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .sm-name { flex: 1; }
   .player .chev { display: none; }
   .player > .nm, .player > .fed { display: none; }
   .sm-name { display: grid; min-width: 0; line-height: 1.3; }
@@ -217,7 +248,11 @@ tr.detail > td { padding: 0 16px 16px; text-align: left; white-space: normal; ba
 
   <section aria-labelledby="list-title" style="display:grid; gap:12px; min-width:0">
     <div class="toolbar">
-      <label for="q">Find a player <input id="q" type="search" placeholder="Name or federation" autocomplete="off"></label>
+      <div class="finders" id="finders" role="search">
+        <label for="q">Find a player</label>
+        <span class="chips" id="chips"></span>
+        <span class="qf"><input id="q" type="search" placeholder="Name or federation" autocomplete="off"><button type="button" class="addq" id="addq" disabled aria-label="Keep in the table and search for another player" title="Keep in the table and search for another player">+</button></span>
+      </div>
       <span class="note" id="count"></span>
     </div>
     <h2 id="list-title" hidden>Ranking</h2>
@@ -296,7 +331,7 @@ const COLS = [
   { key: "delta", label: "Δ", cls: "num", dir: -1 },
 ];
 
-const state = { mode: DATA.modes[0].id, fmt: "classical", sort: "rank", dir: 1, q: "", open: new Set() };
+const state = { mode: DATA.modes[0].id, fmt: "classical", sort: "rank", dir: 1, q: "", picks: [], open: new Set() };
 let M = DATA.modes[0];
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -393,8 +428,51 @@ function sortedRows() {
     if (typeof x === "string") return d * x.localeCompare(y);
     return d * (x - y) || a.rank - b.rank;
   });
-  const q = state.q.trim().toLowerCase();
-  return q ? rows.filter((r) => r.name.toLowerCase().includes(q) || r.fed.toLowerCase() === q || shortName(r.name).toLowerCase().includes(q)) : rows;
+  const q = liveQ();
+  if (!q && !state.picks.length) return rows;
+  return rows.filter((r) => state.picks.some((p) => p.id === r.fide_id) || (q && matches(r, q)));
+}
+
+// The table shows the kept players (chips) plus whatever the search field matches.
+const liveQ = () => state.q.trim().toLowerCase();
+const matches = (r, q) => r.name.toLowerCase().includes(q) || r.fed.toLowerCase() === q || shortName(r.name).toLowerCase().includes(q) || fullName(r.name).toLowerCase().includes(q);
+const fullName = (n) => { const [last, first] = n.split(", "); return first ? `${first} ${last}` : n; };
+const kept = (id) => state.picks.some((p) => p.id === id);
+
+// Every player in any list, so a chip can name the player even where they aren't ranked.
+const PEOPLE = new Map();
+for (const m of DATA.modes) for (const f of FMTS) for (const r of m.lists[f].rows) PEOPLE.set(r.fide_id, { id: r.fide_id, name: r.name, fed: r.fed });
+
+// The one player the search points at: the only match in this list, or failing that
+// the only match anywhere (someone not ranked in this format). Null when it's ambiguous.
+function onlyMatch() {
+  const q = liveQ(); if (!q) return null;
+  const here = M.lists[state.fmt].rows.filter((r) => matches(r, q) && !kept(r.fide_id));
+  if (here.length) return here.length === 1 ? PEOPLE.get(here[0].fide_id) : null;
+  const all = [...PEOPLE.values()].filter((p) => matches(p, q) && !kept(p.id));
+  return all.length === 1 ? all[0] : null;
+}
+
+// "+" keeps one player as a chip, clears the search and gets ready for the next name.
+function keep(id) {
+  const p = PEOPLE.get(id); if (!p) return;
+  if (!kept(id)) state.picks.push({ id, label: fullName(p.name), fed: p.fed });
+  state.q = ""; $("q").value = ""; $("q").focus();
+  renderBody();
+}
+
+function renderChips() {
+  const L = M.lists[state.fmt];
+  $("chips").innerHTML = state.picks.map((p, i) => {
+    const ranked = L.rows.some((r) => r.fide_id === p.id);
+    return `<span class="chip${ranked ? "" : " out"}"${ranked ? "" : ` title="Not ranked in the ${LABEL[state.fmt].toLowerCase()} list"`}>${esc(p.label)}` +
+      `<span class="fed">${esc(p.fed)}</span>` +
+      `<button type="button" data-x="${i}" aria-label="Remove ${esc(p.label)}">×</button></span>`;
+  }).join("");
+  const one = onlyMatch();
+  $("addq").disabled = !one;
+  $("addq").title = one ? `Keep ${fullName(one.name)} in the table and search for another player` :
+    liveQ() ? "Several players match: use + on a row to keep one" : "Keep a player in the table and search for another";
 }
 
 function detailRow(r) {
@@ -415,19 +493,26 @@ function detailRow(r) {
 function renderBody() {
   const rows = sortedRows();
   const L = M.lists[state.fmt];
-  $("count").textContent = state.q ? `${rows.length} of ${L.rows.length} shown` :
+  const searching = !!liveQ() || state.picks.length > 0;
+  $("count").textContent = searching ? `${rows.length} of ${L.rows.length} shown` :
     `Showing ${L.rows.length} of ${L.qualified} qualifying players`;
+  const q = state.q.trim().toLowerCase();
+  $("q").classList.toggle("nomatch", !!q && !L.rows.some((r) => matches(r, q)));
+  renderChips();
   if (!rows.length) {
-    $("body").innerHTML = `<tr><td colspan="${COLS.length}" class="empty">No player in the ${LABEL[state.fmt].toLowerCase()} list matches “${esc(state.q)}”.</td></tr>`;
+    const said = [...state.picks.map((p) => p.label), state.q.trim()].filter(Boolean).map((t) => `“${esc(t)}”`).join(" or ");
+    $("body").innerHTML = `<tr><td colspan="${COLS.length}" class="empty">No player in the ${LABEL[state.fmt].toLowerCase()} list matches ${said}.</td></tr>`;
     return;
   }
   $("body").innerHTML = rows.map((r) => {
     const open = state.open.has(r.fide_id);
+    const keepBtn = liveQ() && !kept(r.fide_id) && matches(r, liveQ()) ?
+      `<button type="button" class="keep" data-keep="${r.fide_id}" aria-label="Keep ${esc(fullName(r.name))} in the table" title="Keep in the table">+</button>` : "";
     const dCls = r.delta == null ? "flat" : r.delta > 0 ? "up" : r.delta < 0 ? "down" : "flat";
     const dTxt = r.delta == null ? "—" : (r.delta > 0 ? "+" : r.delta < 0 ? "−" : "±") + Math.abs(r.delta);
     return `<tr class="row${open ? " open" : ""}" data-id="${r.fide_id}" tabindex="0" aria-expanded="${open}">
       <td class="rank num">${r.rank}</td>
-      <td class="l pcell"><span class="player"><span class="chev" aria-hidden="true">›</span><span class="nm">${esc(r.name)}</span><span class="fed">${esc(r.fed)}</span><span class="sm-name"><span class="sur">${esc(r.name.split(", ")[0])}</span><span class="sub">${r.name.includes(", ") ? esc(r.name.split(", ").slice(1).join(", ")) + " · " : ""}<span class="fed">${esc(r.fed)}</span></span></span></span></td>
+      <td class="l pcell"><span class="player"><span class="chev" aria-hidden="true">›</span><span class="nm">${esc(r.name)}</span><span class="fed">${esc(r.fed)}</span><span class="sm-name"><span class="sur">${esc(r.name.split(", ")[0])}</span><span class="sub">${r.name.includes(", ") ? esc(r.name.split(", ").slice(1).join(", ")) + " · " : ""}<span class="fed">${esc(r.fed)}</span></span></span>${keepBtn}</span></td>
       <td class="tpr num">${r.tpr}</td>
       <td class="num hide-sm">${r.true_perf ?? "—"}</td>
       <td class="num hide-sm">${r.games}</td>
@@ -473,13 +558,21 @@ function toggle(tr) {
   renderBody();
   const again = document.querySelector(`tr.row[data-id="${id}"]`); if (again) again.focus();
 }
-$("body").addEventListener("click", (e) => { if (e.target.closest("a")) return; const tr = e.target.closest("tr.row"); if (tr) toggle(tr); });
+$("body").addEventListener("click", (e) => {
+  const k = e.target.closest(".keep"); if (k) return keep(+k.dataset.keep);
+  if (e.target.closest("a")) return; const tr = e.target.closest("tr.row"); if (tr) toggle(tr); });
 $("body").addEventListener("keydown", (e) => {
   const tr = e.target.closest("tr.row");
+  if (e.target.closest(".keep")) return;
   if (tr && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); toggle(tr); }
 });
 $("q").addEventListener("input", (e) => { state.q = e.target.value; renderBody(); });
-window.addEventListener("hashchange", fromHash);
-
+$("q").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); const one = onlyMatch(); if (one) keep(one.id); } });
+$("addq").addEventListener("click", () => { const one = onlyMatch(); if (one) keep(one.id); });
+$("chips").addEventListener("click", (e) => {
+  const x = e.target.closest("button[data-x]"); if (!x) return;
+  state.picks.splice(+x.dataset.x, 1);
+  renderBody(); $("q").focus();
+});
 fromHash();
 </script>
