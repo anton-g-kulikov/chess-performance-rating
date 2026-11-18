@@ -5,7 +5,9 @@ Rating lists for classical, rapid and blitz, ranked by each player's
 long-standing reputations don't count.
 
 **Current lists: [`results/README.md`](results/README.md)**, with the full
-tables in `results/{classical,rapid,blitz}.csv`.
+tables in `results/{classical,rapid,blitz}.csv`. `site/index.html` is the same
+data as a single self-contained web page, with sortable columns, search and
+each player's events.
 
 ## How it works
 
@@ -49,6 +51,7 @@ Python 3.9+ is needed; there are no third-party dependencies.
 python -m perfrating.build                       # latest FIDE list, 12 periods
 python -m perfrating.build --end 2026-11 --months 12 --min-games 20,20,40
 python -m perfrating.build --from-data           # re-rank saved games, no fetching
+python -m perfrating.web                         # web page -> site/index.html
 python -m unittest discover -s tests -t .        # tests
 ```
 
