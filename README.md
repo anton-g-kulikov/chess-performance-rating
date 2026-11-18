@@ -7,9 +7,20 @@ players who rarely compete. These lists rank classical, rapid and blitz by
 count, and a player without enough recent rated games isn't ranked at all,
 whatever their FIDE rating.
 
-**Current lists: [`results/README.md`](results/README.md)**, with the full
-tables in `results/{classical,rapid,blitz}.csv`. `site/index.html` is the same
-data as a single self-contained web page, with sortable columns, search and
+There are two modes, like tennis's ranking and race:
+
+- **Rolling 12 months** ([`results/`](results/README.md)): every game rated in
+  the last 12 FIDE lists. Nothing resets. Each month the oldest list drops out
+  and the newest comes in.
+- **Calendar-year race** ([`results/2026/`](results/2026/README.md)): games from
+  events that ended in that year. Everyone starts again on January 1. An
+  event belongs to the year it ended in, so the World Rapid & Blitz of late
+  December 2025 counts for 2025 even though FIDE rated it in January 2026.
+  While the year is in progress, the minimum number of games scales with
+  the months played so far (10 of 12 in mid-November gives 17 / 17 / 34).
+
+Each list is in `results/…/{classical,rapid,blitz}.csv`. `site/index.html`
+is a self-contained web page with both modes, sortable columns, search and
 each player's events.
 
 ## How it works
@@ -53,12 +64,15 @@ Python 3.9+ is needed; there are no third-party dependencies.
 ```sh
 python -m perfrating.build                       # latest FIDE list, 12 periods
 python -m perfrating.build --end 2026-11 --months 12 --min-games 20,20,40
+python -m perfrating.build --year 2026            # calendar-year race -> results/2026/
 python -m perfrating.build --from-data           # re-rank saved games, no fetching
 python -m perfrating.web                         # web page -> site/index.html
 python -m unittest discover -s tests -t .        # tests
 ```
 
 Responses are cached in `.cache/fide/`, so re-runs are fast. Raw games are
-written to `data/games.json` and the lists to `results/`. Pass `--exhaustive`
+written to `data/games.json` (`data/games-YEAR.json` for a race) and the
+lists to `results/` (`results/YEAR/`). A finished year reads FIDE lists
+through April of the next year, to catch late-reported events. Pass `--exhaustive`
 to fetch every period instead of relying on FIDE's index of periods that have
 games. It's slower, and the two modes matched in spot checks.

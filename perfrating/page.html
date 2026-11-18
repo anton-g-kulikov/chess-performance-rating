@@ -61,6 +61,19 @@ h1 {
 .lede { margin: 0; max-width: 64ch; color: var(--muted); }
 .lede strong { color: var(--ink); font-weight: 600; }
 
+/* Period switcher */
+.modebar { display: grid; gap: 10px; }
+.modes { display: inline-flex; justify-self: start; gap: 4px; padding: 4px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); flex-wrap: wrap; }
+.mode {
+  appearance: none; border: 0; cursor: pointer; font: inherit; color: var(--muted);
+  background: transparent; border-radius: 7px; padding: 7px 14px;
+  font-family: var(--display); font-weight: 700; font-stretch: 88%; font-size: 16px;
+}
+.mode:hover { color: var(--ink); }
+.mode[aria-selected="true"] { background: var(--ink); color: var(--surface); }
+.mode-note { margin: 0; font-size: 15px; color: var(--muted); max-width: 72ch; }
+.mode-note strong { color: var(--ink); font-weight: 600; }
+
 /* Format switcher */
 .formats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .fmt {
@@ -158,8 +171,13 @@ tr.detail > td { padding: 0 16px 16px; text-align: left; white-space: normal; ba
   <header>
     <div class="eyebrow" id="eyebrow">FIDE rated games</div>
     <h1>Who played best this year</h1>
-    <p class="lede" id="lede">An alternative to the FIDE rating, which carries results forward for years. Here players are ranked only by their performance over the last twelve FIDE rating periods, in classical, rapid and blitz. <strong>No recent games, no ranking.</strong></p>
+    <p class="lede" id="lede">An alternative to the FIDE rating, which carries results forward for years. Here players are ranked only by recent performance, in classical, rapid and blitz. <strong>No recent games, no ranking.</strong></p>
   </header>
+
+  <div class="modebar">
+    <div class="modes" role="tablist" aria-label="Period" id="modes"></div>
+    <p class="mode-note" id="mode-note"></p>
+  </div>
 
   <nav class="formats" role="tablist" aria-label="Format" id="formats"></nav>
 
@@ -205,7 +223,8 @@ const COLS = [
   { key: "delta", label: "Δ", cls: "num", dir: -1 },
 ];
 
-const state = { fmt: "classical", sort: "rank", dir: 1, q: "", open: new Set() };
+const state = { mode: DATA.modes[0].id, fmt: "classical", sort: "rank", dir: 1, q: "", open: new Set() };
+let M = DATA.modes[0];
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const score = (x) => {
@@ -215,16 +234,35 @@ const score = (x) => {
 const shortName = (n) => { const [last, first] = n.split(", "); return first ? `${first.split(" ")[0]} ${last}` : n; };
 const period = (p) => `${MON[+p.slice(5, 7) - 1]} ${p.slice(0, 4)}`;
 
-for (const f of FMTS) for (const r of DATA.lists[f].rows) r.delta = r.rating ? r.tpr - r.rating : null;
+for (const m of DATA.modes) for (const f of FMTS) for (const r of m.lists[f].rows) r.delta = r.rating ? r.tpr - r.rating : null;
 
-$("eyebrow").textContent = `FIDE rated games · ${DATA.span} lists`;
-$("pool-note").textContent = `Players: the ${DATA.pool} people on FIDE's current open top-100 lists for classical, rapid and blitz, ranked in every format. To qualify, a player needs at least ${DATA.min.classical} classical, ${DATA.min.rapid} rapid or ${DATA.min.blitz} blitz rated games in the window. Each list shows its top ${DATA.lists.classical.rows.length}.`;
+const MONTH_FULL = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const longPeriod = (p) => `${MONTH_FULL[+p.slice(5, 7) - 1]} ${p.slice(0, 4)}`;
+
+function renderModes() {
+  $("modes").innerHTML = DATA.modes.map((m) =>
+    `<button class="mode" role="tab" aria-selected="${m.id === state.mode}" data-m="${m.id}">${esc(m.label)}</button>`).join("");
+  const first = M.periods[0], last = M.periods[M.periods.length - 1];
+  const mins = `${M.min.classical} classical, ${M.min.rapid} rapid or ${M.min.blitz} blitz`;
+  if (M.year) {
+    const months = Math.round((M.fraction ?? 1) * 12);
+    const sofar = months >= 12 ? `the whole of ${M.year}` : `events that ended January – ${MONTH_FULL[months - 1]} ${M.year} so far`;
+    $("eyebrow").textContent = `FIDE rated games · ${M.year} calendar year`;
+    $("mode-note").innerHTML = `<strong>Everyone starts again on January 1.</strong> Counts games from ${sofar}. ` +
+      (months >= 12 ? `To qualify, a player needs ${mins} games.` :
+       `The minimum number of games grows with the year: ${mins} games now, after ${months} of 12 months.`);
+  } else {
+    $("eyebrow").textContent = `FIDE rated games · ${longPeriod(first)} – ${longPeriod(last)} lists`;
+    $("mode-note").innerHTML = `<strong>A rolling year.</strong> Counts every game rated in the last ${M.periods.length} FIDE lists, ${longPeriod(first)} – ${longPeriod(last)}. Each month the oldest list drops out and the newest comes in. To qualify, a player needs ${mins} games.`;
+  }
+  $("pool-note").textContent = `Players: the ${M.pool} people on FIDE's current open top-100 lists for classical, rapid and blitz, ranked in every format. Each list shows its top ${M.lists.classical.rows.length}.`;
+}
 
 function renderFormats() {
   $("formats").innerHTML = FMTS.map((f) => {
-    const L = DATA.lists[f], top = L.rows[0];
+    const L = M.lists[f], top = L.rows[0];
     return `<button class="fmt" role="tab" id="tab-${f}" aria-selected="${f === state.fmt}" data-f="${f}">
-      <span class="fmt-top"><span class="fmt-name">${LABEL[f]}</span><span class="fmt-count num">${L.qualified} qualify · ${DATA.min[f]}+ games</span></span>
+      <span class="fmt-top"><span class="fmt-name">${LABEL[f]}</span><span class="fmt-count num">${L.qualified} qualify · ${M.min[f]}+ games</span></span>
       <span class="fmt-lead"><span class="who">1. ${esc(shortName(top.name))} <span class="fed">${esc(top.fed)}</span></span><span class="tpr num">${top.tpr}</span></span>
     </button>`;
   }).join("");
@@ -239,7 +277,7 @@ function renderHead() {
 }
 
 function sortedRows() {
-  const rows = DATA.lists[state.fmt].rows.slice();
+  const rows = M.lists[state.fmt].rows.slice();
   const k = state.sort, d = state.dir;
   rows.sort((a, b) => {
     let x = a[k], y = b[k];
@@ -268,7 +306,7 @@ function detailRow(r) {
 
 function renderBody() {
   const rows = sortedRows();
-  const L = DATA.lists[state.fmt];
+  const L = M.lists[state.fmt];
   $("count").textContent = state.q ? `${rows.length} of ${L.rows.length} shown` :
     `Showing ${L.rows.length} of ${L.qualified} qualifying players`;
   if (!rows.length) {
@@ -293,16 +331,28 @@ function renderBody() {
   }).join("");
 }
 
-function render() { renderFormats(); renderHead(); renderBody(); }
+function render() { renderModes(); renderFormats(); renderHead(); renderBody(); }
 
-function setFormat(f, push) {
-  if (!FMTS.includes(f)) f = "classical";
-  state.fmt = f; state.open.clear();
-  if (push && location.hash !== "#" + f) history.replaceState(null, "", "#" + f);
+const hashFor = () => (state.mode ? `${state.mode}-` : "") + state.fmt;
+
+function go(mode, fmt, push) {
+  M = DATA.modes.find((m) => m.id === mode) || DATA.modes[0];
+  state.mode = M.id;
+  state.fmt = FMTS.includes(fmt) ? fmt : "classical";
+  state.open.clear();
+  if (push && location.hash !== "#" + hashFor()) history.replaceState(null, "", "#" + hashFor());
   render();
 }
 
-$("formats").addEventListener("click", (e) => { const b = e.target.closest(".fmt"); if (b) setFormat(b.dataset.f, true); });
+function fromHash() {
+  const h = location.hash.slice(1);
+  const i = h.lastIndexOf("-");
+  if (i < 0) return go("", h, false);
+  go(h.slice(0, i), h.slice(i + 1), false);
+}
+
+$("modes").addEventListener("click", (e) => { const b = e.target.closest(".mode"); if (b) go(b.dataset.m, state.fmt, true); });
+$("formats").addEventListener("click", (e) => { const b = e.target.closest(".fmt"); if (b) go(state.mode, b.dataset.f, true); });
 $("head").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-k]"); if (!b) return;
   const col = COLS.find((c) => c.key === b.dataset.k);
@@ -321,7 +371,7 @@ $("body").addEventListener("keydown", (e) => {
   if (tr && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); toggle(tr); }
 });
 $("q").addEventListener("input", (e) => { state.q = e.target.value; renderBody(); });
-window.addEventListener("hashchange", () => setFormat(location.hash.slice(1), false));
+window.addEventListener("hashchange", fromHash);
 
-setFormat(location.hash.slice(1) || "classical", false);
+fromHash();
 </script>

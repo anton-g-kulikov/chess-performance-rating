@@ -2,8 +2,9 @@
 
     python -m perfrating.web            # writes site/index.html
 
-Reads ``results/{format}.json`` and ``data/games.json`` (written by
-``perfrating.build``) and embeds the top rows of each list, with each
+Reads the rolling lists (``results/``, ``data/games.json``) and every
+calendar-year race that has been built (``results/YYYY/``,
+``data/games-YYYY.json``), and embeds the top rows of each list, with each
 player's events, into ``perfrating/page.html``.
 """
 
@@ -13,7 +14,7 @@ import argparse
 import json
 from pathlib import Path
 
-from .build import FORMATS, MONTHS
+from .build import FORMATS
 from .performance import performance
 
 TEMPLATE = Path(__file__).with_name("page.html")
@@ -28,42 +29,49 @@ def event_summary(e: dict) -> list:
             perf.tpr if perf else None]
 
 
-def page_data(results: Path, data: Path, top: int) -> dict:
+def mode_data(results: Path, data: Path, top: int, mode_id: str, label: str) -> dict:
     saved = json.loads(data.read_text())
+    meta = json.loads((results / "meta.json").read_text())
     players = saved["players"]
-    out = {"periods": saved["periods"], "pool": len(players), "lists": {}}
+    lists = {}
     for fmt in FORMATS:
         rows = json.loads((results / f"{fmt}.json").read_text())
-        qualified = len(rows)
         lst = []
         for r in rows[:top]:
             events = sorted(players[str(r["fide_id"])]["games"][fmt],
                             key=lambda e: (e["start"] or "", e["period"]), reverse=True)
             lst.append({**r, "ev": [event_summary(e) for e in events]})
-        out["lists"][fmt] = {"qualified": qualified, "rows": lst}
-    return out
+        lists[fmt] = {"qualified": len(rows), "rows": lst}
+    return {
+        "id": mode_id,
+        "label": label,
+        "year": meta.get("year"),
+        "fraction": meta.get("fraction"),
+        "scope": meta["scope"].replace("**", ""),
+        "periods": meta["periods"],
+        "min": meta["min_games"],
+        "pool": len(players),
+        "lists": lists,
+    }
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--results", default="results")
-    ap.add_argument("--data", default="data/games.json")
     ap.add_argument("--top", type=int, default=100)
-    ap.add_argument("--min-games", default="20,20,40")
     ap.add_argument("--out", default="site/index.html")
     args = ap.parse_args(argv)
 
-    d = page_data(Path(args.results), Path(args.data), args.top)
-    d["min"] = dict(zip(FORMATS, (int(x) for x in args.min_games.split(","))))
-    first, last = d["periods"][0], d["periods"][-1]
-    d["span"] = (f"{MONTHS[int(first[5:7]) - 1]} {first[:4]} – "
-                 f"{MONTHS[int(last[5:7]) - 1]} {last[:4]}")
-    blob = json.dumps(d, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+    modes = [mode_data(Path("results"), Path("data/games.json"), args.top, "", "Last 12 months")]
+    for d in sorted(Path("results").glob("[0-9][0-9][0-9][0-9]"), reverse=True):
+        data = Path(f"data/games-{d.name}.json")
+        if data.exists() and (d / "meta.json").exists():
+            modes.append(mode_data(d, data, args.top, f"y{d.name}", f"{d.name} race"))
+    blob = json.dumps({"modes": modes}, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     html = TEMPLATE.read_text(encoding="utf-8").replace("/*DATA*/null", blob)
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(html, encoding="utf-8")
-    print(f"wrote {out} ({len(html) // 1024} KB)")
+    print(f"wrote {out} ({len(html) // 1024} KB, modes: {', '.join(m['label'] for m in modes)})")
     return 0
 
 

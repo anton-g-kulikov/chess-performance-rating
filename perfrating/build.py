@@ -1,9 +1,19 @@
-"""Build last-12-months performance rating lists from FIDE data.
+"""Build performance rating lists from FIDE data.
+
+Two modes:
+
+* **Rolling** (default): every game rated in the last 12 FIDE rating periods.
+  Each month the oldest period drops out and the newest comes in.
+* **Year** (``--year 2026``): games from events that ended in that calendar
+  year.  Everyone starts again from nothing on January 1.  While the year is
+  in progress the minimum number of games scales with the share of the year
+  covered so far.
 
 Usage::
 
-    python -m perfrating.build                # default: latest list, 12 periods
+    python -m perfrating.build                # rolling: latest list, 12 periods
     python -m perfrating.build --end 2026-11 --months 12 --min-games 20,20,40
+    python -m perfrating.build --year 2026    # calendar year, -> results/2026/
 
 Steps:
 
@@ -22,6 +32,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 import re
 import sys
 from concurrent.futures import ThreadPoolExecutor
@@ -53,6 +64,44 @@ def latest_list_month(top_page: str) -> date:
     if not m:
         raise RuntimeError("could not read the list month from the FIDE top list")
     return date(int(m.group(2)), MONTHS.index(m.group(1)) + 1, 1)
+
+
+def event_year(e: dict) -> int:
+    """Calendar year an event belongs to: the year it ended."""
+    d = e.get("end") or e.get("start")
+    if d:
+        return int(d[:4])
+    # No dates: FIDE usually rates an event in the list after it ends.
+    return month_add(date.fromisoformat(e["period"]), -1).year
+
+
+def year_periods(year: int, latest: date) -> List[str]:
+    """FIDE lists that can hold games from ``year``.
+
+    Games reach the list one or two months after the event ends, a few
+    later still, so a finished year is read through April of the next.
+    """
+    end = min(date(year + 1, 4, 1), latest)
+    first = date(year, 1, 1)
+    n = (end.year - first.year) * 12 + end.month - first.month + 1
+    if n < 1:
+        raise SystemExit(f"no FIDE lists for {year} yet (latest is {latest:%Y-%m})")
+    return window(end, n)
+
+
+def year_fraction(year: int, periods: List[str]) -> float:
+    """Share of ``year`` covered by the lists: games up to the month before
+    the last list."""
+    covered = month_add(date.fromisoformat(periods[-1]), -1)
+    if covered.year > year:
+        return 1.0
+    if covered.year < year:
+        return 0.0
+    return covered.month / 12
+
+
+def scaled_minimum(min_games: Dict[str, int], fraction: float) -> Dict[str, int]:
+    return {f: max(1, math.ceil(n * fraction)) for f, n in min_games.items()}
 
 
 def periods_with_games(client: FideClient, fide_id: int, periods: List[str],
@@ -142,8 +191,9 @@ def fmt_score(x: float) -> str:
     return f"{x:g}"
 
 
-def write_outputs(out_dir: Path, rows_by_fmt: Dict[str, List[dict]], periods: List[str],
-                  min_games: Dict[str, int], pool_size: int, top: int) -> None:
+def write_outputs(out_dir: Path, rows_by_fmt: Dict[str, List[dict]], scope: str,
+                  min_games: Dict[str, int], pool_size: int, top: int,
+                  title: str = "Performance rating lists") -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     cols = ["rank", "name", "fed", "fide_id", "tpr", "true_perf", "games", "score",
             "pct", "avg_opp", "rating", "events"]
@@ -155,13 +205,10 @@ def write_outputs(out_dir: Path, rows_by_fmt: Dict[str, List[dict]], periods: Li
                 w.writerow({k: r[k] for k in cols})
         (out_dir / f"{fmt}.json").write_text(json.dumps(rows, indent=1, ensure_ascii=False) + "\n")
 
-    first, last = date.fromisoformat(periods[0]), date.fromisoformat(periods[-1])
-    span = f"{MONTHS[first.month-1]} {first.year} – {MONTHS[last.month-1]} {last.year}"
     lines = [
-        "# Performance rating lists",
+        f"# {title}",
         "",
-        f"Rating periods: **{span}** FIDE lists ({len(periods)} periods). "
-        f"Player pool: the {pool_size} players on FIDE's current open top-100 "
+        f"{scope} Player pool: the {pool_size} players on FIDE's current open top-100 "
         "classical, rapid and blitz lists.",
         "",
         "**TPR** is the FIDE performance rating over all rated games in the window "
@@ -191,40 +238,96 @@ def write_outputs(out_dir: Path, rows_by_fmt: Dict[str, List[dict]], periods: Li
     (out_dir / "README.md").write_text("\n".join(lines))
 
 
+def period_span(periods: List[str]) -> str:
+    first, last = date.fromisoformat(periods[0]), date.fromisoformat(periods[-1])
+    return f"{MONTHS[first.month-1]} {first.year} – {MONTHS[last.month-1]} {last.year}"
+
+
+def describe(meta: dict) -> Dict[str, str]:
+    """Headline and scope sentence for a saved build."""
+    periods = meta["periods"]
+    if meta.get("year"):
+        y = meta["year"]
+        covered = month_add(date.fromisoformat(periods[-1]), -1)
+        through = ("the full year" if covered.year > y
+                   else f"events ending January – {MONTHS[covered.month-1]} {y}")
+        return {
+            "title": f"{y} performance race",
+            "scope": f"Games from events that ended in **{y}** ({through}), read from the "
+                     f"{period_span(periods)} FIDE lists. Everyone starts again on January 1.",
+        }
+    return {
+        "title": "Performance rating lists",
+        "scope": f"Rating periods: **{period_span(periods)}** FIDE lists ({len(periods)} periods).",
+    }
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--end", help="last rating period, YYYY-MM (default: FIDE's latest list)")
-    ap.add_argument("--months", type=int, default=12, help="number of rating periods (default 12)")
+    ap.add_argument("--year", type=int, help="calendar-year mode for this year")
+    ap.add_argument("--end", help="rolling mode: last rating period, YYYY-MM (default: FIDE's latest list)")
+    ap.add_argument("--months", type=int, default=12, help="rolling mode: number of rating periods (default 12)")
     ap.add_argument("--min-games", default="20,20,40",
-                    help="minimum games for classical,rapid,blitz (default 20,20,40)")
+                    help="minimum games for classical,rapid,blitz over a full year (default 20,20,40)")
     ap.add_argument("--top", type=int, default=100, help="rows per list in the Markdown summary")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--exhaustive", action="store_true",
                     help="fetch every period instead of using FIDE's list of periods with games")
     ap.add_argument("--cache", default=".cache/fide", help="cache directory ('' to disable)")
-    ap.add_argument("--out", default="results")
-    ap.add_argument("--data", default="data/games.json", help="where to save the raw games")
+    ap.add_argument("--out", help="output directory (default results/, or results/YEAR/)")
+    ap.add_argument("--data", help="raw games file (default data/games.json, or data/games-YEAR.json)")
     ap.add_argument("--from-data", action="store_true",
                     help="rebuild the lists from --data without fetching anything")
     args = ap.parse_args(argv)
-    min_games = dict(zip(FORMATS, (int(x) for x in args.min_games.split(","))))
+    args.out = args.out or (f"results/{args.year}" if args.year else "results")
+    args.data = args.data or (f"data/games-{args.year}.json" if args.year else "data/games.json")
+    base_min = dict(zip(FORMATS, (int(x) for x in args.min_games.split(","))))
 
     if args.from_data:
         saved = json.loads(Path(args.data).read_text())
-        periods = saved["periods"]
         pool = {int(fid): {k: v for k, v in info.items() if k != "games"}
                 for fid, info in saved["players"].items()}
         games = {int(fid): info["games"] for fid, info in saved["players"].items()}
-        finish(pool, games, periods, min_games, args)
-        return 0
+        meta = {"periods": saved["periods"], "year": saved.get("year")}
+    else:
+        pool, games, meta = fetch(args)
 
+    if meta.get("year"):
+        meta["fraction"] = year_fraction(meta["year"], meta["periods"])
+        meta["min_games"] = scaled_minimum(base_min, meta["fraction"])
+    else:
+        meta["min_games"] = base_min
+    meta.update(describe(meta))
+
+    if args.data and not args.from_data:
+        Path(args.data).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.data).write_text(json.dumps({
+            **meta,
+            "players": {str(fid): {**pool[fid], "games": games[fid]} for fid in pool},
+        }, ensure_ascii=False, separators=(",", ":")))
+
+    rows_by_fmt = {fmt: build_rows(pool, games, fmt, meta["min_games"][fmt]) for fmt in FORMATS}
+    write_outputs(Path(args.out), rows_by_fmt, meta["scope"], meta["min_games"], len(pool),
+                  args.top, meta["title"])
+    (Path(args.out) / "meta.json").write_text(json.dumps(
+        {k: meta[k] for k in ("title", "scope", "periods", "min_games", "year", "fraction") if k in meta},
+        indent=1, ensure_ascii=False) + "\n")
+    for fmt, rows in rows_by_fmt.items():
+        print(f"{fmt}: {len(rows)} qualify (min {meta['min_games'][fmt]}); leader: "
+              + (f"{rows[0]['name']} {rows[0]['tpr']}" if rows else "-"), file=sys.stderr)
+    return 0
+
+
+def fetch(args):
     client = FideClient(cache_dir=Path(args.cache) if args.cache else None)
-
     top_pages = {fmt: client.get("/a_top.php", {"list": TOP_LISTS[fmt]}, refresh=True)
                  for fmt in FORMATS}
-    end = (date.fromisoformat(args.end + "-01") if args.end
-           else latest_list_month(top_pages["classical"]))
-    periods = window(end, args.months)
+    latest = latest_list_month(top_pages["classical"])
+    if args.year:
+        periods = year_periods(args.year, latest)
+    else:
+        end = date.fromisoformat(args.end + "-01") if args.end else latest
+        periods = window(end, args.months)
 
     pool: Dict[int, dict] = {}
     for fmt, page in top_pages.items():
@@ -242,6 +345,8 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
         for i, (fid, data) in enumerate(ex.map(job, pool), 1):
+            if args.year:
+                data = {f: [e for e in evs if event_year(e) == args.year] for f, evs in data.items()}
             games[fid] = data
             if i % 10 == 0 or i == len(pool):
                 print(f"  {i}/{len(pool)} players ({client.requests_made} requests)", file=sys.stderr)
@@ -251,27 +356,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     for fid, info in pool.items():
         for fmt in FORMATS:
             if fmt not in info["ratings"] and games[fid][fmt]:
-                latest = max(games[fid][fmt], key=lambda e: (e["period"], e["end"] or ""))
-                if latest.get("ro"):
-                    info["ratings"][fmt] = int(latest["ro"])
+                latest_ev = max(games[fid][fmt], key=lambda e: (e["period"], e["end"] or ""))
+                if latest_ev.get("ro"):
+                    info["ratings"][fmt] = int(latest_ev["ro"])
 
-    if args.data:
-        Path(args.data).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.data).write_text(json.dumps({
-            "periods": periods,
-            "players": {str(fid): {**pool[fid], "games": games[fid]} for fid in pool},
-        }, ensure_ascii=False, separators=(",", ":")))
-
-    finish(pool, games, periods, min_games, args)
-    return 0
-
-
-def finish(pool, games, periods, min_games, args) -> None:
-    rows_by_fmt = {fmt: build_rows(pool, games, fmt, min_games[fmt]) for fmt in FORMATS}
-    write_outputs(Path(args.out), rows_by_fmt, periods, min_games, len(pool), args.top)
-    for fmt, rows in rows_by_fmt.items():
-        print(f"{fmt}: {len(rows)} qualify; leader: "
-              + (f"{rows[0]['name']} {rows[0]['tpr']}" if rows else "-"), file=sys.stderr)
+    return pool, games, {"periods": periods, "year": args.year}
 
 
 if __name__ == "__main__":
