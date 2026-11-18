@@ -1,0 +1,476 @@
+<title>Chess Performance Ratings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout: narrow reading column; format switcher as three result slips, then one ranked table with expandable event rows. */
+:root {
+  --bg: #eef1ee;
+  --surface: #ffffff;
+  --ink: #16201a;
+  --muted: #5a675f;
+  --line: #d8dfda;
+  --accent: #1d6a47;
+  --accent-soft: #e1eee6;
+  --up: #1c7443;
+  --down: #b23b2b;
+  --focus: #2b7fd4;
+  --display: "Archivo", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1411; --surface: #161d19; --ink: #e5ebe7; --muted: #94a299; --line: #27312b;
+    --accent: #62c493; --accent-soft: #1b2c22; --up: #66c98f; --down: #f08b79; --focus: #7ab8f5;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1411; --surface: #161d19; --ink: #e5ebe7; --muted: #94a299; --line: #27312b;
+  --accent: #62c493; --accent-soft: #1b2c22; --up: #66c98f; --down: #f08b79; --focus: #7ab8f5;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--body); font-size: 16px; line-height: 1.5;
+}
+.wrap {
+  max-width: 1040px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 56px;
+  display: grid; gap: 28px;
+}
+.num { font-variant-numeric: tabular-nums; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+header { display: grid; gap: 10px; }
+.eyebrow {
+  font-family: var(--display); font-weight: 600; font-size: 13px;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+}
+h1 {
+  font-family: var(--display); font-weight: 800; font-stretch: 78%;
+  font-size: clamp(34px, 6vw, 54px); line-height: 1.02; margin: 0;
+  letter-spacing: -.01em; text-wrap: balance;
+}
+.lede { margin: 0; max-width: 64ch; color: var(--muted); }
+.lede strong { color: var(--ink); font-weight: 600; }
+
+/* Period switcher */
+.modebar { display: grid; gap: 10px; }
+.modes { display: inline-flex; justify-self: start; gap: 4px; padding: 4px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); flex-wrap: wrap; }
+.mode {
+  appearance: none; border: 0; cursor: pointer; font: inherit; color: var(--muted);
+  background: transparent; border-radius: 7px; padding: 7px 14px;
+  font-family: var(--display); font-weight: 700; font-stretch: 88%; font-size: 16px;
+}
+.mode:hover { color: var(--ink); }
+.mode[aria-selected="true"] { background: var(--ink); color: var(--surface); }
+.mode-note { margin: 0; font-size: 15px; color: var(--muted); max-width: 72ch; }
+.mode-note strong { color: var(--ink); font-weight: 600; }
+
+/* Format switcher */
+.formats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.fmt {
+  appearance: none; text-align: left; cursor: pointer; font: inherit; color: inherit;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  padding: 14px 16px 16px; display: grid; gap: 6px; min-width: 0;
+  transition: border-color .15s, box-shadow .15s;
+}
+.fmt:hover { border-color: var(--accent); }
+.fmt[aria-selected="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--accent-soft); }
+.fmt-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.fmt-name { font-family: var(--display); font-weight: 800; font-stretch: 85%; font-size: 22px; }
+.fmt-count { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.fmt-lead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; min-width: 0; }
+.fmt-lead .who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.fmt-lead .tpr { font-family: var(--display); font-weight: 800; font-size: 26px; font-stretch: 80%; color: var(--accent); }
+
+/* Toolbar */
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.toolbar label { font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+#q {
+  font: inherit; font-size: 15px; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; width: min(280px, 70vw);
+}
+.note { font-size: 14px; color: var(--muted); }
+
+/* Table */
+.table-box { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { padding: 9px 10px; text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { padding-left: 16px; }
+th:last-child, td:last-child { padding-right: 16px; }
+thead th {
+  font-family: var(--display); font-weight: 600; font-size: 12px; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; background: var(--surface);
+}
+th button { all: unset; cursor: pointer; display: inline-flex; gap: 4px; align-items: center; }
+th button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+th[aria-sort] button::after { content: "▾"; font-size: 11px; }
+th[aria-sort="ascending"] button::after { content: "▴"; }
+.l { text-align: left; }
+tbody tr.row { cursor: pointer; border-top: 1px solid var(--line); }
+tbody tr.row:first-child { border-top: 0; }
+tbody tr.row:hover { background: var(--accent-soft); }
+.rank { color: var(--muted); width: 44px; }
+.player { display: flex; align-items: baseline; gap: 8px; }
+.player .nm { font-weight: 600; }
+.sm-name { display: none; }
+.fed { font-size: 12px; font-weight: 700; letter-spacing: .05em; color: var(--muted); }
+td.tpr { font-family: var(--display); font-weight: 800; font-size: 18px; font-stretch: 85%; }
+.up { color: var(--up); } .down { color: var(--down); } .flat { color: var(--muted); }
+.muted { color: var(--muted); }
+.chev { display: inline-block; width: 1em; color: var(--muted); transition: transform .15s; }
+tr.open .chev { transform: rotate(90deg); }
+
+tr.detail > td { padding: 0 16px 16px; text-align: left; white-space: normal; background: var(--accent-soft); }
+.of { display: none; }
+.detail-inner { display: grid; gap: 10px; padding-top: 4px; }
+.detail-head { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--muted); }
+.ev { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--surface); border-radius: 8px; overflow: hidden; }
+.ev th, .ev td { padding: 6px 10px; }
+.ev thead th { position: static; font-size: 11px; }
+.ev tbody tr { border-top: 1px solid var(--line); }
+.ev td.name { white-space: normal; min-width: 160px; }
+.ev-box { overflow-x: auto; }
+.empty { padding: 28px 16px; text-align: center; color: var(--muted); }
+
+.method { display: grid; gap: 22px; max-width: 72ch; font-size: 15px; color: var(--muted); padding-top: 8px; border-top: 1px solid var(--line); }
+.method h2 { font-family: var(--display); font-weight: 800; font-stretch: 85%; font-size: 24px; color: var(--ink); margin: 12px 0 0; }
+.method h3 { font-family: var(--display); font-weight: 700; font-stretch: 88%; font-size: 18px; color: var(--ink); margin: 0; }
+.mblock { display: grid; gap: 8px; min-width: 0; }
+.method p, .method ol, .method dl { margin: 0; }
+.method ol { padding-left: 1.3em; display: grid; gap: 2px; }
+.method strong { color: var(--ink); font-weight: 600; }
+.method dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.method dt { color: var(--ink); font-weight: 600; }
+.method dd { margin: 0; }
+.dp-box { overflow-x: auto; }
+.dp { border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.dp th, .dp td { padding: 5px 10px; text-align: right; white-space: nowrap; }
+.dp th { text-align: left; color: var(--muted); font-weight: 600; }
+.dp tr + tr td { color: var(--ink); font-weight: 600; border-top: 1px solid var(--line); }
+.dp tr + tr th { border-top: 1px solid var(--line); }
+.example { background: var(--accent-soft); border-radius: 8px; padding: 10px 14px; color: var(--ink); }
+@media (max-width: 520px) { .method dl { grid-template-columns: 1fr; gap: 2px; } .method dd { margin-bottom: 8px; } }
+
+@media (max-width: 720px) {
+  .formats { grid-template-columns: 1fr; }
+  .fmt { grid-template-columns: 1fr auto; align-items: baseline; padding: 12px 14px; }
+  .fmt-top { display: contents; }
+  .fmt-count { grid-column: 2; grid-row: 1; }
+  .fmt-lead { grid-column: 1 / -1; }
+  .fmt-lead .tpr { font-size: 22px; }
+  .hide-sm { display: none; }
+  .of { display: inline; }
+  .pct-sm { display: none; }
+  th, td { padding: 9px 6px; }
+  th:first-child, td:first-child { padding-left: 10px; }
+  th:last-child, td:last-child { padding-right: 12px; }
+  td.l { white-space: normal; }
+  /* Player cell: takes the leftover width; name on one line, federation under it. */
+  td.pcell { width: 100%; max-width: 0; }
+  .player { display: block; min-width: 0; }
+  .player .chev { display: none; }
+  .player > .nm, .player > .fed { display: none; }
+  .sm-name { display: grid; min-width: 0; line-height: 1.3; }
+  .sm-name .sur { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sm-name .sub { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sm-name .fed { font-size: 11px; }
+  tbody tr.row td { padding-block: 8px; }
+  td.tpr { font-size: 17px; }
+  .rank { width: 32px; }
+  tr.detail > td { padding: 0 10px 12px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow" id="eyebrow">FIDE rated games</div>
+    <h1 id="headline">Who is playing best right now</h1>
+    <p class="lede" id="lede">An alternative to the FIDE rating, which carries results forward for years. Here players are ranked only by recent performance, in classical, rapid and blitz. <strong>No recent games, no ranking.</strong></p>
+  </header>
+
+  <div class="modebar">
+    <div class="modes" role="tablist" aria-label="Period" id="modes"></div>
+    <p class="mode-note" id="mode-note"></p>
+  </div>
+
+  <nav class="formats" role="tablist" aria-label="Format" id="formats"></nav>
+
+  <section aria-labelledby="list-title" style="display:grid; gap:12px; min-width:0">
+    <div class="toolbar">
+      <label for="q">Find a player <input id="q" type="search" placeholder="Name or federation" autocomplete="off"></label>
+      <span class="note" id="count"></span>
+    </div>
+    <h2 id="list-title" hidden>Ranking</h2>
+    <div class="table-box">
+      <table>
+        <thead><tr id="head"></tr></thead>
+        <tbody id="body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="method" aria-labelledby="how">
+    <h2 id="how">How it works</h2>
+
+    <div class="mblock">
+      <h3>Two ways to count a year</h3>
+      <dl class="modes-explained">
+        <dt>Last 12 months</dt>
+        <dd id="explain-rolling"></dd>
+        <dt id="race-term">Calendar-year race</dt>
+        <dd id="explain-race"></dd>
+      </dl>
+      <p>In both modes all of a player's events in a format are pooled, as if they were one long tournament, and a player without enough games isn't ranked.</p>
+    </div>
+
+    <div class="mblock">
+      <h3>TPR: Tournament Performance Rating</h3>
+      <p>TPR is the rating a player's results were worth: the rating someone would need to score exactly what they scored against the same opponents. It is calculated the way FIDE does it, in two steps.</p>
+      <ol>
+        <li>Take the <strong>average rating of the opponents</strong>.</li>
+        <li>Add the value from <strong>FIDE's conversion table</strong> for the percentage score. Scores below 50% subtract the same amounts.</li>
+      </ol>
+      <div class="dp-box">
+        <table class="dp" aria-label="FIDE conversion table, selected values">
+          <tr><th scope="row">Score</th><td>50%</td><td>55%</td><td>60%</td><td>65%</td><td>70%</td><td>75%</td><td>80%</td><td>90%</td><td>100%</td></tr>
+          <tr><th scope="row">Add</th><td>0</td><td>+36</td><td>+72</td><td>+110</td><td>+149</td><td>+193</td><td>+240</td><td>+366</td><td>+800</td></tr>
+        </table>
+      </div>
+      <p class="example" id="tpr-example"></p>
+    </div>
+
+    <div class="mblock">
+      <h3>The other columns</h3>
+      <dl class="cols-explained">
+        <dt>True</dt><dd>The rating at which the expected score against each actual opponent adds up to the actual score. It is the more precise measure when opponents' ratings are spread out, and it doesn't exist for 0% or 100%.</dd>
+        <dt>Score</dt><dd>Points from rated games, with the percentage. Win 1, draw ½, loss 0.</dd>
+        <dt>Avg opp</dt><dd>Average rating of the opponents faced. As in FIDE's own calculations, an opponent rated more than 400 points below the player counts as the player's rating minus 400.</dd>
+        <dt>Rating</dt><dd>The player's current FIDE rating in that format.</dd>
+        <dt>Δ</dt><dd>TPR minus that rating. Green means playing above the FIDE rating, red below it.</dd>
+      </dl>
+    </div>
+
+    <div class="mblock">
+      <h3>Who is included</h3>
+      <p id="pool-note"></p>
+      <p>Source: game-by-game rating calculations on <a href="https://ratings.fide.com" target="_blank" rel="noopener">ratings.fide.com</a>. Code: <a href="https://github.com/anton-g-kulikov/chess-performance-rating" target="_blank" rel="noopener">chess-performance-rating</a>.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+const DATA = /*DATA*/null;
+const FMTS = ["classical", "rapid", "blitz"];
+const LABEL = { classical: "Classical", rapid: "Rapid", blitz: "Blitz" };
+const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+const COLS = [
+  { key: "rank", label: "#", cls: "rank num", dir: 1 },
+  { key: "name", label: "Player", cls: "l", dir: 1 },
+  { key: "tpr", label: "TPR", cls: "tpr num", dir: -1 },
+  { key: "true_perf", label: "True", cls: "num hide-sm", dir: -1 },
+  { key: "games", label: "Games", cls: "num hide-sm", dir: -1 },
+  { key: "pct", label: "Score", cls: "num", dir: -1 },
+  { key: "avg_opp", label: "Avg opp", cls: "num hide-sm", dir: -1 },
+  { key: "rating", label: "Rating", cls: "num hide-sm", dir: -1 },
+  { key: "delta", label: "Δ", cls: "num", dir: -1 },
+];
+
+const state = { mode: DATA.modes[0].id, fmt: "classical", sort: "rank", dir: 1, q: "", open: new Set() };
+let M = DATA.modes[0];
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const score = (x) => {
+  const w = Math.floor(x), half = Math.abs(x - w - 0.5) < 1e-9;
+  return half ? `${w || ""}½` : String(Math.round(x * 100) / 100);
+};
+const shortName = (n) => { const [last, first] = n.split(", "); return first ? `${first.split(" ")[0]} ${last}` : n; };
+const period = (p) => `${MON[+p.slice(5, 7) - 1]} ${p.slice(0, 4)}`;
+
+for (const m of DATA.modes) for (const f of FMTS) for (const r of m.lists[f].rows) r.delta = r.rating ? r.tpr - r.rating : null;
+
+const MONTH_FULL = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const longPeriod = (p) => `${MONTH_FULL[+p.slice(5, 7) - 1]} ${p.slice(0, 4)}`;
+
+function headline(m) {
+  if (!m.year) return "Who is playing best right now";
+  return (m.fraction ?? 1) >= 1 ? `Who played best in ${m.year}` : `Who is leading the ${m.year} race`;
+}
+
+function renderModes() {
+  $("headline").textContent = headline(M);
+  document.title = `${headline(M)} · Chess Performance Ratings`;
+  $("modes").innerHTML = DATA.modes.map((m) =>
+    `<button class="mode" role="tab" aria-selected="${m.id === state.mode}" data-m="${m.id}">${esc(m.label)}</button>`).join("");
+  const first = M.periods[0], last = M.periods[M.periods.length - 1];
+  const mins = `${M.min.classical} classical, ${M.min.rapid} rapid or ${M.min.blitz} blitz`;
+  if (M.year) {
+    const months = Math.round((M.fraction ?? 1) * 12);
+    const sofar = months >= 12 ? `the whole of ${M.year}` : `events that ended January – ${MONTH_FULL[months - 1]} ${M.year} so far`;
+    $("eyebrow").textContent = `FIDE rated games · ${M.year} calendar year`;
+    $("mode-note").innerHTML = `<strong>Everyone starts again on January 1.</strong> Counts games from ${sofar}. ` +
+      (months >= 12 ? `To qualify, a player needs ${mins} games.` :
+       `The minimum number of games grows with the year: ${mins} games now, after ${months} of 12 months.`);
+  } else {
+    $("eyebrow").textContent = `FIDE rated games · ${longPeriod(first)} – ${longPeriod(last)} lists`;
+    $("mode-note").innerHTML = `<strong>A rolling year.</strong> Counts every game rated in the last ${M.periods.length} FIDE lists, ${longPeriod(first)} – ${longPeriod(last)}. Each month the oldest list drops out and the newest comes in. To qualify, a player needs ${mins} games.`;
+  }
+}
+
+function renderMethod() {
+  const R = DATA.modes.find((m) => !m.year);
+  const race = DATA.modes.find((m) => m.year);
+  const minsOf = (m) => `${m.min.classical} classical, ${m.min.rapid} rapid or ${m.min.blitz} blitz`;
+  if (R) {
+    const first = R.periods[0], last = R.periods[R.periods.length - 1];
+    $("explain-rolling").textContent = `A rolling year with no reset. It counts every game rated in the last ${R.periods.length} monthly FIDE lists, currently ${longPeriod(first)} – ${longPeriod(last)}. Each month the oldest list drops out and the newest comes in, so a strong result counts for exactly one year. Minimum: ${minsOf(R)} games.`;
+  }
+  if (race) {
+    const months = Math.round((race.fraction ?? 1) * 12);
+    $("race-term").textContent = `${race.year} race`;
+    $("explain-race").textContent = `Everyone starts again on January 1. It counts games from events that ended in ${race.year}` +
+      (months >= 12 ? ". " : `, so far through ${MONTH_FULL[months - 1]}. `) +
+      `An event belongs to the year it ended in, even when FIDE rates it a month or two later. The minimum number of games grows through the year, in proportion to the months played` +
+      (months >= 12 ? `: ${minsOf(race)} games.` : `: after ${months} of 12 months it is ${minsOf(race)} games, rising to the full-year minimum by December.`);
+  } else {
+    $("race-term").hidden = true; $("explain-race").hidden = true;
+  }
+  $("pool-note").textContent = `The ${M.pool} players on FIDE's current open top-100 lists for classical, rapid and blitz. Every one of them is ranked in all three formats if they have enough games. Each list on this page shows its top ${M.lists.classical.rows.length}.`;
+
+  const top = M.lists[state.fmt].rows[0];
+  if (top) {
+    const exact = top.avg_opp + top.dp === top.tpr;
+    $("tpr-example").innerHTML = `<strong>Example</strong>, from the ${esc(M.label.toLowerCase())} ${LABEL[state.fmt].toLowerCase()} list: ` +
+      `${esc(shortName(top.name))} scored ${score(top.score)} out of ${top.games} (${Math.round(top.pct)}%) against opponents averaging ${top.avg_opp}. ` +
+      `The table gives ${top.dp >= 0 ? "+" : "−"}${Math.abs(top.dp)} for ${Math.round(top.pct)}%, so the TPR is ${top.avg_opp} ${top.dp >= 0 ? "+" : "−"} ${Math.abs(top.dp)} ${exact ? "=" : "≈"} <strong>${top.tpr}</strong>.`;
+  }
+}
+
+function renderFormats() {
+  $("formats").innerHTML = FMTS.map((f) => {
+    const L = M.lists[f], top = L.rows[0];
+    return `<button class="fmt" role="tab" id="tab-${f}" aria-selected="${f === state.fmt}" data-f="${f}">
+      <span class="fmt-top"><span class="fmt-name">${LABEL[f]}</span><span class="fmt-count num">${L.qualified} qualify · ${M.min[f]}+ games</span></span>
+      <span class="fmt-lead"><span class="who">1. ${esc(shortName(top.name))} <span class="fed">${esc(top.fed)}</span></span><span class="tpr num">${top.tpr}</span></span>
+    </button>`;
+  }).join("");
+}
+
+function renderHead() {
+  $("head").innerHTML = COLS.map((c) => {
+    const sorted = state.sort === c.key;
+    const aria = sorted ? ` aria-sort="${state.dir === 1 ? "ascending" : "descending"}"` : "";
+    return `<th class="${c.cls}"${aria} scope="col"><button type="button" data-k="${c.key}">${c.label}</button></th>`;
+  }).join("");
+}
+
+function sortedRows() {
+  const rows = M.lists[state.fmt].rows.slice();
+  const k = state.sort, d = state.dir;
+  rows.sort((a, b) => {
+    let x = a[k], y = b[k];
+    if (x == null) return 1; if (y == null) return -1;
+    if (typeof x === "string") return d * x.localeCompare(y);
+    return d * (x - y) || a.rank - b.rank;
+  });
+  const q = state.q.trim().toLowerCase();
+  return q ? rows.filter((r) => r.name.toLowerCase().includes(q) || r.fed.toLowerCase() === q || shortName(r.name).toLowerCase().includes(q)) : rows;
+}
+
+function detailRow(r) {
+  const ev = r.ev.map((e) => {
+    const [p, name, start, end, n, s, avg, tpr] = e;
+    const dates = start ? (start === end || !end ? start : `${start} – ${end}`) : "";
+    return `<tr><td class="l name">${esc(name)}<div class="muted" style="font-size:12px">${esc(dates)}</div></td>
+      <td class="l hide-sm">${period(p + "-01")}</td><td class="num">${score(s)}/${n}</td>
+      <td class="num hide-sm">${avg ?? "—"}</td><td class="num">${tpr ?? "—"}</td></tr>`;
+  }).join("");
+  return `<tr class="detail"><td colspan="${COLS.length}"><div class="detail-inner">
+    <div class="detail-head"><span>${r.events} events · ${score(r.score)}/${r.games}</span>
+    <a href="https://ratings.fide.com/profile/${r.fide_id}" target="_blank" rel="noopener">FIDE profile</a></div>
+    <div class="ev-box"><table class="ev"><thead><tr><th class="l">Event</th><th class="l hide-sm">FIDE list</th><th>Score</th><th class="hide-sm">Avg opp</th><th>TPR</th></tr></thead><tbody>${ev}</tbody></table></div>
+  </div></td></tr>`;
+}
+
+function renderBody() {
+  const rows = sortedRows();
+  const L = M.lists[state.fmt];
+  $("count").textContent = state.q ? `${rows.length} of ${L.rows.length} shown` :
+    `Showing ${L.rows.length} of ${L.qualified} qualifying players`;
+  if (!rows.length) {
+    $("body").innerHTML = `<tr><td colspan="${COLS.length}" class="empty">No player in the ${LABEL[state.fmt].toLowerCase()} list matches “${esc(state.q)}”.</td></tr>`;
+    return;
+  }
+  $("body").innerHTML = rows.map((r) => {
+    const open = state.open.has(r.fide_id);
+    const dCls = r.delta == null ? "flat" : r.delta > 0 ? "up" : r.delta < 0 ? "down" : "flat";
+    const dTxt = r.delta == null ? "—" : (r.delta > 0 ? "+" : r.delta < 0 ? "−" : "±") + Math.abs(r.delta);
+    return `<tr class="row${open ? " open" : ""}" data-id="${r.fide_id}" tabindex="0" aria-expanded="${open}">
+      <td class="rank num">${r.rank}</td>
+      <td class="l pcell"><span class="player"><span class="chev" aria-hidden="true">›</span><span class="nm">${esc(r.name)}</span><span class="fed">${esc(r.fed)}</span><span class="sm-name"><span class="sur">${esc(r.name.split(", ")[0])}</span><span class="sub">${r.name.includes(", ") ? esc(r.name.split(", ").slice(1).join(", ")) + " · " : ""}<span class="fed">${esc(r.fed)}</span></span></span></span></td>
+      <td class="tpr num">${r.tpr}</td>
+      <td class="num hide-sm">${r.true_perf ?? "—"}</td>
+      <td class="num hide-sm">${r.games}</td>
+      <td class="num">${score(r.score)}<span class="of">/${r.games}</span> <span class="muted pct-sm">(${Math.round(r.pct)}%)</span></td>
+      <td class="num hide-sm">${r.avg_opp}</td>
+      <td class="num hide-sm">${r.rating ?? "—"}</td>
+      <td class="num ${dCls}">${dTxt}</td>
+    </tr>${open ? detailRow(r) : ""}`;
+  }).join("");
+}
+
+function render() { renderModes(); renderFormats(); renderHead(); renderBody(); renderMethod(); }
+
+const hashFor = () => (state.mode ? `${state.mode}-` : "") + state.fmt;
+
+function go(mode, fmt, push) {
+  M = DATA.modes.find((m) => m.id === mode) || DATA.modes[0];
+  state.mode = M.id;
+  state.fmt = FMTS.includes(fmt) ? fmt : "classical";
+  state.open.clear();
+  if (push && location.hash !== "#" + hashFor()) history.replaceState(null, "", "#" + hashFor());
+  render();
+}
+
+function fromHash() {
+  const h = location.hash.slice(1);
+  const i = h.lastIndexOf("-");
+  if (i < 0) return go("", h, false);
+  go(h.slice(0, i), h.slice(i + 1), false);
+}
+
+$("modes").addEventListener("click", (e) => { const b = e.target.closest(".mode"); if (b) go(b.dataset.m, state.fmt, true); });
+$("formats").addEventListener("click", (e) => { const b = e.target.closest(".fmt"); if (b) go(state.mode, b.dataset.f, true); });
+$("head").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-k]"); if (!b) return;
+  const col = COLS.find((c) => c.key === b.dataset.k);
+  if (state.sort === col.key) state.dir = -state.dir; else { state.sort = col.key; state.dir = col.dir; }
+  renderHead(); renderBody();
+});
+function toggle(tr) {
+  const id = +tr.dataset.id;
+  state.open.has(id) ? state.open.delete(id) : state.open.add(id);
+  renderBody();
+  const again = document.querySelector(`tr.row[data-id="${id}"]`); if (again) again.focus();
+}
+$("body").addEventListener("click", (e) => { if (e.target.closest("a")) return; const tr = e.target.closest("tr.row"); if (tr) toggle(tr); });
+$("body").addEventListener("keydown", (e) => {
+  const tr = e.target.closest("tr.row");
+  if (tr && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); toggle(tr); }
+});
+$("q").addEventListener("input", (e) => { state.q = e.target.value; renderBody(); });
+window.addEventListener("hashchange", fromHash);
+
+fromHash();
+</script>

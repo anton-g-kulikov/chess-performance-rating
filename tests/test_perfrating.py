@@ -2,7 +2,10 @@ import unittest
 from decimal import Decimal
 from pathlib import Path
 
-from perfrating.build import build_rows, window
+from datetime import date
+
+from perfrating.build import (build_rows, event_year, scaled_minimum, window,
+                              year_fraction, year_periods)
 from perfrating.parsers import parse_calculation, parse_period_arrays, parse_top_list
 from perfrating.performance import dp, performance, round_p, true_performance
 
@@ -88,7 +91,6 @@ class ParserTest(unittest.TestCase):
 
 class BuildTest(unittest.TestCase):
     def test_window(self):
-        from datetime import date
         w = window(date(2026, 11, 1), 12)
         self.assertEqual(w[0], "2025-12-01")
         self.assertEqual(w[-1], "2026-11-01")
@@ -108,6 +110,26 @@ class BuildTest(unittest.TestCase):
         self.assertEqual([r["name"] for r in rows], ["A", "B"])
         self.assertEqual(rows[0]["tpr"], 3500)
         self.assertEqual(rows[1]["tpr"], 2700)
+
+
+class YearModeTest(unittest.TestCase):
+    def test_event_year_uses_end_date(self):
+        # World Blitz 2025 is rated in the January 2026 list but belongs to 2025.
+        self.assertEqual(event_year({"start": "2025-12-29", "end": "2025-12-30", "period": "2026-01-01"}), 2025)
+        self.assertEqual(event_year({"start": "2025-12-28", "end": "2026-01-04", "period": "2026-02-01"}), 2026)
+        self.assertEqual(event_year({"start": None, "end": None, "period": "2026-01-01"}), 2025)
+
+    def test_year_periods(self):
+        cur = year_periods(2026, date(2026, 11, 1))
+        self.assertEqual((cur[0], cur[-1], len(cur)), ("2026-01-01", "2026-11-01", 11))
+        full = year_periods(2025, date(2026, 11, 1))
+        self.assertEqual((full[0], full[-1], len(full)), ("2025-01-01", "2026-04-01", 16))
+
+    def test_year_fraction_and_minimum(self):
+        self.assertAlmostEqual(year_fraction(2026, window(date(2026, 11, 1), 11)), 10 / 12)
+        self.assertEqual(year_fraction(2025, window(date(2026, 4, 1), 16)), 1.0)
+        self.assertEqual(scaled_minimum({"classical": 20, "blitz": 40}, 10 / 12), {"classical": 17, "blitz": 34})
+        self.assertEqual(scaled_minimum({"classical": 20}, 0.0), {"classical": 1})
 
 
 if __name__ == "__main__":
