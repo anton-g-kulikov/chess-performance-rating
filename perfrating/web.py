@@ -23,7 +23,7 @@ from pathlib import Path
 from . import race
 from .build import FORMATS, rated_games
 from .performance import dp, performance, round_p
-from .race import race_frames
+from .race import race_frames, rolling_frames
 
 TEMPLATE = Path(__file__).with_name("page.html")
 
@@ -111,6 +111,8 @@ def mode_data(results: Path, data: Path, top: int, mode_id: str, label: str) -> 
         if meta.get("year"):
             lists[fmt]["race"] = race_frames(saved, fmt, round((meta.get("fraction") or 1) * 12),
                                              meta["min_games"][fmt])
+        elif saved.get("history"):
+            lists[fmt]["race"] = rolling_frames(saved, fmt, meta["min_games"][fmt])
     return {
         "id": mode_id,
         "label": label,

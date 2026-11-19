@@ -30,6 +30,8 @@ games to be ranked or finish outside the top 100, down to single games, and a
 chart of their TPR over all games so far after each event. Each year race can
 be replayed month by month: the top 10 at the end of each month, with the
 minimum number of games scaled to the months played, but never below half.
+The rolling ranking can be replayed over the past year: the top 10 of the
+12-list window ending at each of the last 12 lists, from today's player pool.
 
 ## How it works
 

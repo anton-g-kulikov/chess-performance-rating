@@ -334,6 +334,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--year", type=int, help="calendar-year mode for this year")
     ap.add_argument("--end", help="rolling mode: last rating period, YYYY-MM (default: FIDE's latest list)")
     ap.add_argument("--months", type=int, default=12, help="rolling mode: number of rating periods (default 12)")
+    ap.add_argument("--history", type=int, default=11,
+                    help="rolling mode: earlier lists to fetch for the month-by-month replay (default 11; 0 for none)")
     ap.add_argument("--min-games", default=DEFAULT_MIN_GAMES,
                     help="minimum games for classical,rapid,blitz over a full year (default 20,20,40)")
     ap.add_argument("--top", type=int, default=100, help="rows per list in the Markdown summary")
@@ -466,7 +468,44 @@ def fetch(args):
                 if ev.get("ro"):
                     info["ratings"][fmt] = int(ev["ro"])
 
-    return pool, games, {"periods": periods, "year": args.year, **notes}
+    meta = {"periods": periods, "year": args.year, **notes}
+    if not args.year and args.history:
+        meta["history"] = fetch_history(client, pool, periods, args.history)
+    return pool, games, meta
+
+
+def fetch_history(client: FideClient, pool: Dict[int, dict], periods: List[str], months: int) -> dict:
+    """Games on the ``months`` lists before a rolling window, for its replay:
+    each earlier position of the window needs them.  Which months have games
+    comes from FIDE's archived lists, as for a past year.  They are kept apart
+    from the window's games, so nothing else sees them."""
+    hist = window(month_add(date.fromisoformat(periods[0]), -1), months)
+    archive = ListArchive()
+    known = {fid: {f: [] for f in FORMATS} for fid in pool}
+    for period in hist:
+        for fmt in FORMATS:
+            for fid, r in archive.by_id(fmt, date.fromisoformat(period), pool).items():
+                if r.gms:
+                    known[fid][fmt].append(period)
+    print(f"history: {hist[0]} .. {hist[-1]}; "
+          f"{sum(len(v) for k in known.values() for v in k.values())} player-months with games", file=sys.stderr)
+    gaps = Gaps()
+    out: Dict[int, Dict[str, List[dict]]] = {}
+    for i, (fid, info) in enumerate(pool.items(), 1):
+        out[fid] = collect_player(client, Player(fid, info["name"], info["fed"], 0), hist, False, known[fid], gaps)
+        if i % 10 == 0 or i == len(pool):
+            print(f"  history {i}/{len(pool)} players ({client.requests_made} requests)", file=sys.stderr)
+    still = []
+    for fid, fmt, period in gaps.pages:
+        time.sleep(5)
+        rows = event_rows(fetch_tournaments(client, fid, period, fmt, True), period)
+        if rows:
+            out[fid][fmt].extend(rows)
+        else:
+            still.append(f"{pool[fid]['name']} {fmt} {period}")
+    if still:
+        raise FideRefusing(f"{len(still)} history pages with games are still empty: " + "; ".join(still))
+    return {"periods": hist, "players": {str(fid): g for fid, g in out.items()}}
 
 
 CURRENT_RATING_NOTE = "current FIDE rating"

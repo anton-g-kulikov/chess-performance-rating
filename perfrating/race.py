@@ -1,7 +1,9 @@
 """Race replay: how a calendar-year list developed, month by month.
 
-The data side, ``race_frames``, gives each year list the top of the table at
-the end of every month so far.  The page side is ``race.html`` (markup),
+The data side gives each list the top of the table month by month:
+``race_frames`` for a calendar year (everything so far, from January), and
+``rolling_frames`` for the rolling 12 months (the window at each of the last
+12 lists, using the games on the lists before it).  The page side is ``race.html`` (markup),
 ``race.css`` and ``race.js``, which ``inline`` puts into ``page.html`` at its
 ``<!--RACE_HTML-->``, ``/*RACE_CSS*/`` and ``/*RACE_JS*/`` markers.  The
 script runs in the page's own scope and uses its helpers (``$``, ``M``,
@@ -11,6 +13,7 @@ script runs in the page's own scope and uses its helpers (``$``, ``M``,
 from __future__ import annotations
 
 import re
+from datetime import date
 from pathlib import Path
 
 from .build import DEFAULT_MIN_GAMES, FORMATS, build_rows, event_month, scaled_minimum
@@ -36,7 +39,30 @@ def race_frames(saved: dict, fmt: str, months: int, final_min: int) -> list:
                  for fid, info in pool.items()}
         need = final_min if last else scaled_minimum(base, m / 12)[fmt]
         rows = build_rows(pool, games, fmt, need)
-        frames.append({"m": m, "min": need, "q": len(rows),
+        frames.append({"y": year, "m": m, "min": need, "q": len(rows),
+                       "rows": [[r["fide_id"], r["tpr"], r["games"]] for r in rows[:RACE_TOP]]})
+    return frames
+
+
+def rolling_frames(saved: dict, fmt: str, min_games: int) -> list:
+    """The rolling list's top at each of its last lists.
+
+    Frame k is the window of ``len(periods)`` lists ending k lists before the
+    newest, among today's pool; it needs the games on the lists before the
+    window (``saved["history"]``).  The last frame is the published list."""
+    hist = saved.get("history") or {"periods": [], "players": {}}
+    size = len(saved["periods"])
+    periods = hist["periods"] + saved["periods"]
+    pool = {int(fid): info for fid, info in saved["players"].items()}
+    events = {fid: (hist["players"].get(str(fid)) or {}).get(fmt, []) + info["games"][fmt]
+              for fid, info in pool.items()}
+    frames = []
+    for k in range(len(hist["periods"]) + 1):
+        win = set(periods[k:k + size])
+        games = {fid: {fmt: [e for e in evs if e["period"] in win]} for fid, evs in events.items()}
+        rows = build_rows(pool, games, fmt, min_games)
+        end = date.fromisoformat(periods[k + size - 1])
+        frames.append({"y": end.year, "m": end.month, "min": min_games, "q": len(rows),
                        "rows": [[r["fide_id"], r["tpr"], r["games"]] for r in rows[:RACE_TOP]]})
     return frames
 

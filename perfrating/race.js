@@ -1,9 +1,11 @@
-// ---- Race replay: the year list's top 10 at the end of each month ----
+// ---- Race replay: a list's top 10 month by month ----
+// A year list replays from January, everything so far; the rolling list
+// replays its 12-list window at each of the last 12 lists.
 const race = { key: "", frames: null, i: 0, timer: null, rows: new Map(), played: new Set() };
 const raceKey = () => `${state.mode}-${state.fmt}`;
 
 function renderRace() {
-  const frames = M.year && M.lists?.[state.fmt]?.race;
+  const frames = M.lists?.[state.fmt]?.race;
   stopRace();
   $("race").hidden = !frames?.length;
   if (!frames?.length) { race.key = ""; return; }
@@ -11,29 +13,36 @@ function renderRace() {
   race.key = raceKey(); race.frames = frames; race.span = null;
   race.rows.forEach((el) => el.remove()); race.rows.clear();
   $("race-axis").innerHTML = "";
+  $("race-title").textContent = M.year ? "How the race unfolded" : "How the ranking moved";
   $("race-seek").max = frames.length - 1;
   // One tick per month in the race so far; the slider's own keys and value
   // text cover screen readers, so these are mouse and touch shortcuts.
   const last = Math.max(1, frames.length - 1);
   $("race-ticks").innerHTML = frames.map((f, i) =>
     `<button type="button" tabindex="-1" data-i="${i}" style="left:${(i / last) * 100}%">` +
-    `<span class="f">${MON[f.m - 1]}</span><span class="s">${MON[f.m - 1][0]}</span></button>`).join("");
+    `<span class="f">${MON[f.m - 1]}${!M.year && (i === 0 || f.m === 1) ? ` ’${String(f.y).slice(2)}` : ""}</span>` +
+    `<span class="s">${MON[f.m - 1][0]}</span></button>`).join("");
   showFrame(frames.length - 1, false);
 }
 
-function monthName(m) { return `${MONTH_FULL[m - 1]} ${M.year}`; }
+function monthName(f) { return `${MONTH_FULL[f.m - 1]} ${f.y ?? M.year}`; }
 
 function showFrame(i, animate = true) {
   const f = race.frames[i], fmtName = LABEL[state.fmt].toLowerCase();
   race.i = i;
   $("race-seek").value = i;
-  $("race-seek").setAttribute("aria-valuetext", `Through ${monthName(f.m)}`);
+  $("race-seek").setAttribute("aria-valuetext", M.year ? `Through ${monthName(f)}` : `12 lists to ${monthName(f)}`);
   $("race-ticks").querySelectorAll("button").forEach((b) => b.classList.toggle("on", +b.dataset.i === i));
-  $("race-month").textContent = `${MON[f.m - 1]} ${M.year}`;
-  const when = i === race.frames.length - 1 ? (M.fraction ?? 1) >= 1 ? " (final)" : " (now)" : "";
+  $("race-month").textContent = `${MON[f.m - 1]} ${f.y ?? M.year}`;
+  const lastFrame = i === race.frames.length - 1;
+  const when = !lastFrame ? "" : M.year && (M.fraction ?? 1) >= 1 ? " (final)" : " (now)";
+  // A year counts everything since January; the rolling list, the 12 lists up
+  // to this one, among the players in today's pool.
+  const span = M.year ? `at the end of ${monthName(f)}` : `over the ${M.periods?.length || 12} lists to ${monthName(f)}`;
+  const players = (n) => `${n} ${n === 1 ? "player" : "players"}${M.year ? "" : " from today's pool"}`;
   $("race-sub").textContent = f.q
-    ? `Top 10 in ${fmtName} at the end of ${monthName(f.m)}: ${f.q} ${f.q === 1 ? "player" : "players"} with ${f.min}+ games${when}`
-    : `Nobody had ${f.min} ${fmtName} games by the end of ${monthName(f.m)}${when}`;
+    ? `Top 10 in ${fmtName} ${span}: ${players(f.q)} with ${f.min}+ games${when}`
+    : `Nobody had ${f.min} ${fmtName} games ${span}${when}`;
   $("race-empty").hidden = f.q > 0;
   const plot = $("race-plot"), anim = animate && !reduced();
   // This month's axis: round steps around the visible TPRs, as many as fit the width.

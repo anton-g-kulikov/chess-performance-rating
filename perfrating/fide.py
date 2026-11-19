@@ -91,8 +91,11 @@ class FideClient:
                 self.requests_made += 1
                 break
             except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
+                # FIDE's server errors (502s, timeouts) come in spells of
+                # minutes, so the waits grow to several minutes in all.
                 last_err = e
-                time.sleep(2 ** attempt)
+                if attempt < self.retries:
+                    time.sleep(min(240, 15 * 2 ** attempt))
         else:
             raise RuntimeError(f"failed to fetch {url}: {last_err}")
         if cache_file and body.replace("\ufeff", "").strip():

@@ -8,7 +8,7 @@ from perfrating.build import (build_rows, event_year, scaled_minimum, window,
                               year_fraction, year_periods)
 from perfrating.parsers import parse_calculation, parse_period_arrays, parse_top_list
 from perfrating.performance import dp, performance, round_p, true_performance
-from perfrating.race import race_frames
+from perfrating.race import race_frames, rolling_frames
 from perfrating.web import name_key, player_entries, progress
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -188,6 +188,26 @@ class PlayerPageTest(unittest.TestCase):
         self.assertEqual([(f["m"], f["min"], f["q"]) for f in frames], [(1, 20, 1), (2, 7, 2)])
         self.assertEqual(frames[0]["rows"], [[1, 3500, 25]])
         self.assertEqual([r[0] for r in frames[1]["rows"]], [1, 2])
+
+    def test_rolling_frames_slide_the_window_over_the_history(self):
+        def ev(period, n, result):
+            return {"start": period, "end": period, "period": period,
+                    "games": [{"opponent_rating": 2700, "result": result, "counted": True}] * n}
+        # A three-list window (Mar-May) with two lists of history (Jan, Feb).
+        saved = {"periods": ["2026-03-01", "2026-04-01", "2026-05-01"],
+                 "history": {"periods": ["2026-01-01", "2026-02-01"],
+                             "players": {"1": {"blitz": [ev("2026-01-01", 2, 1)]}}},
+                 "players": {
+                     "1": {"name": "A", "fed": "X", "ratings": {}, "games": {"blitz": [ev("2026-04-01", 2, 0.5)]}},
+                     "2": {"name": "B", "fed": "Y", "ratings": {}, "games": {"blitz": [ev("2026-05-01", 2, 1)]}},
+                 }}
+        frames = rolling_frames(saved, "blitz", 2)
+        self.assertEqual([(f["y"], f["m"], f["q"]) for f in frames], [(2026, 3, 1), (2026, 4, 1), (2026, 5, 2)])
+        # Jan-Mar: only A's January wins.  Feb-Apr: those drop out, A's April draws remain.
+        self.assertEqual(frames[0]["rows"], [[1, 3500, 2]])
+        self.assertEqual(frames[1]["rows"], [[1, 2700, 2]])
+        # The last frame is the published window: B's wins, then A's draws.
+        self.assertEqual([r[0] for r in frames[2]["rows"]], [2, 1])
 
 
 if __name__ == "__main__":
