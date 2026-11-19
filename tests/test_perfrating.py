@@ -1,3 +1,4 @@
+import json
 import unittest
 from decimal import Decimal
 from pathlib import Path
@@ -9,7 +10,7 @@ from perfrating.build import (build_rows, event_year, scaled_minimum, window,
 from perfrating.parsers import parse_calculation, parse_period_arrays, parse_top_list
 from perfrating.performance import dp, performance, round_p, true_performance
 from perfrating.race import race_frames, rolling_frames
-from perfrating.web import name_key, opponent_ids, player_entries, progress
+from perfrating.web import name_key, opponent_ids, player_entries, progress, split_page
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -188,6 +189,23 @@ class PlayerPageTest(unittest.TestCase):
         self.assertEqual(list(b), ["blitz"])  # formats without games are left out
         self.assertEqual((b["blitz"]["rank"], b["blitz"]["games"], b["blitz"]["tpr"]), (None, 1, 1900))
 
+    def test_split_page_keeps_numbers_in_the_summary_and_events_by_period(self):
+        page = {"id": 7, "name": "A", "fed": "X", "modes": {
+            "": {"blitz": {"rank": 1, "tpr": 2800, "ev": [["2026-01", "Open"]]}},
+            "y2025": {"rapid": {"rank": None, "tpr": 2600, "ev": [["2025-05", "Cup"]]},
+                      "blitz": {"rank": 3, "tpr": 2700, "ev": []}},
+        }}
+        summary, files = split_page(page)
+        self.assertEqual(summary["modes"]["y2025"]["rapid"], {"rank": None, "tpr": 2600})
+        self.assertEqual(sorted(summary["files"]), ["", "y2025"])
+        self.assertTrue(summary["files"][""].startswith("r12-"))
+        self.assertEqual(json.loads(files[summary["files"]["y2025"]]),
+                         {"rapid": [["2025-05", "Cup"]], "blitz": []})
+        # A period's file name follows its content alone.
+        page["modes"][""]["blitz"]["ev"].append(["2026-02", "Rapid"])
+        again, _ = split_page(page)
+        self.assertNotEqual(again["files"][""], summary["files"][""])
+        self.assertEqual(again["files"]["y2025"], summary["files"]["y2025"])
 
     def test_progress_is_tpr_to_date_oldest_first(self):
         def ev(start, ro, games):

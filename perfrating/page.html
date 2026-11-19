@@ -70,7 +70,7 @@ body {
 .num { font-variant-numeric: tabular-nums; }
 /* Besley's tabular zero is drawn at the wrong weight, and its default figures are
    close to one width already, so the display numerals keep the default set. */
-td.tpr, .fmt-lead b, .fmt-lead-sm b, .gcell .ctpr, .pstats dd.num { font-variant-numeric: normal; }
+td.tpr, .fmt-lead b, .fmt-lead-sm b, .pstats dd.num { font-variant-numeric: normal; }
 a { color: var(--ink); text-decoration-color: var(--muted); text-underline-offset: 2px; }
 a:hover { color: var(--accent); text-decoration-color: currentColor; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
@@ -336,27 +336,36 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 .back { justify-self: start; font-weight: 600; font-size: 14.5px; color: var(--muted); text-decoration: none; }
 .back:hover { color: var(--ink); }
 .plinks { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 15px; }
-/* Period × format grid: one cell per list, the selected one opens below. */
-.psum { display: grid; grid-template-columns: minmax(120px, 1fr) repeat(3, minmax(0, 1.3fr)); gap: 8px 12px; }
-.psum .colh { align-self: end; padding: 0 4px; font-weight: 600; font-size: 11.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
-.psum .rowh { align-self: center; display: grid; font-weight: 700; font-size: 16px; line-height: 1.25; }
-.psum .rowh small { font-weight: 400; font-size: 13px; color: var(--muted); }
-.gcell {
-  appearance: none; text-align: left; cursor: pointer; font: inherit; color: inherit; min-width: 0;
-  background: transparent; border: 1px solid var(--line); border-radius: var(--r);
-  padding: 10px 14px; display: grid; gap: 1px; align-content: center; transition: border-color .15s, box-shadow .15s;
+/* Career: format tabs, the TPR of every period on one chart, and the periods as chips.
+   Solid = ranked, hatch = not ranked (too few games), outline = the FIDE rating. */
+.career { display: grid; gap: 14px; min-width: 0; }
+.ptabs { margin-bottom: 4px; }
+.career .pchart { gap: 8px; }
+.plot .car-line { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-opacity: .55; stroke-linejoin: round; }
+.plot .cdot { fill: var(--ink); stroke: var(--bg); stroke-width: 2; paint-order: stroke; }
+.plot .cdot.hx { fill: url(#hx); stroke: var(--ink); stroke-width: 1.2; paint-order: normal; }
+.plot .cdot.sel { fill: var(--accent); stroke: var(--accent); }
+.plot .cdot.hx.sel { fill: url(#hx); stroke: var(--accent); stroke-width: 2.5; }
+.plot .slot { fill: transparent; cursor: pointer; }
+.plot .slot.cur { fill: var(--accent-soft); }
+.plot .slot.hov { fill: var(--accent-soft); }
+.plot .ctick { font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.plot .ctick.sel { fill: var(--ink); font-weight: 700; }
+.plot .vlab { font-size: 13px; font-weight: 700; fill: var(--ink); font-variant-numeric: tabular-nums; }
+.plot .vlab tspan { font-weight: 400; fill: var(--muted); }
+.plot .sep { stroke: var(--line); stroke-dasharray: 3 3; }
+.anim .cdot, .anim .fdot, .anim .car-line, .anim .vlab { transition: opacity .3s; }
+.pchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pchip {
+  appearance: none; cursor: pointer; font: 600 14px/1.3 var(--body); color: var(--ink); background: transparent;
+  border: 1px solid var(--line); border-radius: var(--r); padding: 6px 10px; display: inline-flex; align-items: baseline; gap: 6px;
 }
-.gcell:hover { border-color: var(--ink); }
-.gcell[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--accent-soft); }
-.gcell:disabled { cursor: default; border-style: dashed; color: var(--muted); }
-.gcell .ctpr { font-family: var(--display); font-weight: 800; font-size: 24px; line-height: 1.15; }
-.gcell[aria-pressed="true"] .ctpr { color: var(--accent); }
-.gcell .cnr { font-weight: 600; color: var(--muted); }
-.gcell .csub { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
-/* Not ranked: how far the games go toward the minimum, hatched because it is provisional. */
-.gcell .bar { display: block; position: relative; height: 9px; max-width: 120px; margin: 4px 0 3px; border: 1.2px solid var(--muted); }
-.gcell .bar i { position: absolute; inset: 0 auto 0 0; background: var(--hatch); }
-.psum .gap { grid-column: span 3; align-self: center; padding: 10px 14px; border: 1px dashed var(--line); border-radius: var(--r); font-size: 14px; color: var(--muted); }
+.pchip small { font-weight: 400; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.pchip:hover { border-color: var(--ink); }
+.pchip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.pchip[aria-pressed="true"] small { color: var(--bg); opacity: .8; }
+.pchip:disabled { cursor: default; border-style: dashed; color: var(--muted); }
+.pchip:disabled:hover { border-color: var(--line); }
 .pdetail { display: grid; gap: 28px; min-width: 0; }
 .pdetail > h2 + .mode-note { margin-top: -18px; }
 .pdetail h2 { font-family: var(--display); font-weight: 800; font-size: 25px; line-height: 1.15; margin: 0; }
@@ -425,12 +434,6 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 .anim .dot, .anim .fdot, .anim .l-fide, .anim .endl, .anim .qual, .anim .prov { transition: opacity .35s; }
 
 @media (max-width: 560px) {
-  .psum { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-  .psum .corner { display: none; }
-  .psum .rowh { grid-column: 1 / -1; margin-top: 8px; grid-template-columns: auto 1fr; gap: 8px; align-items: baseline; }
-  .psum .gap { grid-column: 1 / -1; }
-  .gcell { padding: 8px 10px; }
-  .gcell .ctpr { font-size: 20px; }
   .pev td.name { min-width: 0; width: 100%; }
 }
 </style>
@@ -457,10 +460,17 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
     <header>
       <div class="eyebrow" id="p-eyebrow">Player</div>
       <h1 id="p-name">&nbsp;</h1>
-      <p class="lede">Every rated game on this site, by period and format, ranked or not. Pick a period and format to see the events and games behind it.</p>
+      <p class="lede">Every rated game on this site, year by year, ranked or not. Pick a format, then a year on the chart or below it, to see the events and games behind it.</p>
       <div class="plinks" id="p-links"></div>
     </header>
-    <div class="psum" id="p-grid"></div>
+    <div class="career" id="p-career">
+      <div class="modes ptabs" role="tablist" aria-label="Format" id="p-fmts"></div>
+      <div class="pchart">
+        <div class="pchart-head"><h3 id="p-car-title">TPR by year</h3><div class="legend" id="p-car-legend"></div></div>
+        <div class="plot" id="p-car"></div>
+      </div>
+      <div class="pchips" id="p-chips" role="group" aria-label="Period"></div>
+    </div>
     <div class="pdetail" id="p-detail" aria-live="polite"></div>
   </section>
 
@@ -901,7 +911,8 @@ function fromHash() {
 
 // ---- Player page: /player/<FIDE id>#<mode>-<format> ----
 // The same page serves it (Firebase rewrites /player/** here). The player's
-// results come from /data/p/<id>.json, fetched once per visit.
+// numbers come from /data/p/<id>.json; the events and games of a period from
+// /data/p/<id>/<file>, fetched when that period is first opened.
 const playerId = () => { const m = location.pathname.match(/^\/player\/(\d+)\/?$/); return m ? +m[1] : null; };
 const PFILES = new Map();
 function loadPlayer(id) {
@@ -911,6 +922,18 @@ function loadPlayer(id) {
     PFILES.set(id, p);
   }
   return PFILES.get(id);
+}
+// Adds the period's events to the player's entries for it, once.
+const PERIODS = new Map();
+function loadPeriod(d, mode) {
+  const key = `${d.id}/${mode}`;
+  if (!PERIODS.has(key)) {
+    const p = fetch(`/data/p/${d.id}/${d.files[mode]}`).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then((ev) => { for (const [f, list] of Object.entries(ev)) d.modes[mode][f].ev = list; });
+    p.catch(() => PERIODS.delete(key));
+    PERIODS.set(key, p);
+  }
+  return PERIODS.get(key);
 }
 const ps = { id: null, d: null, mode: "", fmt: "classical", open: new Set() };
 const pentry = (mode = ps.mode, fmt = ps.fmt) => ps.d?.modes[mode]?.[fmt];
@@ -930,7 +953,7 @@ function showPlayer(id) {
   const known = PEOPLE.get(id);
   setPlayerHead(known ? known.name : null, known ? known.fed : null, id);
   if (!ps.d) {
-    $("p-grid").innerHTML = "";
+    $("p-career").hidden = true;
     $("p-detail").innerHTML = `<p class="empty">Loading…</p>`;
   }
   loadPlayer(id).then((d) => {
@@ -944,7 +967,7 @@ function showPlayer(id) {
     renderPlayer();
   }).catch(() => {
     if (ps.id !== id) return;
-    $("p-grid").innerHTML = "";
+    $("p-career").hidden = true;
     $("p-detail").innerHTML = `<p class="empty">${known ? "Couldn't load this player. Check your connection and try again." :
       `No player with FIDE ID ${id} is on these lists. Players come from FIDE's open top-100 lists.`}</p>`;
   });
@@ -964,26 +987,143 @@ function windowNote(m) {
   return `Games from events that ended in ${m.year}` + (months >= 12 ? "." : `, January – ${MONTH_FULL[months - 1]} so far.`);
 }
 
-function cell(m, f) {
-  const e = ps.d.modes[m.id][f];
-  const on = m.id === ps.mode && f === ps.fmt;
-  const where = `${m.label}, ${LABEL[f].toLowerCase()}`;
-  if (!e) return `<button type="button" class="gcell" disabled aria-label="${esc(where)}: no rated games"><span class="csub">No games</span></button>`;
-  if (e.rank) return `<button type="button" class="gcell" data-m="${m.id}" data-f="${f}" aria-pressed="${on}" aria-label="${esc(where)}: TPR ${e.tpr}, rank ${e.rank} of ${e.of}">` +
-    `<span class="ctpr num">${e.tpr}</span><span class="csub num">#${e.rank} of ${e.of}</span></button>`;
-  return `<button type="button" class="gcell" data-m="${m.id}" data-f="${f}" aria-pressed="${on}" aria-label="${esc(where)}: not ranked, ${e.games} of ${m.min[f]} games">` +
-    `<span class="cnr">Not ranked</span><span class="bar" aria-hidden="true"><i style="width:${Math.min(100, (e.games / m.min[f]) * 100)}%"></i></span>` +
-    `<span class="csub num">${e.games} of ${m.min[f]} games</span></button>`;
+// ---- Career: format tabs, TPR by year, period chips ----
+// Years run from the player's first year in a pool to now; the rolling year
+// sits apart at the right, since it overlaps the last two calendar years.
+function careerSlots() {
+  const years = DATA.modes.filter((m) => m.year).sort((a, b) => a.year - b.year);
+  const firstIn = years.findIndex((m) => ps.d.modes[m.id]);
+  const shown = firstIn < 0 ? [] : years.slice(firstIn);
+  const rolling = DATA.modes.filter((m) => !m.year);
+  return shown.map((m, i) => ({ m, k: i })).concat(rolling.map((m, i) => ({ m, k: shown.length + 0.7 + i, rolling: true })));
+}
+const shortLabel = (m) => m.year ? `${m.year}${(m.fraction ?? 1) < 1 ? " so far" : ""}` : "12 months";
+
+function renderCareer(animate = false) {
+  $("p-career").hidden = false;
+  $("p-fmts").innerHTML = FMTS.map((f) => {
+    const n = DATA.modes.filter((m) => ps.d.modes[m.id]?.[f]).length;
+    return `<button type="button" class="mode" role="tab" data-f="${f}" aria-selected="${f === ps.fmt}"${n ? "" : " disabled"}>${LABEL[f]}</button>`;
+  }).join("");
+  const fmt = LABEL[ps.fmt].toLowerCase();
+  $("p-chips").innerHTML = DATA.modes.filter((m) => ps.d.modes[m.id]).map((m) => {
+    const e = pentry(m.id), on = m.id === ps.mode;
+    const sub = !e ? "" : e.rank ? `#${e.rank}` : "not ranked";
+    const aria = !e ? `${m.label}: no rated ${fmt} games` : e.rank ? `${m.label}: TPR ${e.tpr}, rank ${e.rank} of ${e.of}` : `${m.label}: TPR ${e.tpr}, not ranked, ${e.games} of ${m.min[ps.fmt]} games`;
+    return `<button type="button" class="pchip" data-m="${m.id}" aria-pressed="${on}" aria-label="${esc(aria)}"${e ? "" : " disabled"}>${esc(shortLabel(m))}${sub ? `<small>${sub}</small>` : ""}</button>`;
+  }).join("");
+  $("p-car-title").textContent = `${LABEL[ps.fmt]} TPR by year`;
+  drawCareer(animate);
 }
 
-function renderPlayerGrid() {
+let carState = null, lastCarW = 0;
+function drawCareer(animate) {
+  const box = $("p-car");
+  lastCarW = box.clientWidth;
+  const slots = careerSlots().map((s) => ({ ...s, e: pentry(s.m.id) }));
+  const pts = slots.filter((s) => s.e && s.e.tpr != null);
+  const anyHx = pts.some((s) => !s.e.rank), anyFide = pts.some((s) => s.e.rating);
+  $("p-car-legend").innerHTML = `<span><i class="sq solid"></i>TPR, ranked</span>` +
+    (anyHx ? `<span><i class="sq hatch"></i>TPR, too few games to rank</span>` : "") +
+    (anyFide ? `<span><i class="sq out"></i>FIDE rating</span>` : "");
+  if (!pts.length) { box.innerHTML = `<p class="mode-note">No rated ${LABEL[ps.fmt].toLowerCase()} games on this site.</p>`; carState = null; return; }
+
+  const W = Math.max(280, box.clientWidth), small = W < 520;
+  const H = small ? 190 : 220, L = 40, R = 8, T = 26, B = 24;
+  const pw = W - L - R, ph = H - T - B;
+  const kmax = slots[slots.length - 1].k, sw = pw / (kmax + 1);
+  const X = (k) => L + (k + 0.5) * sw;
+  const vals = pts.flatMap((s) => [s.e.tpr, s.e.rating]).filter((v) => v);
+  const step = niceStep(Math.max(...vals) - Math.min(...vals));
+  let y0 = Math.floor((Math.min(...vals) - 10) / step) * step, y1 = Math.ceil((Math.max(...vals) + 10) / step) * step;
+  if (y1 - y0 < 2 * step) y1 = y0 + 2 * step;
+  const Y = (v) => T + (1 - (v - y0) / (y1 - y0)) * ph;
+
+  let grid = "";
+  for (let v = y0; v <= y1; v += step) grid += `<line x1="${L}" x2="${L + pw}" y1="${Y(v)}" y2="${Y(v)}"/><text class="tick" x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${v}</text>`;
+  // Year labels, thinned to fit; the selected one is always shown.
+  const every = Math.max(1, Math.ceil(36 / sw));
+  const lastYear = slots.filter((s) => !s.rolling).length - 1;
+  const ticks = slots.map((s) => {
+    const sel = s.m.id === ps.mode;
+    const show = sel || s.rolling || (lastYear - s.k) % every === 0;
+    if (!show) return "";
+    const lab = s.rolling ? (small ? "12 mo" : "12 months") : (every > 1 || small ? `’${String(s.m.year).slice(2)}` : s.m.year);
+    return `<text class="ctick${sel ? " sel" : ""}" x="${X(s.k)}" y="${H - 6}" text-anchor="middle">${lab}</text>`;
+  }).join("");
+  const firstRolling = slots.find((s) => s.rolling);
+  const sep = firstRolling && lastYear >= 0 ? `<line class="sep" x1="${X(firstRolling.k) - sw * 0.85}" x2="${X(firstRolling.k) - sw * 0.85}" y1="${T - 8}" y2="${T + ph}"/>` : "";
+
+  // Consecutive years are joined; a year without games breaks the line.
+  let line = "", prev = null;
+  slots.filter((s) => !s.rolling).forEach((s) => {
+    if (s.e && s.e.tpr != null) { line += `${prev ? "L" : "M"}${X(s.k).toFixed(1)},${Y(s.e.tpr).toFixed(1)}`; prev = s; } else prev = null;
+  });
+  const z = small ? 9 : 10;
+  const fdots = pts.filter((s) => s.e.rating).map((s) => `<rect class="fdot" x="${X(s.k) - 3.5}" y="${Y(s.e.rating) - 3.5}" width="7" height="7"/>`).join("");
+  const dots = pts.map((s, i) => `<rect class="cdot${s.e.rank ? "" : " hx"}${s.m.id === ps.mode ? " sel" : ""}" data-i="${i}" x="${X(s.k) - z / 2}" y="${Y(s.e.tpr) - z / 2}" width="${z}" height="${z}"/>`).join("");
+  const cur = slots.find((s) => s.m.id === ps.mode);
+  const band = cur ? `<rect class="slot cur" x="${X(cur.k) - sw / 2}" y="${T - 8}" width="${sw}" height="${ph + 8}"/>` : "";
+  // Only the selected period carries its numbers; the rest are in the tooltip and the chips.
+  // It goes above the point, or below it, wherever no other mark is in the way.
+  let vlab = "";
+  if (cur && cur.e && cur.e.tpr != null) {
+    const x = X(cur.k), y = Y(cur.e.tpr), txt = `${cur.e.tpr}${cur.e.rank ? ` #${cur.e.rank}` : ""}`;
+    const w = txt.length * 7.4 + 4, anchor = x - w / 2 < L ? "start" : x + w / 2 > L + pw ? "end" : "middle";
+    const x0 = anchor === "start" ? x - 4 : anchor === "end" ? x - w + 4 : x - w / 2;
+    const marks = pts.flatMap((s) => [[X(s.k), Y(s.e.tpr), s !== cur], [X(s.k), s.e.rating ? Y(s.e.rating) : -99, true]]).filter((m) => m[2]);
+    const free = (top) => top > 2 && top + 16 < H - B && !marks.some(([mx, my]) => mx > x0 - 6 && mx < x0 + w + 6 && my > top - 6 && my < top + 22);
+    const top = [y - z / 2 - 20, y + z / 2 + 4].find(free);
+    if (top !== undefined) vlab = `<text class="vlab" x="${x}" y="${top + 13}" text-anchor="${anchor}">${cur.e.tpr}${cur.e.rank ? `<tspan dx="4">#${cur.e.rank}</tspan>` : ""}</text>`;
+  }
+  const hits = slots.map((s) => s.e ? `<rect class="slot hit" data-m="${s.m.id}" x="${X(s.k) - sw / 2}" y="0" width="${sw}" height="${H}" fill="transparent"/>` : "").join("");
+  const label = `${LABEL[ps.fmt]} TPR by year, ${pts.map((s) => `${shortLabel(s.m)}: ${s.e.tpr}${s.e.rank ? `, rank ${s.e.rank}` : ", not ranked"}`).join("; ")}. Use the left and right arrow keys to pick a period.`;
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}" tabindex="0" role="img" aria-label="${esc(label)}">
+    ${band}<g class="grid">${grid}</g>${sep}${ticks}<path class="car-line" d="${line}"/>${fdots}${dots}${vlab}${hits}</svg><div class="tip" hidden></div>`;
+  carState = { slots: slots.filter((s) => s.e), X, Y, W, sw };
+
+  if (animate && !reduced()) {
+    const svg = box.querySelector("svg");
+    const fade = svg.querySelectorAll(".cdot, .fdot, .car-line, .vlab");
+    fade.forEach((el) => { el.style.opacity = 0; });
+    svg.getBoundingClientRect();
+    svg.classList.add("anim");
+    svg.querySelectorAll(".cdot").forEach((d) => { d.style.transitionDelay = `${(+d.getAttribute("x") - L) / pw * 0.6}s`; d.style.opacity = 1; });
+    svg.querySelectorAll(".fdot, .car-line").forEach((el) => { el.style.transitionDelay = ".15s"; el.style.opacity = 1; });
+    svg.querySelectorAll(".vlab").forEach((el) => { el.style.transitionDelay = ".6s"; el.style.opacity = 1; });
+  }
+}
+
+function careerTip(id) {
+  const box = $("p-car"), cs = carState; if (!box || !cs) return;
+  const svg = box.querySelector("svg"), tip = box.querySelector(".tip");
+  svg.querySelectorAll(".slot.hov").forEach((r) => r.classList.remove("hov"));
+  const s = id == null ? null : cs.slots.find((x) => x.m.id === id);
+  if (!s) { tip.hidden = true; return; }
+  svg.querySelector(`.slot.hit[data-m="${id}"]`)?.classList.add("hov");
+  const e = s.e, m = s.m;
+  tip.innerHTML = `<b>${esc(m.label)}</b><div class="muted">${esc(windowNote(m))}</div>
+    <div class="row2"><span>TPR</span><span class="num"><strong>${e.tpr ?? "—"}</strong>${e.rank ? ` · #${e.rank} of ${e.of}` : " · not ranked"}</span></div>
+    <div class="row2"><span>Games</span><span class="num">${score(e.score)}/${e.games}${e.rank ? "" : ` · needs ${m.min[ps.fmt]}`}</span></div>
+    ${e.rating ? `<div class="row2"><span>FIDE</span><span class="num">${e.rating}</span></div>` : ""}`;
+  tip.hidden = false;
+  const scale = box.clientWidth / cs.W, tw = tip.offsetWidth, x = cs.X(s.k) * scale;
+  let left = x + cs.sw * scale / 2 + 6; if (left + tw > box.clientWidth) left = x - cs.sw * scale / 2 - tw - 6;
+  tip.style.left = `${Math.max(0, left)}px`; tip.style.top = `${Math.max(0, cs.Y(e.tpr ?? 0) * scale - 50)}px`;
+}
+
+// Pick a period or a format; the format keeps the period when it has games there.
+function pickPlayer(mode, fmt, focus) {
   const d = ps.d;
-  $("p-grid").innerHTML = `<span class="corner"></span>` + FMTS.map((f) => `<span class="colh">${LABEL[f]}</span>`).join("") +
-    DATA.modes.map((m) => {
-      const head = `<span class="rowh">${esc(m.label)}<small>${m.year ? ((m.fraction ?? 1) >= 1 ? "Calendar year" : "Year so far") : "Rolling"}</small></span>`;
-      if (!d.modes[m.id]) return head + `<span class="gap">Not in this period's player pool</span>`;
-      return head + FMTS.map((f) => cell(m, f)).join("");
-    }).join("");
+  if (!d.modes[mode]?.[fmt]) {
+    if (mode !== ps.mode) return;
+    mode = DATA.modes.map((m) => m.id).find((id) => d.modes[id]?.[fmt]) ?? mode;
+  }
+  ps.mode = mode; ps.fmt = fmt; ps.open.clear();
+  history.replaceState(history.state, "", `#${viewHash(ps.mode, ps.fmt)}`);
+  $("p-back").href = `/#${viewHash(ps.mode, ps.fmt)}`;
+  renderCareer(false); renderPlayerDetail(true);
+  if (focus) $("player").querySelector(focus)?.focus();
 }
 
 function stat(label, value, cls = "") {
@@ -996,6 +1136,15 @@ function renderPlayerDetail(animate = false) {
   if (!e) {
     $("p-detail").innerHTML = `<h2>${title}</h2><p class="mode-note">No rated ${LABEL[ps.fmt].toLowerCase()} games in this period.</p>`;
     renderPlayerMethod(m, null);
+    return;
+  }
+  if (!e.ev) {
+    $("p-detail").innerHTML = `<h2>${title}</h2><p class="empty">Loading…</p>`;
+    $("p-method").innerHTML = "";
+    const d = ps.d, mode = ps.mode, still = () => ps.d === d && ps.mode === mode;
+    loadPeriod(d, mode).then(() => { if (still()) renderPlayerDetail(animate); }).catch(() => {
+      if (still()) $("p-detail").innerHTML = `<h2>${title}</h2><p class="empty">Couldn't load this period. Check your connection and try again.</p>`;
+    });
     return;
   }
   const delta = e.tpr != null && e.rating ? e.tpr - e.rating : null;
@@ -1111,7 +1260,7 @@ function renderPlayerMethod(m, e) {
   const blocks = [];
   blocks.push(`<h2 id="p-how">How it works</h2>`);
   blocks.push(`<div class="mblock"><h3>This page</h3>
-    <p>Each cell in the grid at the top is ${esc(who)}'s TPR over all their rated games in one period and format, and their rank among the players with enough games there. A cell marked “Not ranked” shows how many games they have against how many the list needs. Each period counts only its own games. Unlike the FIDE rating, nothing carries over from one period to the next.</p></div>`);
+    <p>The chart at the top shows ${esc(who)}'s TPR in each calendar year and over the last 12 months, in the format picked above it. Each point pools all their rated games in that period. A solid point is ranked: they had enough games to make that list. A hatched point isn't: too few games, so the TPR rests on less. The outlined points are their FIDE rating: at the start of each finished year, and their current rating for this year and the last 12 months. Each period counts only its own games. Unlike the FIDE rating, nothing carries over from one period to the next.</p></div>`);
 
   if (e) {
     const games = e.ev.flatMap((x) => x[8]);
@@ -1285,7 +1434,7 @@ function renderPlayer() {
   const d = ps.d;
   setPlayerHead(d.name, d.fed, d.id);
   $("p-back").href = `/#${viewHash(ps.mode, ps.fmt)}`;
-  renderPlayerGrid(); renderPlayerDetail(true);
+  renderCareer(true); renderPlayerDetail(true);
 }
 
 function route() {
@@ -1296,13 +1445,24 @@ function route() {
   fromHash();
 }
 
-$("p-grid").addEventListener("click", (e) => {
-  const b = e.target.closest(".gcell[data-f]"); if (!b) return;
-  ps.mode = b.dataset.m; ps.fmt = b.dataset.f; ps.open.clear();
-  history.replaceState(history.state, "", `#${viewHash(ps.mode, ps.fmt)}`);
-  $("p-back").href = `/#${viewHash(ps.mode, ps.fmt)}`;
-  renderPlayerGrid(); renderPlayerDetail(true);
-  $("p-grid").querySelector(`.gcell[data-m="${ps.mode}"][data-f="${ps.fmt}"]`).focus();
+$("p-fmts").addEventListener("click", (e) => {
+  const b = e.target.closest(".mode[data-f]"); if (b && !b.disabled) pickPlayer(ps.mode, b.dataset.f, `#p-fmts .mode[data-f="${b.dataset.f}"]`);
+});
+$("p-chips").addEventListener("click", (e) => {
+  const b = e.target.closest(".pchip[data-m]"); if (b && !b.disabled) pickPlayer(b.dataset.m, ps.fmt, `#p-chips .pchip[data-m="${b.dataset.m}"]`);
+});
+$("p-car").addEventListener("click", (e) => {
+  const r = e.target.closest(".slot.hit"); if (r) pickPlayer(r.dataset.m, ps.fmt, "#p-car svg");
+});
+$("p-car").addEventListener("pointermove", (e) => { const r = e.target.closest(".slot.hit"); careerTip(r ? r.dataset.m : null); });
+$("p-car").addEventListener("pointerleave", () => careerTip(null));
+$("p-car").addEventListener("focusout", () => careerTip(null));
+$("p-car").addEventListener("keydown", (e) => {
+  const cs = carState; if (!cs || !e.target.closest("svg")) return;
+  const ids = cs.slots.map((s) => s.m.id), i = ids.indexOf(ps.mode);
+  const to = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: ids.length - 1 }[e.key];
+  if (to === undefined || to < 0 || to >= ids.length) return;
+  e.preventDefault(); pickPlayer(ids[to], ps.fmt, "#p-car svg"); careerTip(ids[to]);
 });
 function toggleEvent(tr) {
   const i = +tr.dataset.i;
@@ -1340,6 +1500,7 @@ $("p-detail").addEventListener("keydown", (e) => {
 new ResizeObserver(() => {
   const b = $("p-plot"); if (b && b.clientWidth !== lastW) { lastW = b.clientWidth; drawChart(false); }
   const f = $("p-form"); if (f && f.clientWidth !== lastFormW) drawForm();
+  const c = $("p-car"); if (ps.d && c.clientWidth && c.clientWidth !== lastCarW) drawCareer(false);
 }).observe($("player"));
 $("p-detail").addEventListener("click", (e) => {
   if (e.target.closest("a")) return; const tr = e.target.closest("tr.row"); if (tr) toggleEvent(tr); });

@@ -26,13 +26,15 @@ jobs:
       - name: Run tests
         run: python -m unittest discover -s tests -t .
 
-      # The page is built from results/ and committed. Rebuilding it here
-      # catches a results change pushed without a fresh site/index.html.
+      # The page and its data files are built from results/ and committed.
+      # Rebuilding them here catches a results change pushed without a fresh
+      # site/, and a new data file (say a player's period) left uncommitted.
       - name: Check the page matches the results
         run: |
           python -m perfrating.web
-          if ! git diff --quiet -- site/; then
-            echo "::error::site/index.html is out of date. Run 'python -m perfrating.web' and commit it."
+          if [ -n "$(git status --porcelain -- site/)" ]; then
+            git status --short -- site/ | head -20
+            echo "::error::site/ is out of date. Run 'python -m perfrating.web' and commit everything under site/."
             exit 1
           fi
 

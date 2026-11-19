@@ -8,9 +8,12 @@ calendar-year race that has been built (``results/YYYY/``,
 in ``perfrating/page.html``; every older year is written to
 ``site/data/yYYYY.json`` and loaded by the page when someone opens it.
 
-Every player in any pool also gets ``site/data/p/<FIDE id>.json``: their
-results in each period and format, ranked or not, down to single games.  The
-page shows it at ``/player/<FIDE id>``.
+Every player in any pool also gets a page at ``/player/<FIDE id>``, from
+``site/data/p/<FIDE id>.json`` (their numbers in each period and format,
+ranked or not) and one ``site/data/p/<FIDE id>/<period>-<hash>.json`` per
+period with the events and games behind them, fetched when the period is
+opened.  A period file's name changes only when its content does, so a new
+year adds files without rewriting the old ones.
 """
 
 from __future__ import annotations
@@ -18,6 +21,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import shutil
 from itertools import permutations
 from pathlib import Path
 from statistics import median
@@ -165,6 +169,23 @@ def player_entries(saved: dict, rows_by_fmt: dict, ids: dict, listed: dict = Non
     return out
 
 
+def split_page(page: dict) -> tuple:
+    """A player's page as a small summary plus one file per period.
+
+    Returns ``(summary, {file name: body})``.  The summary has every number but
+    the events, and names each period's file; the name carries a hash of the
+    file, so it can be cached for good and is untouched while the period is."""
+    summary = {k: page[k] for k in ("id", "name", "fed")}
+    summary["modes"], summary["files"], files = {}, {}, {}
+    for mode_id, fmts in page["modes"].items():
+        summary["modes"][mode_id] = {f: {k: v for k, v in e.items() if k != "ev"} for f, e in fmts.items()}
+        body = json.dumps({f: e["ev"] for f, e in fmts.items()}, ensure_ascii=False, separators=(",", ":"))
+        name = f"{mode_id or 'r12'}-{hashlib.sha1(body.encode()).hexdigest()[:10]}.json"
+        summary["files"][mode_id] = name
+        files[name] = body
+    return summary, files
+
+
 def mode_data(results: Path, data: Path, top: int, mode_id: str, label: str) -> dict:
     saved = json.loads(data.read_text())
     meta = json.loads((results / "meta.json").read_text())
@@ -250,14 +271,19 @@ def main(argv=None) -> int:
             page["modes"][m["id"]] = entry["formats"]
     players_dir = data_dir / "p"
     players_dir.mkdir(exist_ok=True)
-    for old in players_dir.glob("*.json"):
-        old.unlink()
-    # One version for all player files: any rebuild that changes one changes it.
+    for old in players_dir.iterdir():
+        shutil.rmtree(old) if old.is_dir() else old.unlink()
+    # One version for all summaries: any rebuild that changes one changes it.
+    # Period files are named by their hash and need none.
     ver = hashlib.sha1()
     for fid in sorted(pages):
-        body = json.dumps(pages[fid], ensure_ascii=False, separators=(",", ":"))
+        summary, files = split_page(pages[fid])
+        body = json.dumps(summary, ensure_ascii=False, separators=(",", ":"))
         (players_dir / f"{fid}.json").write_text(body, encoding="utf-8")
         ver.update(body.encode())
+        (players_dir / str(fid)).mkdir()
+        for name, period in files.items():
+            (players_dir / str(fid) / name).write_text(period, encoding="utf-8")
 
     # The rolling lists and the newest year go in the page; older years are
     # separate files, fetched on demand.
@@ -274,7 +300,8 @@ def main(argv=None) -> int:
     lazy = sum(f.stat().st_size for f in data_dir.glob("y*.json"))
     print(f"wrote {out} ({len(html) // 1024} KB, modes: {', '.join(m['label'] for m in modes)})"
           + (f"; {len(modes) - 2} more in {data_dir}/ ({lazy // 1024} KB)" if len(modes) > 2 else "")
-          + f"; {len(pages)} player pages ({sum(f.stat().st_size for f in players_dir.glob('*.json')) // 1024} KB)")
+          + f"; {len(pages)} player pages ({sum(f.stat().st_size for f in players_dir.glob('*.json')) // 1024} KB"
+          + f" + {sum(f.stat().st_size for f in players_dir.glob('*/*.json')) // 1024} KB by period)")
     return 0
 
 
