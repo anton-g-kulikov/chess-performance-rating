@@ -1,0 +1,31 @@
+{
+ "title": "2025 performance race",
+ "scope": "Games from events that ended in **2025** (the full year), read from the January 2025 – April 2026 FIDE lists. Everyone starts again on January 1.",
+ "periods": [
+  "2025-01-01",
+  "2025-02-01",
+  "2025-03-01",
+  "2025-04-01",
+  "2025-05-01",
+  "2025-06-01",
+  "2025-07-01",
+  "2025-08-01",
+  "2025-09-01",
+  "2025-10-01",
+  "2025-11-01",
+  "2025-12-01",
+  "2026-01-01",
+  "2026-02-01",
+  "2026-03-01",
+  "2026-04-01"
+ ],
+ "min_games": {
+  "classical": 20,
+  "rapid": 20,
+  "blitz": 40
+ },
+ "year": 2025,
+ "fraction": 1.0,
+ "pool_note": "the 204 players in FIDE's open top 100 for classical, rapid or blitz on the January, April, July or October 2025 list, or the January 2026 list",
+ "rating_note": "rating on the January 2025 list"
+}

@@ -40,6 +40,7 @@ import json
 import math
 import re
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 from datetime import date
@@ -134,9 +135,14 @@ def fetch_tournaments(client: FideClient, fide_id: int, period: str, fmt: str,
     tournaments = parse_calculation(client.calculation(fide_id, period, fmt))
     # FIDE occasionally answers with an empty body.  Ask again: a few times
     # when the period is known to have games, once otherwise.
+    # FIDE answers with empty pages when it is busy, so wait a little longer
+    # before each new attempt.
     tries = 3 if expect_games else 1
+    pause = 2.0
     while tries and not any(t.games for t in tournaments):
         tries -= 1
+        time.sleep(pause)
+        pause *= 3
         tournaments = parse_calculation(client.calculation(fide_id, period, fmt, refresh=True))
     return tournaments
 
@@ -277,7 +283,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--min-games", default="20,20,40",
                     help="minimum games for classical,rapid,blitz over a full year (default 20,20,40)")
     ap.add_argument("--top", type=int, default=100, help="rows per list in the Markdown summary")
-    ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--workers", type=int, default=1,
+                    help="parallel requests; FIDE serves one at a time fastest (default 1)")
     ap.add_argument("--exhaustive", action="store_true",
                     help="fetch every period instead of using FIDE's list of periods with games")
     ap.add_argument("--cache", default=".cache/fide", help="cache directory ('' to disable)")
