@@ -1,6 +1,7 @@
 """Race replay: how a calendar-year list developed, month by month.
 
-The data side gives each list the top of the table month by month:
+The data side gives each list the top of the table month by month, each row
+as ``[FIDE id, TPR, games, FIDE rating or None]``:
 ``race_frames`` for a calendar year (everything so far, from January), and
 ``rolling_frames`` for the rolling 12 months (the window at each of the last
 12 lists, using the games on the lists before it).  The page side is ``race.html`` (markup),
@@ -40,7 +41,7 @@ def race_frames(saved: dict, fmt: str, months: int, final_min: int) -> list:
         need = final_min if last else scaled_minimum(base, m / 12)[fmt]
         rows = build_rows(pool, games, fmt, need)
         frames.append({"y": year, "m": m, "min": need, "q": len(rows),
-                       "rows": [[r["fide_id"], r["tpr"], r["games"]] for r in rows[:RACE_TOP]]})
+                       "rows": [[r["fide_id"], r["tpr"], r["games"], r["rating"]] for r in rows[:RACE_TOP]]})
     return frames
 
 
@@ -63,7 +64,7 @@ def rolling_frames(saved: dict, fmt: str, min_games: int) -> list:
         rows = build_rows(pool, games, fmt, min_games)
         end = date.fromisoformat(periods[k + size - 1])
         frames.append({"y": end.year, "m": end.month, "min": min_games, "q": len(rows),
-                       "rows": [[r["fide_id"], r["tpr"], r["games"]] for r in rows[:RACE_TOP]]})
+                       "rows": [[r["fide_id"], r["tpr"], r["games"], r["rating"]] for r in rows[:RACE_TOP]]})
     return frames
 
 

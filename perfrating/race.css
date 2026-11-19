@@ -1,14 +1,28 @@
-/* Race replay (year lists): the top 10 at the end of each month, as dots on a TPR axis that
-   rescales with the month. Rows slide to their new rank; the dot slides to the new TPR. */
-.race { display: grid; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+/* Replay: the top 10 at the end of each month. Each row draws the player's FIDE rating
+   (outline square) and TPR (solid square) on an axis that rescales with the month.
+   Rows slide to their new rank; the squares slide to their new values. */
+.race { display: grid; gap: 18px; border-top: 2px solid var(--ink); padding: 18px 0 0; min-width: 0; }
 .race[hidden] { display: none; }
 .race-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
-.race h2 { margin: 0; font-family: var(--display); font-weight: 800; font-stretch: 85%; font-size: 20px; }
-.race-month { font-family: var(--display); font-weight: 800; font-stretch: 80%; font-size: 26px; line-height: 1; }
-.race-sub { font-size: 13px; color: var(--muted); }
-.race-ctl { display: flex; align-items: flex-start; gap: 12px; }
-.race-track { flex: 1; min-width: 0; display: grid; gap: 2px; padding-top: 4px; }
-.race-track input { width: 100%; margin: 0; accent-color: var(--accent); }
+.race h2 { margin: 0; font-family: var(--display); font-weight: 800; font-size: 20px; line-height: 1.2; }
+.race-month { font-family: var(--display); font-weight: 800; font-size: 24px; line-height: 1; font-variant-numeric: normal; }
+.race-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.race-key { display: flex; flex-wrap: wrap; gap: 2px 14px; margin-top: 8px; font-size: 13px; color: var(--muted); }
+.race-key span { display: inline-flex; align-items: center; gap: 6px; }
+.race-ctl { display: flex; align-items: flex-start; gap: 20px; }
+.race-track { flex: 1; min-width: 0; display: grid; gap: 2px; padding-top: 8px; }
+/* The slider is drawn here, not by the browser: a flat rule filled up to a triangle that
+   points the way the replay runs. --p is the position as a fraction, set by showFrame().
+   The rule is left clear behind the triangle, so its tip stays sharp. */
+.race-track input { appearance: none; -webkit-appearance: none; width: 100%; height: 16px; margin: 0; background: transparent; cursor: pointer; --x: calc((100% - 16px) * var(--p, 1)); }
+.race-track input::-webkit-slider-runnable-track {
+  height: 4px; border-radius: 0;
+  background: linear-gradient(to right, var(--ink) var(--x), transparent var(--x), transparent calc(var(--x) + 16px), var(--line) calc(var(--x) + 16px));
+}
+.race-track input::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -6px; border: 0; border-radius: 0; background: var(--ink); clip-path: polygon(0 0, 100% 50%, 0 100%); }
+.race-track input::-moz-range-track { height: 4px; border-radius: 0; background: var(--line); }
+.race-track input::-moz-range-progress { height: 4px; border-radius: 0; background: var(--ink); }
+.race-track input::-moz-range-thumb { width: 16px; height: 16px; border: 0; border-radius: 0; background: var(--ink); clip-path: polygon(0 0, 100% 50%, 0 100%); }
 /* Month ticks under the slider. The side padding is half the thumb, so each
    tick sits under the thumb's position for that month. */
 .race-ticks { position: relative; height: 22px; margin: 0 8px; }
@@ -17,16 +31,29 @@
   font: inherit; font-size: 11px; line-height: 1; color: var(--muted); cursor: pointer; font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 .race-ticks button::before { content: ""; position: absolute; top: 0; left: 50%; height: 4px; border-left: 1px solid var(--line); }
+/* The end labels grow inward from their tick, so they stay inside the track.
+   (On a phone the labels are single letters and stay centered.) */
+@media (min-width: 721px) {
+  .race-ticks button:first-child { transform: translateX(-2px); }
+  .race-ticks button:first-child::before { left: 2px; }
+  .race-ticks button:last-child { transform: translateX(calc(-100% + 2px)); }
+  .race-ticks button:last-child::before { left: calc(100% - 2px); }
+}
 .race-ticks button:hover { color: var(--ink); }
-.race-ticks button.on { color: var(--accent); font-weight: 700; }
+.race-ticks button.on { color: var(--ink); font-weight: 700; }
 .race-ticks .s { display: none; }
 .race-play {
   appearance: none; cursor: pointer; font: inherit; font-weight: 600; font-size: 14px; flex: none;
-  border: 1px solid var(--accent); background: var(--accent); color: var(--surface); border-radius: 8px; padding: 6px 12px; min-width: 76px;
+  border: 1.5px solid var(--ink); background: var(--ink); color: var(--bg); border-radius: var(--r); padding: 8px 14px; min-width: 84px;
 }
-.race-plot { --row: 30px; --rank: 26px; --name: 190px; --val: 84px; --gap: 10px; position: relative; height: calc(var(--row) * 10 + 22px); }
+.race-plot { --row: 30px; --rank: 26px; --name: 190px; --val: 110px; --gap: 10px; position: relative; height: calc(var(--row) * 10 + 22px); }
 .race-axis { position: absolute; top: 0; bottom: 0; left: calc(var(--rank) + var(--name) + 2 * var(--gap)); right: calc(var(--val) + var(--gap)); }
-.race-axis .t { position: absolute; top: 18px; bottom: 0; width: 0; border-left: 1px solid var(--line); transition: left .8s ease, opacity .4s; }
+/* The axis is only its numbers: no gridlines. A tick element holds one label and slides
+   with the scale; the steps too close to label are not shown. */
+.race-axis .t { position: absolute; top: 18px; width: 0; transition: left .8s ease, opacity .4s; }
+/* The axis carries both marks, the FIDE rating and the TPR: its unit sits over the names. */
+.race-unit { position: absolute; top: 0; left: calc(var(--rank) + var(--gap)); font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; line-height: 1; color: var(--muted); }
+.race-axis .t.nolab { display: none; }
 .race-empty { position: absolute; inset: 22px 0 0; display: grid; place-items: center; margin: 0; color: var(--muted); font-size: 14px; }
 .race-empty[hidden] { display: none; }
 .race-axis .t span { position: absolute; top: -18px; transform: translateX(-50%); font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -37,20 +64,29 @@
 }
 .race-row .rk { text-align: right; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
 .race-row .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; font-size: 14px; color: var(--ink); text-decoration: none; }
-.race-row .nm:hover { color: var(--accent); text-decoration: underline; }
+.race-row .nm .s { display: none; }
 .race-row .tr { position: relative; height: 100%; }
-.race-row .tr::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid var(--line); opacity: .6; }
-.race-row .dt {
-  position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%;
-  background: var(--accent); box-shadow: 0 0 0 2px var(--surface); transition: left .8s ease;
-}
+.race-row .cn { position: absolute; top: 50%; height: 0; margin-top: -.7px; border-top: 1.4px solid var(--ink); transition: left .8s ease, width .8s ease; }
+.race-row .rt { position: absolute; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border: 1.4px solid var(--ink); background: var(--bg); transition: left .8s ease; }
+.race-row .dt { position: absolute; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; background: var(--ink); transition: left .8s ease; }
+/* The accent follows the leader, and the row under the pointer. */
+.race-row.lead .dt, .race-row:hover .dt { background: var(--accent); }
+.race-row:hover .nm { color: var(--accent); text-decoration: underline; }
 .race-row .vl { text-align: right; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .race-row .vl small { font-weight: 400; color: var(--muted); font-size: 12px; }
-@media (max-width: 560px) {
-  .race { padding: 12px 10px; }
-  .race-plot { --row: 28px; --rank: 20px; --name: 92px; --val: 66px; --gap: 6px; }
-  .race-row .nm { font-size: 13px; }
+@media (max-width: 720px) {
+  /* On a phone the replay is one line until it is asked for, so the ranking stays close. */
+  .race:not(.open) { grid-template-columns: minmax(0, 1fr) auto; align-items: center; padding: 12px 0 0; }
+  .race-ctl { gap: 14px; }
+  .race:not(.open) h2 { font-size: 17px; }
+  .race:not(.open) .race-sub, .race:not(.open) .race-key, .race:not(.open) .race-month,
+  .race:not(.open) .race-track, .race:not(.open) .race-plot { display: none; }
+  .race-plot { --row: 28px; --rank: 20px; --name: 88px; --val: 100px; --gap: 6px; }
+  .race-row .vl small { font-size: 11.5px; }
+  .race-row .nm { font-size: 13.5px; }
+  .race-row .nm .f { display: none; }
+  .race-row .nm .s { display: inline; }
   .race-ticks .f { display: none; }
   .race-ticks .s { display: inline; }
 }
-@media (prefers-reduced-motion: reduce) { .race-row, .race-row .dt, .race-axis .t { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .race-row, .race-row .dt, .race-row .rt, .race-row .cn, .race-axis .t { transition: none; } }
