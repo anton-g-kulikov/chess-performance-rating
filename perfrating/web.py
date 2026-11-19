@@ -105,7 +105,10 @@ def mode_data(results: Path, data: Path, top: int, mode_id: str, label: str) -> 
         for r in rows[:top]:
             events = sorted(players[str(r["fide_id"])]["games"][fmt],
                             key=lambda e: (e["start"] or "", e["period"]), reverse=True)
+            won = [x for _, x in rated_games(events)]
             lst.append({**r, "dp": dp(round_p(r["score"], r["games"])),
+                        # Wins, draws, losses: the page draws the score from them.
+                        "wdl": [sum(x == 1 for x in won), sum(0 < x < 1 for x in won), sum(x == 0 for x in won)],
                         "ev": [event_summary(e) for e in events]})
         lists[fmt] = {"qualified": len(rows), "rows": lst}
         if meta.get("year"):
@@ -161,7 +164,7 @@ def main(argv=None) -> int:
     for m, saved, _ in builds:
         for fmt in FORMATS:
             for f in m["lists"][fmt].get("race", []):
-                for fid, _, _ in f["rows"]:
+                for fid, *_ in f["rows"]:
                     if fid not in people:
                         p = saved["players"][str(fid)]
                         people[fid] = [p["name"], p["fed"]]

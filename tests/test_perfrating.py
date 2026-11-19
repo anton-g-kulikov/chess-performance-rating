@@ -186,7 +186,7 @@ class PlayerPageTest(unittest.TestCase):
         # January's scaled minimum (40 / 12 = 4) is floored at half the full one (20),
         # so B's 4 straight wins don't count yet; the last frame uses the list's minimum.
         self.assertEqual([(f["m"], f["min"], f["q"]) for f in frames], [(1, 20, 1), (2, 7, 2)])
-        self.assertEqual(frames[0]["rows"], [[1, 3500, 25]])
+        self.assertEqual(frames[0]["rows"], [[1, 3500, 25, None]])
         self.assertEqual([r[0] for r in frames[1]["rows"]], [1, 2])
 
     def test_rolling_frames_slide_the_window_over_the_history(self):
@@ -204,8 +204,8 @@ class PlayerPageTest(unittest.TestCase):
         frames = rolling_frames(saved, "blitz", 2)
         self.assertEqual([(f["y"], f["m"], f["q"]) for f in frames], [(2026, 3, 1), (2026, 4, 1), (2026, 5, 2)])
         # Jan-Mar: only A's January wins.  Feb-Apr: those drop out, A's April draws remain.
-        self.assertEqual(frames[0]["rows"], [[1, 3500, 2]])
-        self.assertEqual(frames[1]["rows"], [[1, 2700, 2]])
+        self.assertEqual(frames[0]["rows"], [[1, 3500, 2, None]])
+        self.assertEqual(frames[1]["rows"], [[1, 2700, 2, None]])
         # The last frame is the published window: B's wins, then A's draws.
         self.assertEqual([r[0] for r in frames[2]["rows"]], [2, 1])
 
