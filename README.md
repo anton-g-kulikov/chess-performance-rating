@@ -26,15 +26,26 @@ columns, search, side-by-side players and each player's events.
 
 ## How it works
 
+Both modes use the same calculation. They differ only in which games go in.
+
 1. **Player pool.** Players come from FIDE's current open top-100 lists for
    classical, rapid and blitz, combined. For a finished year, they come from
    FIDE's archived lists instead: everyone in an open top 100 in any format
    at the start of each quarter of that year or in January of the next.
    Every player in the pool is ranked in all three formats.
 2. **Games.** For each player, the builder downloads FIDE's game-by-game rating
-   calculations (`ratings.fide.com`) for the last 12 rating periods in each
-   format. Only games FIDE actually rated (opponent rated, `n = 1`) are used.
-3. **Performance.** All games in a format are pooled into a single event.
+   calculations (`ratings.fide.com`). Only games FIDE actually rated
+   (opponent rated, `n = 1`) are used. Which games go in depends on the mode:
+   - **Rolling 12 months:** every game rated on the last 12 monthly lists,
+     whenever it was played. Selection is by rating period, so the
+     December 2025 – November 2026 lists hold games mostly played from
+     November 2025 to October 2026.
+   - **Year race:** every game from events that *ended* in that year, whichever
+     list FIDE rated them on. The builder reads that year's lists and the next
+     January to April (FIDE rates some events a few months late), then keeps
+     the events whose end date falls in the year.
+3. **Performance.** All of a player's games in a format are pooled into a
+   single event, as if they were one long tournament.
    - **TPR** (used for ranking) is the FIDE performance rating: the average
      opponent rating plus `dp` from FIDE table 8.1a for the percentage score,
      rounded to 0.01.
@@ -42,17 +53,49 @@ columns, search, side-by-side players and each player's events.
      opponents equals the actual score. It allows for the spread of opponent
      ratings, and isn't defined for 0% or 100% scores.
 4. **Minimum games.** To qualify, a player needs at least 20 classical, 20 rapid
-   or 40 blitz rated games in the window.
+   or 40 blitz rated games in the window. A year in progress scales these by
+   the share of the year covered so far.
+
+### Why a player's own rating doesn't carry over
+
+A FIDE rating is a running total. Each rating period starts from the previous
+rating and adds `K × (score − expected score)`, so today's rating still holds
+every result back to a player's first rated game, with older results
+gradually fading. A strong player who rarely plays, or plays poorly for a
+while, keeps most of their rating.
+
+These lists start from nothing in every window:
+
+- **Results outside the window aren't read.** The rolling list sees only the
+  last 12 lists; a year race sees only that year's events. Nothing carries
+  from one window to the next.
+- **The player's rating isn't in the formula.** TPR uses only the opponents'
+  ratings and the player's score. Two players with the same opponents and
+  the same score get the same TPR, whatever their own ratings. **True**
+  works the same way.
+- **Ranking is by TPR alone.** The **FIDE** column and **Δ** are shown for
+  comparison and don't affect the order.
+
+A player's own rating still matters in two places:
+
+- **Who is in the pool.** Only players in an open top 100 are considered, and
+  those lists are sorted by FIDE rating. The rating decides who is eligible,
+  not where they finish.
+- **FIDE's 400-point rule.** When an opponent is rated more than 400 points
+  below the player, FIDE's calculation records that opponent as *player's
+  rating − 400* (marked `*` on FIDE's site), and the builder uses the same
+  value so the numbers match FIDE's. In these games the player's own rating
+  sets the opponent's rating, and it's higher than the opponent's real rating,
+  so TPR comes out higher. About 11% of all games used are affected. Among
+  the top 20 of each list it usually touches only a few of a player's
+  games, but it's common for players who play many open tournaments.
+
+Opponents' ratings are FIDE ratings too, with their own history. That's
+unavoidable: a performance rating measures results against the opponents'
+ratings at the time.
 
 ### Notes and limitations
 
-- The window covers rating periods, not calendar dates. For example, the
-  December 2025 – November 2026 lists cover games rated in those periods,
-  which were mostly played from November 2025 to October 2026.
-- When an opponent is rated more than 400 points below the player, FIDE's
-  calculation records that opponent as *player's rating − 400* (marked `*`
-  on FIDE's site). The builder uses the same capped value, so these
-  performances match FIDE's own arithmetic.
 - The pool is limited to top-100 players. A player outside all three
   top-100 lists who had a great year won't appear.
 - **FIDE** is the player's current rating from the top-100 list. If the player
