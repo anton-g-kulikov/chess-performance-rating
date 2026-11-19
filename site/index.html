@@ -59,7 +59,7 @@ body {
   max-width: 1040px; margin: 0 auto;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: 40px 56px;
+  padding-block: 28px 56px;
   display: grid; gap: 28px;
 }
 .wrap > * { min-width: 0; }
@@ -76,6 +76,7 @@ a:hover { color: var(--accent); text-decoration-color: currentColor; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .defs { position: absolute; width: 0; height: 0; }
 .hx line { stroke: var(--ink); stroke-width: 1.1; }
+.hxm line { stroke: var(--ink); stroke-width: .5; }
 .hxs line { stroke: var(--muted); stroke-width: 1; opacity: .45; }
 
 /* The three fills as small squares: legends, results, the format switch. */
@@ -87,7 +88,12 @@ a:hover { color: var(--accent); text-decoration-color: currentColor; }
 .s-ink { fill: var(--ink); }
 .s-win { fill: var(--accent); }
 .s-hx { fill: url(#hx); stroke: var(--ink); stroke-opacity: .5; stroke-width: 1; }
+.s-hxm { fill: url(#hxm); stroke: var(--ink); stroke-width: .5; }
 
+/* Masthead: the mark and the name, above whichever view is open. */
+.brand { justify-self: start; display: inline-flex; align-items: center; gap: 9px; margin-bottom: -6px; font-weight: 700; font-size: 15px; letter-spacing: .01em; color: var(--ink); text-decoration: none; }
+.brand:hover { color: var(--ink); text-decoration: underline; text-decoration-color: var(--muted); }
+.brand svg { flex: none; }
 header { display: grid; gap: 10px; }
 .eyebrow { font-weight: 600; font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 h1 {
@@ -263,7 +269,8 @@ tr.detail > td { padding: 2px 12px 16px; text-align: left; white-space: normal; 
 @media (max-width: 520px) { .method dl { grid-template-columns: 1fr; gap: 2px; } .method dd { margin-bottom: 8px; } }
 
 @media (max-width: 720px) {
-  .wrap { padding-block: 24px 48px; gap: 22px; }
+  .wrap { padding-block: 18px 48px; gap: 22px; }
+  .brand { margin-bottom: -4px; }
   .formats, .race, .list, .method { margin-top: 12px; }
   .fx { height: auto; }
   .fx-unit { padding: 8px 4px 0; }
@@ -376,7 +383,10 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 .form { display: grid; gap: 6px; min-width: 0; }
 .form-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
 .form h3 { margin: 0; font-weight: 700; font-size: 16px; }
-.form svg { max-width: 100%; }
+.form-plot { position: relative; min-width: 0; }
+.form svg { max-width: 100%; cursor: crosshair; }
+.form svg:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; border-radius: var(--r); }
+.form rect.on { fill: var(--accent); stroke: var(--accent); stroke-opacity: 1; }
 .form-foot { font-size: 13px; }
 /* Replay: the top 10 at the end of each month. Each row draws the player's FIDE rating
    (outline square) and TPR (solid square) on an axis that rescales with the month.
@@ -519,11 +529,21 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 
 <!-- Hatch patterns for the drawings: the printed diagram's dark square. -->
 <svg class="defs" aria-hidden="true"><defs>
+  <!-- The mark: three games as the site draws them. A win stands tall in green,
+       a draw half as tall and hatched, a loss points down from the same line. -->
+  <pattern id="hxm" class="hxm" width="1.5" height="1.5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="1.5"/></pattern>
+  <symbol id="mark" viewBox="0 0 30 30">
+    <rect class="s-win" x="2" y="1" width="6" height="16"/>
+    <rect class="s-hxm" x="12.25" y="9.25" width="5.5" height="7.5"/>
+    <rect class="s-ink" x="22" y="17" width="6" height="12"/>
+  </symbol>
   <pattern id="hx" class="hx" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="4"/></pattern>
   <pattern id="hxs" class="hxs" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5"/></pattern>
 </defs></svg>
 
 <main class="wrap">
+  <a class="brand" href="/" data-home><svg width="22" height="22" aria-hidden="true"><use href="#mark"/></svg>Chess Performance Ratings</a>
+
   <section id="player" class="pview-only" aria-labelledby="p-name">
     <a class="back" id="p-back" href="/" data-home>← All rankings</a>
     <header>
@@ -643,7 +663,7 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 
 <footer class="foot">
   <div class="foot-in">
-    <span class="foot-name"><svg width="14" height="14" viewBox="0 0 30 30" aria-hidden="true"><rect class="s-ink" x="0" y="20" width="10" height="10"/><rect class="s-ink" x="10" y="10" width="10" height="10"/><rect class="s-ink" x="20" y="20" width="10" height="10"/><rect class="s-win" x="20" y="0" width="10" height="10"/></svg>Chess Performance Ratings</span>
+    <span class="foot-name"><svg width="16" height="16" aria-hidden="true"><use href="#mark"/></svg>Chess Performance Ratings</span>
     <span>Source: game-by-game rating calculations on <a href="https://ratings.fide.com" target="_blank" rel="noopener">ratings.fide.com</a></span>
     <span>Code: <a href="https://github.com/anton-g-kulikov/chess-performance-rating" target="_blank" rel="noopener">chess-performance-rating</a></span>
     <span>Contact: <a href="mailto:hello@chesstpr.com">hello@chesstpr.com</a></span>
@@ -1118,6 +1138,7 @@ function renderPlayerDetail(animate = false) {
       <thead><tr><th class="l">Event</th><th class="l hide-sm">FIDE list</th><th>Score</th><th class="hide-sm">Avg opp</th><th>TPR</th><th class="hide-sm" title="TPR over all games up to and including this event">To date</th></tr></thead>
       <tbody>${evs}</tbody></table></div>`;
   drawChart(animate);
+  drawForm();
   renderPlayerMethod(m, e);
 }
 
@@ -1130,22 +1151,66 @@ function dpOf(points, n) {
   const pct = Math.floor((200 * points + n) / (2 * n));  // round(100 * points / n), halves up
   return { pct, dp: pct >= 50 ? DP_UPPER[pct - 50] : -DP_UPPER[50 - pct] };
 }
-// Game by game: one tick per game, oldest first, at the height of its result (1, ½, 0),
-// with a gap between events.
+// Game by game: one tick per game, oldest first, with a gap between events. A win stands
+// tall, a draw half as tall, and a loss points down from the same line. The strip stretches
+// to the width it is given, up to 24px a game.
+// Pointing along the strip, or stepping with the arrow keys, names the game under it.
+// The strip is drawn at the size it is shown, up to 24px a game, and redrawn when the
+// width changes, so the hatching of the draws keeps its angle.
+let formState = [], formAt = -1, lastFormW = 0;
 function formBlock(e) {
-  const events = e.ev.slice().reverse().map((x) => x[8].map((g) => g[2])).filter((g) => g.length);
-  const all = events.flat();
-  if (!all.length) return "";
-  const step = 4, gap = 4, H = 18;
-  let x = 0, ticks = "";
-  for (const games of events) {
-    for (const r of games) { const h = r === 1 ? 16 : r === 0 ? 2 : 9; ticks += `<rect class="s-ink" x="${x}" y="${H - h}" width="3" height="${h}"/>`; x += step; }
+  const events = e.ev.slice().reverse().filter((x) => x[8].length);
+  formState = []; formAt = -1;
+  const step = 4, gap = 4;
+  let x = 0;
+  for (const ev of events) {
+    ev[8].forEach(([opp, rating, res], k) => { formState.push({ opp, rating, res, ev: ev[1], k: k + 1, n: ev[8].length, x }); x += step; });
     x += gap;
   }
-  const W = x - gap - 1, wdl = wdlOf(all);
+  if (!formState.length) return "";
+  const wdl = wdlOf(formState.map((g) => g.res));
   return `<div class="form"><div class="form-head"><h3>Game by game</h3><span class="wn num" role="img" aria-label="${wdlLabel(wdl)}">${wdlText(wdl)}</span></div>
-    <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${ticks}</svg>
-    <div class="form-foot muted">Oldest to newest, a gap between events. A tall tick is a win, a half tick a draw, a short one a loss.</div></div>`;
+    <div class="form-plot" id="p-form"></div>
+    <div class="form-foot muted">Oldest to newest, a gap between events. A tall tick is a win, a hatched half tick a draw, a tick pointing down a loss.</div></div>`;
+}
+function drawForm() {
+  const box = $("p-form"); if (!box || !formState.length) return;
+  lastFormW = box.clientWidth; formAt = -1;
+  const base = 16, H = 30, units = formState[formState.length - 1].x + 3;
+  const k = Math.min(6, Math.max(1, box.clientWidth) / units), W = units * k, w = 3 * k;
+  const ticks = formState.map((g, i) => {
+    const x = (g.x * k).toFixed(1);
+    return g.res === 1 ? `<rect class="s-ink" data-i="${i}" x="${x}" y="0" width="${w.toFixed(1)}" height="${base}"/>`
+      : g.res === 0 ? `<rect class="s-ink" data-i="${i}" x="${x}" y="${base}" width="${w.toFixed(1)}" height="${H - base}"/>`
+      : `<rect class="s-hx" data-i="${i}" x="${(g.x * k + .5).toFixed(1)}" y="${base - 7.5}" width="${Math.max(1, w - 1).toFixed(1)}" height="7"/>`;
+  }).join("");
+  const wdl = wdlOf(formState.map((g) => g.res));
+  const label = `Every game in order, oldest first: ${wdlLabel(wdl)}. Use the arrow keys to step through the games.`;
+  box.innerHTML = `<svg width="${W.toFixed(1)}" height="${H}" viewBox="0 0 ${W.toFixed(1)} ${H}" tabindex="0" role="img" aria-label="${esc(label)}">${ticks}</svg><div class="tip" hidden></div>`;
+}
+
+function formFocus(i) {
+  const box = document.querySelector(".form-plot"); if (!box) return;
+  const tip = box.querySelector(".tip");
+  box.querySelectorAll("rect.on").forEach((r) => r.classList.remove("on"));
+  formAt = i;
+  if (i < 0) { tip.hidden = true; return; }
+  const g = formState[i], rect = box.querySelector(`rect[data-i="${i}"]`);
+  rect.classList.add("on");
+  const [word, fill] = g.res === 1 ? ["Win", " win"] : g.res === 0 ? ["Loss", " solid"] : ["Draw", " hatch"];
+  tip.innerHTML = `<b>${esc(fullName(g.opp))}</b><div class="muted">${esc(g.ev)} · game ${g.k} of ${g.n}</div>
+    <div class="row2"><span>Opponent's rating</span><span class="num">${g.rating}</span></div>
+    <div class="row2"><span>Result</span><span><i class="sq${fill}" aria-hidden="true"></i> ${word}</span></div>`;
+  tip.hidden = false;
+  const b = box.getBoundingClientRect(), r = rect.getBoundingClientRect(), tw = tip.offsetWidth;
+  tip.style.left = `${Math.max(0, Math.min(b.width - tw, r.left + r.width / 2 - b.left - tw / 2))}px`;
+  tip.style.top = `${-tip.offsetHeight - 6}px`;
+}
+// The game whose tick is nearest the pointer: the whole strip is the target, not the tick.
+function nearestGame(svg, clientX) {
+  let best = 0, d = Infinity;
+  svg.querySelectorAll("rect").forEach((r) => { const b = r.getBoundingClientRect(), v = Math.abs(b.left + b.width / 2 - clientX); if (v < d) { d = v; best = +r.dataset.i; } });
+  return best;
 }
 
 // "How it works" on a player page: the same rules as the lists, told with this
@@ -1186,7 +1251,7 @@ function renderPlayerMethod(m, e) {
     blocks.push(`<div class="mblock"><h3>The chart and the events</h3>
       <p>The events table lists ${esc(who)}'s ${fmt} events in this period, newest first. Score, average opponent and TPR in each row are for that event alone. The FIDE list is the monthly rating list that rated it.${m.year ? ` An event counts in the year it ended, even when FIDE rated it a month or two later.` : ""}</p>
       <p><strong>To date</strong> pools every game from the first event in the period up to and including that one. The chart draws the same number after each event, so its last point is the TPR above, ${e.tpr}. The step line is ${esc(who)}'s FIDE rating going into each event.${qualified ? ` The “Qualified” marker is the event where they reached the ${min} games the list needs. The hatched area before it is provisional: the line moves a lot there, because a few games decide it.` : ` The whole chart is hatched as provisional, because they haven't reached the ${min} games the list needs.`}</p>
-      <p><strong>Game by game</strong> draws every game in order, at the height of its result: a win is 1, a draw ½, a loss 0.</p>
+      <p><strong>Game by game</strong> draws every game in order: a win stands tall, a draw half as tall and hatched, and a loss points down.</p>
       <p>Open an event to see its games. Opponents who have a page here are links.</p></div>`);
   }
 
@@ -1493,9 +1558,25 @@ function toggleEvent(tr) {
   renderPlayerDetail();
   $("p-detail").querySelector(`tr.row[data-i="${i}"]`).focus();
 }
-$("p-detail").addEventListener("pointermove", (e) => { if (e.target.closest("#p-plot svg")) chartFocus(nearest(e.clientX)); });
-$("p-detail").addEventListener("pointerleave", (e) => { if (e.target.matches("#p-plot svg")) chartFocus(-1); }, true);
-$("p-detail").addEventListener("focusout", (e) => { if (e.target.closest("#p-plot svg")) chartFocus(-1); });
+$("p-detail").addEventListener("pointermove", (e) => {
+  if (e.target.closest("#p-plot svg")) chartFocus(nearest(e.clientX));
+  const strip = e.target.closest(".form-plot svg"); if (strip) formFocus(nearestGame(strip, e.clientX));
+});
+$("p-detail").addEventListener("pointerleave", (e) => {
+  if (e.target.matches("#p-plot svg")) chartFocus(-1);
+  if (e.target.matches(".form-plot svg")) formFocus(-1);
+}, true);
+$("p-detail").addEventListener("focusout", (e) => {
+  if (e.target.closest("#p-plot svg")) chartFocus(-1);
+  if (e.target.closest(".form-plot svg")) formFocus(-1);
+});
+$("p-detail").addEventListener("keydown", (e) => {
+  if (!e.target.closest(".form-plot svg") || !formState.length) return;
+  const n = formState.length, i = formAt;
+  const to = { ArrowRight: Math.min(n - 1, i + 1), ArrowLeft: Math.max(0, i < 0 ? n - 1 : i - 1), Home: 0, End: n - 1, Escape: -1 }[e.key];
+  if (to === undefined) return;
+  e.preventDefault(); formFocus(to);
+});
 $("p-detail").addEventListener("keydown", (e) => {
   if (!e.target.closest("#p-plot svg") || !chartState) return;
   const n = chartState.pts.length, i = chartState.i;
@@ -1504,7 +1585,10 @@ $("p-detail").addEventListener("keydown", (e) => {
   e.preventDefault(); chartFocus(to);
 });
 // Redraw (without the animation) when the width changes.
-new ResizeObserver(() => { const b = $("p-plot"); if (b && b.clientWidth !== lastW) { lastW = b.clientWidth; drawChart(false); } }).observe($("player"));
+new ResizeObserver(() => {
+  const b = $("p-plot"); if (b && b.clientWidth !== lastW) { lastW = b.clientWidth; drawChart(false); }
+  const f = $("p-form"); if (f && f.clientWidth !== lastFormW) drawForm();
+}).observe($("player"));
 $("p-detail").addEventListener("click", (e) => {
   if (e.target.closest("a")) return; const tr = e.target.closest("tr.row"); if (tr) toggleEvent(tr); });
 $("p-detail").addEventListener("keydown", (e) => {
