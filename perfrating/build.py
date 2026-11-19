@@ -7,7 +7,7 @@ Two modes:
 * **Year** (``--year 2026``): games from events that ended in that calendar
   year.  Everyone starts again from nothing on January 1.  While the year is
   in progress the minimum number of games scales with the share of the year
-  covered so far.
+  covered so far, but never below half the full-year minimum.
 
 Usage::
 
@@ -119,7 +119,10 @@ def year_fraction(year: int, periods: List[str]) -> float:
 
 
 def scaled_minimum(min_games: Dict[str, int], fraction: float) -> Dict[str, int]:
-    return {f: max(1, math.ceil(n * fraction)) for f, n in min_games.items()}
+    """The full-year minimum scaled to the share of the year played, but
+    never below half of it: early in the year a scaled minimum of two or
+    three games would rank a couple of wins as a 3400 performance."""
+    return {f: max(math.ceil(n / 2), math.ceil(n * fraction)) for f, n in min_games.items()}
 
 
 def periods_with_games(client: FideClient, fide_id: int, periods: List[str],

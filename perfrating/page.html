@@ -286,46 +286,7 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 .games td.opp { white-space: normal; text-align: left; }
 .games td.res { font-weight: 700; }
 .games .cap { color: var(--muted); }
-/* Race replay (year lists): the top 10 at the end of each month, as dots on a TPR axis that
-   rescales with the month. Rows slide to their new rank; the dot slides to the new TPR. */
-.race { display: grid; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
-.race[hidden] { display: none; }
-.race-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
-.race h2 { margin: 0; font-family: var(--display); font-weight: 800; font-stretch: 85%; font-size: 20px; }
-.race-month { font-family: var(--display); font-weight: 800; font-stretch: 80%; font-size: 26px; line-height: 1; }
-.race-sub { font-size: 13px; color: var(--muted); }
-.race-ctl { display: flex; align-items: center; gap: 10px; flex: 1 1 260px; max-width: 420px; }
-.race-ctl input { flex: 1; min-width: 0; accent-color: var(--accent); }
-.race-play {
-  appearance: none; cursor: pointer; font: inherit; font-weight: 600; font-size: 14px; flex: none;
-  border: 1px solid var(--accent); background: var(--accent); color: var(--surface); border-radius: 8px; padding: 6px 12px; min-width: 76px;
-}
-.race-plot { --row: 30px; --rank: 26px; --name: 190px; --val: 84px; --gap: 10px; position: relative; height: calc(var(--row) * 10 + 22px); }
-.race-axis { position: absolute; top: 0; bottom: 0; left: calc(var(--rank) + var(--name) + 2 * var(--gap)); right: calc(var(--val) + var(--gap)); }
-.race-axis .t { position: absolute; top: 18px; bottom: 0; width: 0; border-left: 1px solid var(--line); transition: left .8s ease, opacity .4s; }
-.race-axis .t span { position: absolute; top: -18px; transform: translateX(-50%); font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.race-row {
-  position: absolute; left: 0; right: 0; top: 22px; height: var(--row);
-  display: grid; grid-template-columns: var(--rank) var(--name) 1fr var(--val); gap: var(--gap); align-items: center;
-  transition: transform .8s ease, opacity .4s;
-}
-.race-row .rk { text-align: right; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
-.race-row .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; font-size: 14px; color: var(--ink); text-decoration: none; }
-.race-row .nm:hover { color: var(--accent); text-decoration: underline; }
-.race-row .tr { position: relative; height: 100%; }
-.race-row .tr::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid var(--line); opacity: .6; }
-.race-row .dt {
-  position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%;
-  background: var(--accent); box-shadow: 0 0 0 2px var(--surface); transition: left .8s ease;
-}
-.race-row .vl { text-align: right; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.race-row .vl small { font-weight: 400; color: var(--muted); font-size: 12px; }
-@media (max-width: 560px) {
-  .race { padding: 12px 10px; }
-  .race-plot { --row: 28px; --rank: 20px; --name: 92px; --val: 66px; --gap: 6px; }
-  .race-row .nm { font-size: 13px; }
-}
-@media (prefers-reduced-motion: reduce) { .race-row, .race-row .dt, .race-axis .t { transition: none; } }
+/*RACE_CSS*/
 
 /* Player chart: TPR to date (accent) and the FIDE rating going into each event (muted), one rating axis. */
 .pchart { display: grid; gap: 8px; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px 10px; }
@@ -399,17 +360,7 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 
   <nav class="formats lists-only" role="tablist" aria-label="Format" id="formats"></nav>
 
-  <section class="race lists-only" id="race" aria-labelledby="race-title" hidden>
-    <div class="race-head">
-      <div><h2 id="race-title">How the race unfolded</h2><div class="race-sub" id="race-sub"></div></div>
-      <div class="race-month" id="race-month" aria-hidden="true"></div>
-    </div>
-    <div class="race-ctl">
-      <button type="button" class="race-play" id="race-play">Play</button>
-      <input type="range" id="race-seek" min="0" max="0" value="0" aria-label="Month">
-    </div>
-    <div class="race-plot" id="race-plot"><div class="race-axis" id="race-axis"></div></div>
-  </section>
+  <!--RACE_HTML-->
 
   <section class="lists-only" aria-labelledby="list-title" style="display:grid; gap:12px; min-width:0">
     <div class="toolbar">
@@ -995,104 +946,7 @@ function nearest(clientX) {
   return best;
 }
 
-// ---- Race replay: the year list's top 10 at the end of each month ----
-const race = { key: "", frames: null, i: 0, timer: null, rows: new Map(), played: new Set() };
-const raceKey = () => `${state.mode}-${state.fmt}`;
-
-function renderRace() {
-  const frames = M.year && M.lists?.[state.fmt]?.race;
-  stopRace();
-  $("race").hidden = !frames?.length;
-  if (!frames?.length) { race.key = ""; return; }
-  if (race.key === raceKey()) return;
-  race.key = raceKey(); race.frames = frames;
-  race.rows.forEach((el) => el.remove()); race.rows.clear();
-  $("race-axis").innerHTML = "";
-  $("race-seek").max = frames.length - 1;
-  showFrame(frames.length - 1, false);
-}
-
-function monthName(m) { return `${MONTH_FULL[m - 1]} ${M.year}`; }
-
-function showFrame(i, animate = true) {
-  const f = race.frames[i], fmtName = LABEL[state.fmt].toLowerCase();
-  race.i = i;
-  $("race-seek").value = i;
-  $("race-seek").setAttribute("aria-valuetext", `Through ${monthName(f.m)}`);
-  $("race-month").textContent = `${MON[f.m - 1]} ${M.year}`;
-  $("race-sub").textContent = `Top 10 in ${fmtName} at the end of ${monthName(f.m)}: ${f.q} players with ${f.min}+ games` +
-    (i === race.frames.length - 1 ? (M.fraction ?? 1) >= 1 ? " (final)" : " (now)" : "");
-  const plot = $("race-plot"), anim = animate && !reduced();
-  // This month's axis: round steps around the visible TPRs, as many as fit the width.
-  const tprs = f.rows.map((r) => r[1]), a = Math.min(...tprs), b = Math.max(...tprs);
-  const fit = Math.max(2, Math.floor($("race-axis").clientWidth / 40));
-  const step = [25, 50, 100, 200, 250, 500, 1000].find((st) => Math.ceil((b + st / 4) / st) - Math.floor((a - st / 4) / st) <= fit) ?? 1000;
-  const lo = Math.floor((a - step / 4) / step) * step, hi = Math.ceil((b + step / 4) / step) * step;
-  const pct = (v) => ((v - lo) / (hi - lo)) * 100;
-  const axis = $("race-axis"), seen = new Set();
-  for (let v = lo; v <= hi; v += step) {
-    let t = axis.querySelector(`.t[data-v="${v}"]`);
-    if (!t) { t = document.createElement("div"); t.className = "t"; t.dataset.v = v; t.innerHTML = `<span>${v}</span>`; t.style.opacity = 0; t.style.left = `${pct(v)}%`; axis.append(t); }
-    seen.add(t);
-  }
-  axis.querySelectorAll(".t").forEach((t) => {
-    const v = +t.dataset.v, inside = seen.has(t);
-    t.style.left = `${Math.min(110, Math.max(-10, pct(v)))}%`;
-    t.style.opacity = inside ? 1 : 0;
-  });
-  const keep = new Set();
-  f.rows.forEach(([id, tpr, games], rank) => {
-    keep.add(id);
-    let el = race.rows.get(id);
-    const fresh = !el;
-    if (fresh) {
-      const p = PEOPLE.get(id);
-      el = document.createElement("div"); el.className = "race-row";
-      el.innerHTML = `<span class="rk"></span><a class="nm" data-player href="/player/${id}#${viewHash()}">${esc(p ? shortName(p.name) : id)}</a><span class="tr"><span class="dt"></span></span><span class="vl"></span>`;
-      el.style.opacity = 0; el.style.transform = `translateY(calc(var(--row) * ${rank}))`;
-      plot.append(el); race.rows.set(id, el);
-      el.querySelector(".dt").style.left = `${pct(tpr)}%`;
-      if (anim) el.getBoundingClientRect();
-    }
-    el.querySelector(".rk").textContent = rank + 1;
-    el.querySelector(".vl").innerHTML = `${tpr} <small>${games}g</small>`;
-    el.querySelector(".vl").title = `TPR ${tpr} over ${games} games`;
-    el.querySelector(".dt").style.left = `${pct(tpr)}%`;
-    el.style.transform = `translateY(calc(var(--row) * ${rank}))`;
-    el.style.opacity = 1;
-  });
-  race.rows.forEach((el, id) => {
-    if (keep.has(id)) return;
-    race.rows.delete(id);
-    el.style.opacity = 0; el.style.pointerEvents = "none";
-    setTimeout(() => el.remove(), anim ? 500 : 0);
-  });
-  if (!anim) plot.querySelectorAll(".race-row, .dt, .t").forEach((el) => { el.style.transition = "none"; el.getBoundingClientRect(); el.style.transition = ""; });
-  $("race-play").textContent = race.timer ? "Pause" : i === race.frames.length - 1 ? "Replay" : "Play";
-}
-
-function playRace() {
-  if (!race.frames) return;
-  stopRace();
-  race.played.add(race.key);
-  if (race.i >= race.frames.length - 1) showFrame(0);
-  race.timer = setInterval(() => {
-    if (race.i >= race.frames.length - 1) return stopRace();
-    showFrame(race.i + 1);
-  }, 1300);
-  $("race-play").textContent = "Pause";
-}
-function stopRace() {
-  if (race.timer) clearInterval(race.timer);
-  race.timer = null;
-  if (race.frames) $("race-play").textContent = race.i === race.frames.length - 1 ? "Replay" : "Play";
-}
-$("race-play").addEventListener("click", () => race.timer ? stopRace() : playRace());
-$("race-seek").addEventListener("input", (e) => { stopRace(); race.played.add(race.key); showFrame(+e.target.value); });
-// The first time a race scrolls into view it plays from January, once per list.
-new IntersectionObserver((es) => {
-  if (es.some((x) => x.isIntersecting) && race.frames && !race.played.has(race.key) && !reduced() && !$("race").hidden) playRace();
-}, { threshold: 0.6 }).observe($("race"));
+/*RACE_JS*/
 
 function gamesRow(games) {
   const rows = games.map(([opp, r, res, capped, oid], i) => {

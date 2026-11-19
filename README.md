@@ -16,7 +16,8 @@ There are two modes, like tennis's ranking and race:
   event belongs to the year it ended in, so the World Rapid & Blitz of late
   December 2025 counts for 2025 even though FIDE rated it in January 2026.
   While the year is in progress, the minimum number of games scales with
-  the months played so far (10 of 12 in mid-November gives 17 / 17 / 34).
+  the months played so far, never below half (10 of 12 in mid-November gives
+  17 / 17 / 34).
   Finished years go back to 2013 (`results/2013/` … `results/2025/`), the
   first year covered by FIDE's archive of monthly rating lists.
 
@@ -28,7 +29,7 @@ results in every period and format, including those where they have too few
 games to be ranked or finish outside the top 100, down to single games, and a
 chart of their TPR over all games so far after each event. Each year race can
 be replayed month by month: the top 10 at the end of each month, with the
-minimum number of games scaled to the months played.
+minimum number of games scaled to the months played, but never below half.
 
 ## How it works
 
@@ -60,7 +61,8 @@ Both modes use the same calculation. They differ only in which games go in.
      ratings, and isn't defined for 0% or 100% scores.
 4. **Minimum games.** To qualify, a player needs at least 20 classical, 20 rapid
    or 40 blitz rated games in the window. A year in progress scales these by
-   the share of the year covered so far.
+   the share of the year covered so far, but never below half (10 / 10 / 20),
+   so a couple of early wins can't top the list.
 
 ### Why a player's own rating doesn't carry over
 

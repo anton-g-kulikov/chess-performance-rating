@@ -20,9 +20,10 @@ import hashlib
 import json
 from pathlib import Path
 
-from .build import (DEFAULT_MIN_GAMES, FORMATS, build_rows, event_month, rated_games,
-                    scaled_minimum)
+from . import race
+from .build import FORMATS, rated_games
 from .performance import dp, performance, round_p
+from .race import race_frames
 
 TEMPLATE = Path(__file__).with_name("page.html")
 
@@ -58,30 +59,6 @@ def progress(events: list) -> list:
         perf = performance(so_far)
         out.append([int(e["ro"]) if e.get("ro") else None, perf.tpr if perf else None, len(so_far)])
     return out[::-1]
-
-
-RACE_TOP = 10
-
-
-def race_frames(saved: dict, fmt: str, months: int, final_min: int) -> list:
-    """The top of a year's list at the end of each month so far.
-
-    Each frame counts events that ended by then, with the minimum number of
-    games scaled to the months played; the last frame is the published list."""
-    base = dict(zip(FORMATS, (int(x) for x in DEFAULT_MIN_GAMES.split(","))))
-    year = saved["year"]
-    pool = {int(fid): info for fid, info in saved["players"].items()}
-    frames = []
-    for m in range(1, months + 1):
-        cut = f"{year}-{m:02d}"
-        last = m == months
-        games = {fid: {fmt: [e for e in info["games"][fmt] if last or event_month(e) <= cut]}
-                 for fid, info in pool.items()}
-        need = final_min if last else scaled_minimum(base, m / 12)[fmt]
-        rows = build_rows(pool, games, fmt, need)
-        frames.append({"m": m, "min": need, "q": len(rows),
-                       "rows": [[r["fide_id"], r["tpr"], r["games"]] for r in rows[:RACE_TOP]]})
-    return frames
 
 
 def player_entries(saved: dict, rows_by_fmt: dict, ids: dict) -> dict:
@@ -220,7 +197,7 @@ def main(argv=None) -> int:
         m["src"] = f"/data/{m['id']}.json?v={hashlib.sha1(body.encode()).hexdigest()[:10]}"
     blob = json.dumps({"modes": modes, "people": people, "pver": ver.hexdigest()[:10]}, ensure_ascii=False,
                       separators=(",", ":")).replace("</", "<\\/")
-    html = TEMPLATE.read_text(encoding="utf-8").replace("/*DATA*/null", blob)
+    html = race.inline(TEMPLATE.read_text(encoding="utf-8")).replace("/*DATA*/null", blob)
     out.write_text(html, encoding="utf-8")
     lazy = sum(f.stat().st_size for f in data_dir.glob("y*.json"))
     print(f"wrote {out} ({len(html) // 1024} KB, modes: {', '.join(m['label'] for m in modes)})"

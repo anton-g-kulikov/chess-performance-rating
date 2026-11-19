@@ -8,7 +8,8 @@ from perfrating.build import (build_rows, event_year, scaled_minimum, window,
                               year_fraction, year_periods)
 from perfrating.parsers import parse_calculation, parse_period_arrays, parse_top_list
 from perfrating.performance import dp, performance, round_p, true_performance
-from perfrating.web import name_key, player_entries, progress, race_frames
+from perfrating.race import race_frames
+from perfrating.web import name_key, player_entries, progress
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -130,7 +131,9 @@ class YearModeTest(unittest.TestCase):
         self.assertAlmostEqual(year_fraction(2026, window(date(2026, 11, 1), 11)), 10 / 12)
         self.assertEqual(year_fraction(2025, window(date(2026, 4, 1), 16)), 1.0)
         self.assertEqual(scaled_minimum({"classical": 20, "blitz": 40}, 10 / 12), {"classical": 17, "blitz": 34})
-        self.assertEqual(scaled_minimum({"classical": 20}, 0.0), {"classical": 1})
+        self.assertEqual(scaled_minimum({"classical": 20, "blitz": 40}, 1 / 12), {"classical": 10, "blitz": 20})
+        self.assertEqual(scaled_minimum({"classical": 20}, 7 / 12), {"classical": 12})
+        self.assertEqual(scaled_minimum({"classical": 20}, 0.0), {"classical": 10})
 
 
 class PlayerPageTest(unittest.TestCase):
@@ -176,13 +179,15 @@ class PlayerPageTest(unittest.TestCase):
             return {"start": end, "end": end, "period": "2026-01-01",
                     "games": [{"opponent_rating": 2700, "result": result, "counted": True}] * n}
         saved = {"year": 2026, "players": {
-            "1": {"name": "A", "fed": "X", "ratings": {}, "games": {"blitz": [ev("2026-01-10", 4, 1), ev("2026-02-10", 40, 0.5)]}},
-            "2": {"name": "B", "fed": "Y", "ratings": {}, "games": {"blitz": [ev("2026-02-20", 40, 0.6)]}},
+            "1": {"name": "A", "fed": "X", "ratings": {}, "games": {"blitz": [ev("2026-01-10", 25, 1), ev("2026-02-10", 40, 0.5)]}},
+            "2": {"name": "B", "fed": "Y", "ratings": {}, "games": {"blitz": [ev("2026-01-20", 4, 1), ev("2026-02-20", 40, 0.6)]}},
         }}
         frames = race_frames(saved, "blitz", 2, final_min=7)
-        self.assertEqual([(f["m"], f["min"], f["q"]) for f in frames], [(1, 4, 1), (2, 7, 2)])
-        self.assertEqual(frames[0]["rows"], [[1, 3500, 4]])
-        self.assertEqual([r[0] for r in frames[1]["rows"]], [2, 1])
+        # January's scaled minimum (40 / 12 = 4) is floored at half the full one (20),
+        # so B's 4 straight wins don't count yet; the last frame uses the list's minimum.
+        self.assertEqual([(f["m"], f["min"], f["q"]) for f in frames], [(1, 20, 1), (2, 7, 2)])
+        self.assertEqual(frames[0]["rows"], [[1, 3500, 25]])
+        self.assertEqual([r[0] for r in frames[1]["rows"]], [1, 2])
 
 
 if __name__ == "__main__":
