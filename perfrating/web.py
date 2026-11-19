@@ -18,7 +18,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+from itertools import permutations
 from pathlib import Path
+from statistics import median
 
 from . import race
 from .build import FORMATS, rated_games
@@ -43,11 +45,81 @@ def name_key(name: str) -> tuple:
     return tuple(sorted(name.lower().replace(",", " ").replace(".", " ").split()))
 
 
-def event_games(e: dict, ids: dict) -> list:
-    """Rated games of an event as [opponent, rating, result, capped, opponent's id or 0]."""
-    return [[g["opponent"], g["opponent_rating"], g["result"], int(bool(g.get("capped"))),
-             ids.get(name_key(g["opponent"]), 0)]
-            for g in e["games"] if g["counted"] and g["opponent_rating"]]
+# A longer or shorter spelling is taken for a pool player only when the ratings agree:
+# the opponent's rating in those games is typically within this of the player's.
+NAMESAKE_GAP = 60
+
+
+def same_but_initials(a: tuple, b: tuple) -> bool:
+    """The same words, a given name cut to its initial on either side:
+    "Praggnanandhaa R" and "Rameshbabu, Praggnanandhaa"."""
+    if len(a) != len(b) or a == b:
+        return False
+    for other in permutations(b):
+        pairs = list(zip(a, other))
+        if all(x == y or (len(x) == 1 and y.startswith(x)) or (len(y) == 1 and x.startswith(y))
+               for x, y in pairs) and any(x == y and len(x) > 1 for x, y in pairs):
+            return True
+    return False
+
+
+def one_within_other(a: tuple, b: tuple) -> bool:
+    """One name is the other with words left out, and they share two full
+    words: "Niemann, Hans" and "Niemann, Hans Moke"."""
+    sa, sb = set(a), set(b)
+    return (sa < sb or sb < sa) and sum(len(t) > 1 for t in sa & sb) >= 2
+
+
+def opponent_ids(saveds: list) -> tuple:
+    """Who an opponent is, by name: ``(spelling key -> FIDE id, id -> listed name)``.
+
+    FIDE spells the same player differently from event to event.  A spelling
+    is a pool player's when it is their listed name (in any word order), or
+    when it differs from exactly one listed name only by initials or by words
+    left out and the ratings agree.  The rating check keeps namesakes apart:
+    "Flores Quillas, Diego Saul Rodri" is not "Flores, Diego"."""
+    names, listed = {}, {}
+    for saved in saveds:
+        for fid, info in saved["players"].items():
+            names.setdefault(name_key(info["name"]), set()).add(int(fid))
+            listed.setdefault(int(fid), info["name"])
+    exact = {k: next(iter(s)) for k, s in names.items() if len(s) == 1}
+    # Every other spelling met as an opponent, with where and at what rating.
+    met = {}
+    for saved in saveds:
+        for info in saved["players"].values():
+            for fmt, events in info["games"].items():
+                for e in events:
+                    for g in e["games"]:
+                        key = name_key(g["opponent"])
+                        if key not in names and g["opponent_rating"]:
+                            met.setdefault(key, []).append((saved, fmt, g["opponent_rating"]))
+    ids = dict(exact)
+    for key, where in met.items():
+        fits = [fid for k, fid in exact.items() if same_but_initials(k, key)]
+        if len(fits) != 1:
+            fits = [fid for k, fid in exact.items() if one_within_other(k, key)]
+        if len(fits) != 1:
+            continue
+        gaps = [abs(rating - player["ratings"][fmt]) for saved, fmt, rating in where
+                for player in [saved["players"].get(str(fits[0]))]
+                if player and player["ratings"].get(fmt)]
+        if gaps and median(gaps) <= NAMESAKE_GAP:
+            ids[key] = fits[0]
+    return ids, listed
+
+
+def event_games(e: dict, ids: dict, listed: dict) -> list:
+    """Rated games of an event as [opponent, rating, result, capped, opponent's id or 0].
+    An opponent who is a pool player goes by their listed name, however FIDE
+    spelled them in this event."""
+    out = []
+    for g in e["games"]:
+        if g["counted"] and g["opponent_rating"]:
+            oid = ids.get(name_key(g["opponent"]), 0)
+            out.append([listed.get(oid, g["opponent"]), g["opponent_rating"], g["result"],
+                        int(bool(g.get("capped"))), oid])
+    return out
 
 
 def progress(events: list) -> list:
@@ -61,7 +133,7 @@ def progress(events: list) -> list:
     return out[::-1]
 
 
-def player_entries(saved: dict, rows_by_fmt: dict, ids: dict) -> dict:
+def player_entries(saved: dict, rows_by_fmt: dict, ids: dict, listed: dict = None) -> dict:
     """One period's results for every player in its pool, per format.
 
     Ranked players carry their row from the list; the others get the same
@@ -86,7 +158,7 @@ def player_entries(saved: dict, rows_by_fmt: dict, ids: dict) -> dict:
             fmts[fmt] = {
                 "rank": r["rank"], "of": len(rows_by_fmt[fmt]), "rating": info["ratings"].get(fmt),
                 **{k: r[k] for k in ("games", "score", "pct", "avg_opp", "tpr", "true_perf")},
-                "ev": [event_summary(e) + [event_games(e, ids)] + p
+                "ev": [event_summary(e) + [event_games(e, ids, listed or {})] + p
                        for e, p in zip(events, progress(events))],
             }
         out[fid] = {"name": info["name"], "fed": info["fed"], "formats": fmts}
@@ -166,16 +238,11 @@ def main(argv=None) -> int:
                         p = saved["players"][str(fid)]
                         people[fid] = [p["name"], p["fed"]]
 
-    # Player pages.  Opponents are linked by name when exactly one player in
-    # any pool has it.
-    names = {}
-    for _, saved, _ in builds:
-        for fid, info in saved["players"].items():
-            names.setdefault(name_key(info["name"]), set()).add(int(fid))
-    ids = {n: next(iter(s)) for n, s in names.items() if len(s) == 1}
+    # Player pages.  Opponents who are pool players are linked and named as listed.
+    ids, listed = opponent_ids([saved for _, saved, _ in builds])
     pages = {}
     for m, saved, full in builds:
-        for fid, entry in player_entries(saved, full, ids).items():
+        for fid, entry in player_entries(saved, full, ids, listed).items():
             page = pages.setdefault(fid, {"id": fid, "name": entry["name"], "fed": entry["fed"], "modes": {}})
             page["modes"][m["id"]] = entry["formats"]
     players_dir = data_dir / "p"
