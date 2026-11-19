@@ -42,20 +42,6 @@
   "rank": 3
  },
  {
-  "fide_id": 13300474,
-  "name": "Aronian, Levon",
-  "fed": "USA",
-  "rating": 2750,
-  "games": 82,
-  "score": 51.5,
-  "pct": 63.0,
-  "avg_opp": 2677,
-  "tpr": 2772,
-  "true_perf": 2782,
-  "events": 7,
-  "rank": 4
- },
- {
   "fide_id": 2020009,
   "name": "Caruana, Fabiano",
   "fed": "USA",
@@ -67,7 +53,7 @@
   "tpr": 2758,
   "true_perf": 2760,
   "events": 8,
-  "rank": 5
+  "rank": 4
  },
  {
   "fide_id": 623539,
@@ -80,6 +66,20 @@
   "avg_opp": 2662,
   "tpr": 2757,
   "true_perf": 2767,
+  "events": 8,
+  "rank": 5
+ },
+ {
+  "fide_id": 13300474,
+  "name": "Aronian, Levon",
+  "fed": "USA",
+  "rating": 2750,
+  "games": 100,
+  "score": 62.5,
+  "pct": 63.0,
+  "avg_opp": 2659,
+  "tpr": 2754,
+  "true_perf": 2760,
   "events": 8,
   "rank": 6
  },
@@ -448,20 +448,6 @@
   "rank": 32
  },
  {
-  "fide_id": 3901211,
-  "name": "Iturrizaga Bonelli, Eduardo",
-  "fed": "ESP",
-  "rating": 2629,
-  "games": 65,
-  "score": 50.5,
-  "pct": 78.0,
-  "avg_opp": 2396,
-  "tpr": 2616,
-  "true_perf": 2634,
-  "events": 6,
-  "rank": 33
- },
- {
   "fide_id": 4168003,
   "name": "Matlakov, Maxim",
   "fed": "RUS",
@@ -473,7 +459,7 @@
   "tpr": 2613,
   "true_perf": 2628,
   "events": 4,
-  "rank": 34
+  "rank": 33
  },
  {
   "fide_id": 13401653,
@@ -487,6 +473,20 @@
   "tpr": 2611,
   "true_perf": 2629,
   "events": 8,
+  "rank": 34
+ },
+ {
+  "fide_id": 14117908,
+  "name": "Kovalenko, Igor",
+  "fed": "UKR",
+  "rating": 2574,
+  "games": 54,
+  "score": 42.0,
+  "pct": 78.0,
+  "avg_opp": 2389,
+  "tpr": 2609,
+  "true_perf": 2656,
+  "events": 5,
   "rank": 35
  },
  {
@@ -504,17 +504,17 @@
   "rank": 36
  },
  {
-  "fide_id": 35028600,
-  "name": "Pranesh M",
-  "fed": "IND",
-  "rating": 2548,
-  "games": 43,
-  "score": 31.0,
-  "pct": 72.0,
-  "avg_opp": 2440,
-  "tpr": 2606,
-  "true_perf": 2658,
-  "events": 3,
+  "fide_id": 3901211,
+  "name": "Iturrizaga Bonelli, Eduardo",
+  "fed": "ESP",
+  "rating": 2629,
+  "games": 96,
+  "score": 70.5,
+  "pct": 73.0,
+  "avg_opp": 2432,
+  "tpr": 2607,
+  "true_perf": 2627,
+  "events": 8,
   "rank": 37
  },
  {
@@ -588,6 +588,20 @@
   "rank": 42
  },
  {
+  "fide_id": 35028600,
+  "name": "Pranesh M",
+  "fed": "IND",
+  "rating": 2548,
+  "games": 52,
+  "score": 37.0,
+  "pct": 71.0,
+  "avg_opp": 2433,
+  "tpr": 2591,
+  "true_perf": 2633,
+  "events": 4,
+  "rank": 43
+ },
+ {
   "fide_id": 1510045,
   "name": "Tari, Aryan",
   "fed": "NOR",
@@ -599,7 +613,7 @@
   "tpr": 2586,
   "true_perf": 2637,
   "events": 6,
-  "rank": 43
+  "rank": 44
  },
  {
   "fide_id": 25060783,
@@ -613,7 +627,7 @@
   "tpr": 2586,
   "true_perf": 2612,
   "events": 5,
-  "rank": 44
+  "rank": 45
  },
  {
   "fide_id": 309095,
@@ -627,7 +641,7 @@
   "tpr": 2580,
   "true_perf": 2607,
   "events": 5,
-  "rank": 45
+  "rank": 46
  },
  {
   "fide_id": 2293307,
@@ -641,7 +655,7 @@
   "tpr": 2578,
   "true_perf": 2588,
   "events": 5,
-  "rank": 46
+  "rank": 47
  },
  {
   "fide_id": 44105681,
@@ -655,7 +669,7 @@
   "tpr": 2577,
   "true_perf": 2594,
   "events": 12,
-  "rank": 47
+  "rank": 48
  },
  {
   "fide_id": 3503240,
@@ -669,7 +683,7 @@
   "tpr": 2575,
   "true_perf": 2581,
   "events": 7,
-  "rank": 48
+  "rank": 49
  },
  {
   "fide_id": 13301004,
@@ -683,7 +697,7 @@
   "tpr": 2574,
   "true_perf": 2601,
   "events": 10,
-  "rank": 49
+  "rank": 50
  },
  {
   "fide_id": 4108566,
@@ -697,7 +711,7 @@
   "tpr": 2573,
   "true_perf": 2587,
   "events": 5,
-  "rank": 50
+  "rank": 51
  },
  {
   "fide_id": 13306766,
@@ -711,7 +725,7 @@
   "tpr": 2569,
   "true_perf": 2598,
   "events": 6,
-  "rank": 51
+  "rank": 52
  },
  {
   "fide_id": 240990,
@@ -725,7 +739,7 @@
   "tpr": 2565,
   "true_perf": 2599,
   "events": 14,
-  "rank": 52
+  "rank": 53
  },
  {
   "fide_id": 5072786,
@@ -739,7 +753,7 @@
   "tpr": 2565,
   "true_perf": 2567,
   "events": 4,
-  "rank": 53
+  "rank": 54
  },
  {
   "fide_id": 14203987,
@@ -753,7 +767,7 @@
   "tpr": 2564,
   "true_perf": 2582,
   "events": 5,
-  "rank": 54
+  "rank": 55
  },
  {
   "fide_id": 44599790,
@@ -767,7 +781,7 @@
   "tpr": 2563,
   "true_perf": 2637,
   "events": 6,
-  "rank": 55
+  "rank": 56
  },
  {
   "fide_id": 738590,
@@ -781,7 +795,7 @@
   "tpr": 2563,
   "true_perf": 2566,
   "events": 4,
-  "rank": 56
+  "rank": 57
  },
  {
   "fide_id": 2209390,
@@ -795,20 +809,6 @@
   "tpr": 2562,
   "true_perf": 2580,
   "events": 34,
-  "rank": 57
- },
- {
-  "fide_id": 2308649,
-  "name": "Stefansson, Vignir Vatnar",
-  "fed": "ISL",
-  "rating": 2546,
-  "games": 308,
-  "score": 268.5,
-  "pct": 87.0,
-  "avg_opp": 2236,
-  "tpr": 2558,
-  "true_perf": 2600,
-  "events": 36,
   "rank": 58
  },
  {
@@ -854,6 +854,20 @@
   "rank": 61
  },
  {
+  "fide_id": 2308649,
+  "name": "Stefansson, Vignir Vatnar",
+  "fed": "ISL",
+  "rating": 2546,
+  "games": 352,
+  "score": 306.0,
+  "pct": 87.0,
+  "avg_opp": 2231,
+  "tpr": 2553,
+  "true_perf": 2590,
+  "events": 41,
+  "rank": 62
+ },
+ {
   "fide_id": 14100010,
   "name": "Ivanchuk, Vasyl",
   "fed": "UKR",
@@ -865,7 +879,7 @@
   "tpr": 2552,
   "true_perf": 2566,
   "events": 5,
-  "rank": 62
+  "rank": 63
  },
  {
   "fide_id": 12923044,
@@ -879,7 +893,7 @@
   "tpr": 2549,
   "true_perf": 2564,
   "events": 5,
-  "rank": 63
+  "rank": 64
  },
  {
   "fide_id": 509825,
@@ -893,7 +907,7 @@
   "tpr": 2548,
   "true_perf": 2572,
   "events": 8,
-  "rank": 64
+  "rank": 65
  },
  {
   "fide_id": 712779,
@@ -907,7 +921,7 @@
   "tpr": 2548,
   "true_perf": 2571,
   "events": 5,
-  "rank": 65
+  "rank": 66
  },
  {
   "fide_id": 2285525,
@@ -921,7 +935,7 @@
   "tpr": 2543,
   "true_perf": 2565,
   "events": 6,
-  "rank": 66
+  "rank": 67
  },
  {
   "fide_id": 4198603,
@@ -935,7 +949,7 @@
   "tpr": 2543,
   "true_perf": 2560,
   "events": 7,
-  "rank": 67
+  "rank": 68
  },
  {
   "fide_id": 3503631,
@@ -949,7 +963,7 @@
   "tpr": 2541,
   "true_perf": 2562,
   "events": 7,
-  "rank": 68
+  "rank": 69
  },
  {
   "fide_id": 35028561,
@@ -963,7 +977,7 @@
   "tpr": 2523,
   "true_perf": 2567,
   "events": 5,
-  "rank": 69
+  "rank": 70
  },
  {
   "fide_id": 4152956,
@@ -977,7 +991,7 @@
   "tpr": 2521,
   "true_perf": 2531,
   "events": 7,
-  "rank": 70
+  "rank": 71
  },
  {
   "fide_id": 12576468,
@@ -991,7 +1005,7 @@
   "tpr": 2520,
   "true_perf": 2570,
   "events": 6,
-  "rank": 71
+  "rank": 72
  },
  {
   "fide_id": 12521213,
@@ -1005,20 +1019,6 @@
   "tpr": 2517,
   "true_perf": 2528,
   "events": 6,
-  "rank": 72
- },
- {
-  "fide_id": 662399,
-  "name": "Lagarde, Maxime",
-  "fed": "FRA",
-  "rating": 2562,
-  "games": 44,
-  "score": 34.0,
-  "pct": 77.0,
-  "avg_opp": 2299,
-  "tpr": 2510,
-  "true_perf": 2550,
-  "events": 4,
   "rank": 73
  },
  {
@@ -1092,6 +1092,20 @@
   "rank": 78
  },
  {
+  "fide_id": 662399,
+  "name": "Lagarde, Maxime",
+  "fed": "FRA",
+  "rating": 2562,
+  "games": 57,
+  "score": 43.0,
+  "pct": 75.0,
+  "avg_opp": 2309,
+  "tpr": 2502,
+  "true_perf": 2539,
+  "events": 5,
+  "rank": 79
+ },
+ {
   "fide_id": 4675789,
   "name": "Meier, Georg",
   "fed": "URU",
@@ -1103,7 +1117,7 @@
   "tpr": 2501,
   "true_perf": 2535,
   "events": 8,
-  "rank": 79
+  "rank": 80
  },
  {
   "fide_id": 1118358,
@@ -1117,7 +1131,7 @@
   "tpr": 2497,
   "true_perf": 2503,
   "events": 3,
-  "rank": 80
+  "rank": 81
  },
  {
   "fide_id": 1444948,
@@ -1131,6 +1145,6 @@
   "tpr": 2480,
   "true_perf": 2495,
   "events": 4,
-  "rank": 81
+  "rank": 82
  }
 ]

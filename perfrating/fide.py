@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import hashlib
+import random
 import threading
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 BASE = "https://ratings.fide.com"
 
@@ -26,15 +27,25 @@ class FideClient:
         self,
         cache_dir: Optional[Path] = Path(".cache/fide"),
         min_interval: float = 0.25,
+        max_interval: Optional[float] = None,
+        breaks: Optional[Tuple[int, int]] = None,
+        break_length: Tuple[float, float] = (60.0, 120.0),
         retries: int = 4,
         timeout: float = 30.0,
     ) -> None:
+        """Requests start at least ``min_interval`` seconds apart, or a random
+        gap up to ``max_interval``.  With ``breaks`` = (lo, hi), the client
+        also rests for ``break_length`` seconds after every lo..hi requests."""
         self.cache_dir = cache_dir
         self.min_interval = min_interval
+        self.max_interval = max_interval if max_interval is not None else min_interval
+        self.breaks = breaks
+        self.break_length = break_length
         self.retries = retries
         self.timeout = timeout
         self._lock = threading.Lock()
         self._next_slot = 0.0
+        self._until_break = random.randint(*breaks) if breaks else 0
         self.requests_made = 0
         if cache_dir:
             cache_dir.mkdir(parents=True, exist_ok=True)
@@ -43,7 +54,13 @@ class FideClient:
         with self._lock:
             now = time.monotonic()
             wait = self._next_slot - now
-            self._next_slot = max(now, self._next_slot) + self.min_interval
+            gap = random.uniform(self.min_interval, self.max_interval)
+            if self.breaks:
+                self._until_break -= 1
+                if self._until_break <= 0:
+                    gap += random.uniform(*self.break_length)
+                    self._until_break = random.randint(*self.breaks)
+            self._next_slot = max(now, self._next_slot) + gap
         if wait > 0:
             time.sleep(wait)
 

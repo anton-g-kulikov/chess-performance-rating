@@ -284,13 +284,13 @@
   "name": "Nihal Sarin",
   "fed": "IND",
   "rating": 2687,
-  "games": 77,
-  "score": 52.5,
-  "pct": 68.0,
-  "avg_opp": 2574,
+  "games": 83,
+  "score": 57.5,
+  "pct": 69.0,
+  "avg_opp": 2566,
   "tpr": 2707,
-  "true_perf": 2718,
-  "events": 9,
+  "true_perf": 2721,
+  "events": 10,
   "rank": 21
  },
  {
@@ -560,6 +560,20 @@
   "rank": 40
  },
  {
+  "fide_id": 13306766,
+  "name": "Sargsyan, Shant",
+  "fed": "ARM",
+  "rating": 2660,
+  "games": 90,
+  "score": 54.5,
+  "pct": 61.0,
+  "avg_opp": 2582,
+  "tpr": 2662,
+  "true_perf": 2663,
+  "events": 10,
+  "rank": 41
+ },
+ {
   "fide_id": 1118358,
   "name": "Wojtaszek, Radoslaw",
   "fed": "POL",
@@ -571,21 +585,35 @@
   "tpr": 2660,
   "true_perf": 2665,
   "events": 12,
-  "rank": 41
+  "rank": 42
  },
  {
-  "fide_id": 13306766,
-  "name": "Sargsyan, Shant",
-  "fed": "ARM",
-  "rating": 2660,
-  "games": 81,
-  "score": 48.5,
-  "pct": 60.0,
-  "avg_opp": 2583,
-  "tpr": 2655,
-  "true_perf": 2658,
+  "fide_id": 1710400,
+  "name": "Grandelius, Nils",
+  "fed": "SWE",
+  "rating": 2639,
+  "games": 86,
+  "score": 56.5,
+  "pct": 66.0,
+  "avg_opp": 2535,
+  "tpr": 2652,
+  "true_perf": 2664,
+  "events": 16,
+  "rank": 43
+ },
+ {
+  "fide_id": 30920019,
+  "name": "Mishra, Abhimanyu",
+  "fed": "USA",
+  "rating": 2600,
+  "games": 70,
+  "score": 39.0,
+  "pct": 56.00000000000001,
+  "avg_opp": 2609,
+  "tpr": 2652,
+  "true_perf": 2655,
   "events": 9,
-  "rank": 42
+  "rank": 44
  },
  {
   "fide_id": 44155573,
@@ -599,7 +627,7 @@
   "tpr": 2651,
   "true_perf": 2658,
   "events": 16,
-  "rank": 43
+  "rank": 45
  },
  {
   "fide_id": 404853,
@@ -613,7 +641,7 @@
   "tpr": 2651,
   "true_perf": 2653,
   "events": 5,
-  "rank": 44
+  "rank": 46
  },
  {
   "fide_id": 5074452,
@@ -627,7 +655,21 @@
   "tpr": 2648,
   "true_perf": 2658,
   "events": 9,
-  "rank": 45
+  "rank": 47
+ },
+ {
+  "fide_id": 14102951,
+  "name": "Eljanov, Pavel",
+  "fed": "UKR",
+  "rating": 2656,
+  "games": 79,
+  "score": 52.0,
+  "pct": 66.0,
+  "avg_opp": 2529,
+  "tpr": 2646,
+  "true_perf": 2659,
+  "events": 18,
+  "rank": 48
  },
  {
   "fide_id": 24125890,
@@ -641,7 +683,7 @@
   "tpr": 2646,
   "true_perf": 2655,
   "events": 4,
-  "rank": 46
+  "rank": 49
  },
  {
   "fide_id": 358878,
@@ -655,21 +697,7 @@
   "tpr": 2645,
   "true_perf": 2650,
   "events": 11,
-  "rank": 47
- },
- {
-  "fide_id": 1710400,
-  "name": "Grandelius, Nils",
-  "fed": "SWE",
-  "rating": 2639,
-  "games": 79,
-  "score": 52.0,
-  "pct": 66.0,
-  "avg_opp": 2526,
-  "tpr": 2643,
-  "true_perf": 2657,
-  "events": 15,
-  "rank": 48
+  "rank": 50
  },
  {
   "fide_id": 4152956,
@@ -683,7 +711,21 @@
   "tpr": 2643,
   "true_perf": 2655,
   "events": 11,
-  "rank": 49
+  "rank": 51
+ },
+ {
+  "fide_id": 44507356,
+  "name": "Gurel, Ediz",
+  "fed": "TUR",
+  "rating": 2624,
+  "games": 78,
+  "score": 47.0,
+  "pct": 60.0,
+  "avg_opp": 2571,
+  "tpr": 2643,
+  "true_perf": 2653,
+  "events": 8,
+  "rank": 52
  },
  {
   "fide_id": 2047640,
@@ -697,7 +739,7 @@
   "tpr": 2641,
   "true_perf": 2681,
   "events": 9,
-  "rank": 50
+  "rank": 53
  },
  {
   "fide_id": 14508150,
@@ -711,7 +753,7 @@
   "tpr": 2640,
   "true_perf": 2648,
   "events": 21,
-  "rank": 51
+  "rank": 54
  },
  {
   "fide_id": 712779,
@@ -725,7 +767,7 @@
   "tpr": 2640,
   "true_perf": 2646,
   "events": 17,
-  "rank": 52
+  "rank": 55
  },
  {
   "fide_id": 4675789,
@@ -739,7 +781,7 @@
   "tpr": 2639,
   "true_perf": 2665,
   "events": 6,
-  "rank": 53
+  "rank": 56
  },
  {
   "fide_id": 24126055,
@@ -753,7 +795,7 @@
   "tpr": 2638,
   "true_perf": 2640,
   "events": 6,
-  "rank": 54
+  "rank": 57
  },
  {
   "fide_id": 12923044,
@@ -767,7 +809,7 @@
   "tpr": 2637,
   "true_perf": 2643,
   "events": 15,
-  "rank": 55
+  "rank": 58
  },
  {
   "fide_id": 9301348,
@@ -781,7 +823,7 @@
   "tpr": 2637,
   "true_perf": 2638,
   "events": 8,
-  "rank": 56
+  "rank": 59
  },
  {
   "fide_id": 13401653,
@@ -795,49 +837,35 @@
   "tpr": 2635,
   "true_perf": 2638,
   "events": 7,
-  "rank": 57
- },
- {
-  "fide_id": 14102951,
-  "name": "Eljanov, Pavel",
-  "fed": "UKR",
-  "rating": 2656,
-  "games": 70,
-  "score": 45.0,
-  "pct": 64.0,
-  "avg_opp": 2532,
-  "tpr": 2634,
-  "true_perf": 2651,
-  "events": 15,
-  "rank": 58
- },
- {
-  "fide_id": 24603295,
-  "name": "Donchenko, Alexander",
-  "fed": "GER",
-  "rating": 2632,
-  "games": 104,
-  "score": 68.5,
-  "pct": 66.0,
-  "avg_opp": 2517,
-  "tpr": 2634,
-  "true_perf": 2649,
-  "events": 14,
-  "rank": 59
+  "rank": 60
  },
  {
   "fide_id": 2004887,
   "name": "Shankland, Sam",
   "fed": "USA",
   "rating": 2670,
-  "games": 70,
-  "score": 39.0,
-  "pct": 56.00000000000001,
-  "avg_opp": 2591,
+  "games": 79,
+  "score": 43.0,
+  "pct": 54.0,
+  "avg_opp": 2605,
   "tpr": 2634,
-  "true_perf": 2640,
-  "events": 7,
-  "rank": 60
+  "true_perf": 2644,
+  "events": 8,
+  "rank": 61
+ },
+ {
+  "fide_id": 24603295,
+  "name": "Donchenko, Alexander",
+  "fed": "GER",
+  "rating": 2632,
+  "games": 122,
+  "score": 83.0,
+  "pct": 68.0,
+  "avg_opp": 2500,
+  "tpr": 2633,
+  "true_perf": 2650,
+  "events": 16,
+  "rank": 62
  },
  {
   "fide_id": 14103320,
@@ -851,7 +879,7 @@
   "tpr": 2633,
   "true_perf": 2638,
   "events": 7,
-  "rank": 61
+  "rank": 63
  },
  {
   "fide_id": 5084423,
@@ -865,7 +893,7 @@
   "tpr": 2633,
   "true_perf": 2635,
   "events": 4,
-  "rank": 62
+  "rank": 64
  },
  {
   "fide_id": 950122,
@@ -879,7 +907,7 @@
   "tpr": 2629,
   "true_perf": 2644,
   "events": 18,
-  "rank": 63
+  "rank": 65
  },
  {
   "fide_id": 1007998,
@@ -893,21 +921,7 @@
   "tpr": 2629,
   "true_perf": 2642,
   "events": 19,
-  "rank": 64
- },
- {
-  "fide_id": 44507356,
-  "name": "Gurel, Ediz",
-  "fed": "TUR",
-  "rating": 2624,
-  "games": 68,
-  "score": 39.5,
-  "pct": 57.99999999999999,
-  "avg_opp": 2572,
-  "tpr": 2629,
-  "true_perf": 2638,
-  "events": 7,
-  "rank": 65
+  "rank": 66
  },
  {
   "fide_id": 309095,
@@ -921,7 +935,7 @@
   "tpr": 2629,
   "true_perf": 2633,
   "events": 22,
-  "rank": 66
+  "rank": 67
  },
  {
   "fide_id": 2285525,
@@ -935,7 +949,7 @@
   "tpr": 2626,
   "true_perf": 2638,
   "events": 12,
-  "rank": 67
+  "rank": 68
  },
  {
   "fide_id": 35093487,
@@ -949,7 +963,7 @@
   "tpr": 2624,
   "true_perf": 2628,
   "events": 12,
-  "rank": 68
+  "rank": 69
  },
  {
   "fide_id": 1444948,
@@ -963,20 +977,6 @@
   "tpr": 2623,
   "true_perf": 2630,
   "events": 17,
-  "rank": 69
- },
- {
-  "fide_id": 13306553,
-  "name": "Martirosyan, Haik M.",
-  "fed": "ARM",
-  "rating": 2645,
-  "games": 56,
-  "score": 31.5,
-  "pct": 56.00000000000001,
-  "avg_opp": 2580,
-  "tpr": 2623,
-  "true_perf": 2629,
-  "events": 8,
   "rank": 70
  },
  {
@@ -1036,6 +1036,20 @@
   "rank": 74
  },
  {
+  "fide_id": 4135539,
+  "name": "Alekseenko, Kirill",
+  "fed": "AUT",
+  "rating": 2661,
+  "games": 47,
+  "score": 28.0,
+  "pct": 60.0,
+  "avg_opp": 2545,
+  "tpr": 2617,
+  "true_perf": 2627,
+  "events": 13,
+  "rank": 75
+ },
+ {
   "fide_id": 13413937,
   "name": "Suleymanli, Aydin",
   "fed": "AZE",
@@ -1047,21 +1061,21 @@
   "tpr": 2616,
   "true_perf": 2619,
   "events": 13,
-  "rank": 75
+  "rank": 76
  },
  {
   "fide_id": 605506,
   "name": "Bacrot, Etienne",
   "fed": "FRA",
   "rating": 2640,
-  "games": 63,
-  "score": 36.5,
+  "games": 65,
+  "score": 38.0,
   "pct": 57.99999999999999,
-  "avg_opp": 2558,
-  "tpr": 2615,
-  "true_perf": 2621,
-  "events": 12,
-  "rank": 76
+  "avg_opp": 2557,
+  "tpr": 2614,
+  "true_perf": 2624,
+  "events": 13,
+  "rank": 77
  },
  {
   "fide_id": 14204223,
@@ -1075,7 +1089,7 @@
   "tpr": 2614,
   "true_perf": 2622,
   "events": 9,
-  "rank": 77
+  "rank": 78
  },
  {
   "fide_id": 25060783,
@@ -1089,7 +1103,7 @@
   "tpr": 2613,
   "true_perf": 2632,
   "events": 13,
-  "rank": 78
+  "rank": 79
  },
  {
   "fide_id": 2023970,
@@ -1103,20 +1117,6 @@
   "tpr": 2612,
   "true_perf": 2610,
   "events": 6,
-  "rank": 79
- },
- {
-  "fide_id": 4135539,
-  "name": "Alekseenko, Kirill",
-  "fed": "AUT",
-  "rating": 2661,
-  "games": 45,
-  "score": 26.5,
-  "pct": 59.0,
-  "avg_opp": 2546,
-  "tpr": 2611,
-  "true_perf": 2623,
-  "events": 12,
   "rank": 80
  },
  {
@@ -1190,6 +1190,20 @@
   "rank": 85
  },
  {
+  "fide_id": 13306553,
+  "name": "Martirosyan, Haik M.",
+  "fed": "ARM",
+  "rating": 2645,
+  "games": 74,
+  "score": 42.5,
+  "pct": 56.99999999999999,
+  "avg_opp": 2559,
+  "tpr": 2609,
+  "true_perf": 2616,
+  "events": 10,
+  "rank": 86
+ },
+ {
   "fide_id": 35028600,
   "name": "Pranesh M",
   "fed": "IND",
@@ -1201,7 +1215,7 @@
   "tpr": 2607,
   "true_perf": 2628,
   "events": 12,
-  "rank": 86
+  "rank": 87
  },
  {
   "fide_id": 1226380,
@@ -1215,7 +1229,7 @@
   "tpr": 2607,
   "true_perf": 2610,
   "events": 8,
-  "rank": 87
+  "rank": 88
  },
  {
   "fide_id": 4657101,
@@ -1229,7 +1243,7 @@
   "tpr": 2607,
   "true_perf": 2608,
   "events": 13,
-  "rank": 88
+  "rank": 89
  },
  {
   "fide_id": 722413,
@@ -1243,7 +1257,7 @@
   "tpr": 2606,
   "true_perf": 2620,
   "events": 14,
-  "rank": 89
+  "rank": 90
  },
  {
   "fide_id": 2905540,
@@ -1257,20 +1271,6 @@
   "tpr": 2606,
   "true_perf": 2613,
   "events": 11,
-  "rank": 90
- },
- {
-  "fide_id": 30920019,
-  "name": "Mishra, Abhimanyu",
-  "fed": "USA",
-  "rating": 2600,
-  "games": 50,
-  "score": 26.5,
-  "pct": 53.0,
-  "avg_opp": 2585,
-  "tpr": 2606,
-  "true_perf": 2610,
-  "events": 7,
   "rank": 91
  },
  {
@@ -1330,6 +1330,20 @@
   "rank": 95
  },
  {
+  "fide_id": 10601457,
+  "name": "Amin, Bassem",
+  "fed": "EGY",
+  "rating": 2648,
+  "games": 93,
+  "score": 62.5,
+  "pct": 67.0,
+  "avg_opp": 2477,
+  "tpr": 2602,
+  "true_perf": 2622,
+  "events": 21,
+  "rank": 96
+ },
+ {
   "fide_id": 400041,
   "name": "Adams, Michael",
   "fed": "ENG",
@@ -1341,7 +1355,7 @@
   "tpr": 2602,
   "true_perf": 2619,
   "events": 11,
-  "rank": 96
+  "rank": 97
  },
  {
   "fide_id": 1512668,
@@ -1355,7 +1369,7 @@
   "tpr": 2601,
   "true_perf": 2642,
   "events": 13,
-  "rank": 97
+  "rank": 98
  },
  {
   "fide_id": 14100010,
@@ -1369,7 +1383,7 @@
   "tpr": 2601,
   "true_perf": 2610,
   "events": 15,
-  "rank": 98
+  "rank": 99
  },
  {
   "fide_id": 24101605,
@@ -1383,7 +1397,7 @@
   "tpr": 2601,
   "true_perf": 2610,
   "events": 8,
-  "rank": 99
+  "rank": 100
  },
  {
   "fide_id": 14107090,
@@ -1397,7 +1411,7 @@
   "tpr": 2601,
   "true_perf": 2607,
   "events": 15,
-  "rank": 100
+  "rank": 101
  },
  {
   "fide_id": 8601429,
@@ -1411,20 +1425,6 @@
   "tpr": 2601,
   "true_perf": 2606,
   "events": 6,
-  "rank": 101
- },
- {
-  "fide_id": 10601457,
-  "name": "Amin, Bassem",
-  "fed": "EGY",
-  "rating": 2648,
-  "games": 90,
-  "score": 60.5,
-  "pct": 67.0,
-  "avg_opp": 2475,
-  "tpr": 2600,
-  "true_perf": 2620,
-  "events": 20,
   "rank": 102
  },
  {
@@ -1446,13 +1446,13 @@
   "name": "Onyshchuk, Volodymyr",
   "fed": "UKR",
   "rating": 2610,
-  "games": 20,
-  "score": 13.5,
+  "games": 22,
+  "score": 15.0,
   "pct": 68.0,
-  "avg_opp": 2465,
-  "tpr": 2598,
-  "true_perf": 2600,
-  "events": 5,
+  "avg_opp": 2464,
+  "tpr": 2597,
+  "true_perf": 2604,
+  "events": 6,
   "rank": 104
  },
  {
@@ -1596,20 +1596,6 @@
   "rank": 114
  },
  {
-  "fide_id": 4118987,
-  "name": "Najer, Evgeniy",
-  "fed": "FID",
-  "rating": 2637,
-  "games": 32,
-  "score": 18.5,
-  "pct": 57.99999999999999,
-  "avg_opp": 2527,
-  "tpr": 2584,
-  "true_perf": 2586,
-  "events": 4,
-  "rank": 115
- },
- {
   "fide_id": 4107012,
   "name": "Antipov, Mikhail Al.",
   "fed": "USA",
@@ -1621,7 +1607,7 @@
   "tpr": 2583,
   "true_perf": 2632,
   "events": 7,
-  "rank": 116
+  "rank": 115
  },
  {
   "fide_id": 4168003,
@@ -1635,7 +1621,7 @@
   "tpr": 2582,
   "true_perf": 2597,
   "events": 7,
-  "rank": 117
+  "rank": 116
  },
  {
   "fide_id": 2000024,
@@ -1649,6 +1635,20 @@
   "tpr": 2582,
   "true_perf": 2590,
   "events": 11,
+  "rank": 117
+ },
+ {
+  "fide_id": 4118987,
+  "name": "Najer, Evgeniy",
+  "fed": "FID",
+  "rating": 2637,
+  "games": 43,
+  "score": 23.0,
+  "pct": 53.0,
+  "avg_opp": 2561,
+  "tpr": 2582,
+  "true_perf": 2588,
+  "events": 5,
   "rank": 118
  },
  {
@@ -1806,6 +1806,20 @@
   "rank": 129
  },
  {
+  "fide_id": 13601520,
+  "name": "Jobava, Baadur",
+  "fed": "GEO",
+  "rating": 2578,
+  "games": 70,
+  "score": 40.5,
+  "pct": 57.99999999999999,
+  "avg_opp": 2510,
+  "tpr": 2567,
+  "true_perf": 2575,
+  "events": 11,
+  "rank": 130
+ },
+ {
   "fide_id": 14102196,
   "name": "Baklan, Vladimir",
   "fed": "UKR",
@@ -1817,7 +1831,7 @@
   "tpr": 2565,
   "true_perf": 2573,
   "events": 14,
-  "rank": 130
+  "rank": 131
  },
  {
   "fide_id": 2209390,
@@ -1831,7 +1845,7 @@
   "tpr": 2564,
   "true_perf": 2578,
   "events": 13,
-  "rank": 131
+  "rank": 132
  },
  {
   "fide_id": 110973,
@@ -1845,20 +1859,6 @@
   "tpr": 2557,
   "true_perf": 2571,
   "events": 13,
-  "rank": 132
- },
- {
-  "fide_id": 13601520,
-  "name": "Jobava, Baadur",
-  "fed": "GEO",
-  "rating": 2578,
-  "games": 58,
-  "score": 32.5,
-  "pct": 56.00000000000001,
-  "avg_opp": 2513,
-  "tpr": 2556,
-  "true_perf": 2564,
-  "events": 9,
   "rank": 133
  },
  {
@@ -2058,20 +2058,6 @@
   "rank": 147
  },
  {
-  "fide_id": 4108566,
-  "name": "Tsydypov, Zhamsaran",
-  "fed": "RUS",
-  "rating": 2505,
-  "games": 56,
-  "score": 35.5,
-  "pct": 63.0,
-  "avg_opp": 2394,
-  "tpr": 2489,
-  "true_perf": 2514,
-  "events": 6,
-  "rank": 148
- },
- {
   "fide_id": 2308649,
   "name": "Stefansson, Vignir Vatnar",
   "fed": "ISL",
@@ -2083,7 +2069,7 @@
   "tpr": 2485,
   "true_perf": 2506,
   "events": 16,
-  "rank": 149
+  "rank": 148
  },
  {
   "fide_id": 4174003,
@@ -2097,7 +2083,7 @@
   "tpr": 2483,
   "true_perf": 2512,
   "events": 8,
-  "rank": 150
+  "rank": 149
  },
  {
   "fide_id": 14118084,
@@ -2111,7 +2097,7 @@
   "tpr": 2481,
   "true_perf": 2503,
   "events": 10,
-  "rank": 151
+  "rank": 150
  },
  {
   "fide_id": 3801497,
@@ -2125,6 +2111,20 @@
   "tpr": 2481,
   "true_perf": 2490,
   "events": 14,
+  "rank": 151
+ },
+ {
+  "fide_id": 4108566,
+  "name": "Tsydypov, Zhamsaran",
+  "fed": "RUS",
+  "rating": 2505,
+  "games": 65,
+  "score": 40.5,
+  "pct": 62.0,
+  "avg_opp": 2390,
+  "tpr": 2477,
+  "true_perf": 2499,
+  "events": 7,
   "rank": 152
  },
  {
@@ -2244,13 +2244,13 @@
   "name": "Sedlak, Nikola",
   "fed": "SRB",
   "rating": 2456,
-  "games": 156,
-  "score": 86.0,
+  "games": 169,
+  "score": 92.5,
   "pct": 55.00000000000001,
-  "avg_opp": 2337,
-  "tpr": 2373,
-  "true_perf": 2378,
-  "events": 21,
+  "avg_opp": 2345,
+  "tpr": 2381,
+  "true_perf": 2383,
+  "events": 24,
   "rank": 161
  },
  {

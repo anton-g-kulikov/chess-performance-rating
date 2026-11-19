@@ -644,20 +644,6 @@
   "rank": 46
  },
  {
-  "fide_id": 4168003,
-  "name": "Matlakov, Maxim",
-  "fed": "RUS",
-  "rating": 2629,
-  "games": 32,
-  "score": 20.0,
-  "pct": 63.0,
-  "avg_opp": 2524,
-  "tpr": 2619,
-  "true_perf": 2636,
-  "events": 3,
-  "rank": 47
- },
- {
   "fide_id": 2004887,
   "name": "Shankland, Sam",
   "fed": "USA",
@@ -669,7 +655,7 @@
   "tpr": 2612,
   "true_perf": 2629,
   "events": 3,
-  "rank": 48
+  "rank": 47
  },
  {
   "fide_id": 13601520,
@@ -683,7 +669,7 @@
   "tpr": 2611,
   "true_perf": 2616,
   "events": 5,
-  "rank": 49
+  "rank": 48
  },
  {
   "fide_id": 13400924,
@@ -697,7 +683,7 @@
   "tpr": 2610,
   "true_perf": 2611,
   "events": 4,
-  "rank": 50
+  "rank": 49
  },
  {
   "fide_id": 13401653,
@@ -711,7 +697,7 @@
   "tpr": 2605,
   "true_perf": 2630,
   "events": 8,
-  "rank": 51
+  "rank": 50
  },
  {
   "fide_id": 12940690,
@@ -725,7 +711,7 @@
   "tpr": 2602,
   "true_perf": 2602,
   "events": 5,
-  "rank": 52
+  "rank": 51
  },
  {
   "fide_id": 13306766,
@@ -739,7 +725,7 @@
   "tpr": 2601,
   "true_perf": 2625,
   "events": 5,
-  "rank": 53
+  "rank": 52
  },
  {
   "fide_id": 1170546,
@@ -753,21 +739,7 @@
   "tpr": 2599,
   "true_perf": 2601,
   "events": 4,
-  "rank": 54
- },
- {
-  "fide_id": 8603332,
-  "name": "Lu, Shanglei",
-  "fed": "CHN",
-  "rating": 2611,
-  "games": 31,
-  "score": 19.0,
-  "pct": 61.0,
-  "avg_opp": 2518,
-  "tpr": 2598,
-  "true_perf": 2606,
-  "events": 4,
-  "rank": 55
+  "rank": 53
  },
  {
   "fide_id": 8601445,
@@ -781,7 +753,7 @@
   "tpr": 2596,
   "true_perf": 2600,
   "events": 5,
-  "rank": 56
+  "rank": 54
  },
  {
   "fide_id": 5029465,
@@ -795,7 +767,7 @@
   "tpr": 2595,
   "true_perf": 2601,
   "events": 4,
-  "rank": 57
+  "rank": 55
  },
  {
   "fide_id": 24603295,
@@ -809,7 +781,7 @@
   "tpr": 2592,
   "true_perf": 2603,
   "events": 4,
-  "rank": 58
+  "rank": 56
  },
  {
   "fide_id": 14100010,
@@ -823,7 +795,7 @@
   "tpr": 2592,
   "true_perf": 2601,
   "events": 4,
-  "rank": 59
+  "rank": 57
  },
  {
   "fide_id": 14203987,
@@ -837,7 +809,7 @@
   "tpr": 2589,
   "true_perf": 2598,
   "events": 5,
-  "rank": 60
+  "rank": 58
  },
  {
   "fide_id": 642908,
@@ -851,7 +823,7 @@
   "tpr": 2587,
   "true_perf": 2597,
   "events": 5,
-  "rank": 61
+  "rank": 59
  },
  {
   "fide_id": 12521213,
@@ -865,7 +837,7 @@
   "tpr": 2586,
   "true_perf": 2645,
   "events": 6,
-  "rank": 62
+  "rank": 60
  },
  {
   "fide_id": 44599790,
@@ -879,7 +851,21 @@
   "tpr": 2585,
   "true_perf": 2640,
   "events": 4,
-  "rank": 63
+  "rank": 61
+ },
+ {
+  "fide_id": 8603332,
+  "name": "Lu, Shanglei",
+  "fed": "CHN",
+  "rating": 2611,
+  "games": 39,
+  "score": 22.0,
+  "pct": 56.00000000000001,
+  "avg_opp": 2542,
+  "tpr": 2585,
+  "true_perf": 2591,
+  "events": 5,
+  "rank": 62
  },
  {
   "fide_id": 2285525,
@@ -893,7 +879,7 @@
   "tpr": 2583,
   "true_perf": 2594,
   "events": 4,
-  "rank": 64
+  "rank": 63
  },
  {
   "fide_id": 14508150,
@@ -907,7 +893,7 @@
   "tpr": 2582,
   "true_perf": 2588,
   "events": 2,
-  "rank": 65
+  "rank": 64
  },
  {
   "fide_id": 8602883,
@@ -921,7 +907,7 @@
   "tpr": 2582,
   "true_perf": 2582,
   "events": 3,
-  "rank": 66
+  "rank": 65
  },
  {
   "fide_id": 13301004,
@@ -935,7 +921,7 @@
   "tpr": 2581,
   "true_perf": 2603,
   "events": 7,
-  "rank": 67
+  "rank": 66
  },
  {
   "fide_id": 3805662,
@@ -949,7 +935,7 @@
   "tpr": 2580,
   "true_perf": 2582,
   "events": 5,
-  "rank": 68
+  "rank": 67
  },
  {
   "fide_id": 310204,
@@ -963,7 +949,7 @@
   "tpr": 2574,
   "true_perf": 2608,
   "events": 4,
-  "rank": 69
+  "rank": 68
  },
  {
   "fide_id": 3901211,
@@ -977,7 +963,7 @@
   "tpr": 2571,
   "true_perf": 2593,
   "events": 7,
-  "rank": 70
+  "rank": 69
  },
  {
   "fide_id": 1226380,
@@ -991,7 +977,7 @@
   "tpr": 2571,
   "true_perf": 2573,
   "events": 3,
-  "rank": 71
+  "rank": 70
  },
  {
   "fide_id": 662399,
@@ -1005,7 +991,7 @@
   "tpr": 2570,
   "true_perf": 2624,
   "events": 9,
-  "rank": 72
+  "rank": 71
  },
  {
   "fide_id": 44105681,
@@ -1019,7 +1005,7 @@
   "tpr": 2570,
   "true_perf": 2609,
   "events": 5,
-  "rank": 73
+  "rank": 72
  },
  {
   "fide_id": 605506,
@@ -1033,7 +1019,7 @@
   "tpr": 2569,
   "true_perf": 2593,
   "events": 4,
-  "rank": 74
+  "rank": 73
  },
  {
   "fide_id": 12576468,
@@ -1047,7 +1033,7 @@
   "tpr": 2567,
   "true_perf": 2622,
   "events": 4,
-  "rank": 75
+  "rank": 74
  },
  {
   "fide_id": 110973,
@@ -1061,7 +1047,7 @@
   "tpr": 2567,
   "true_perf": 2594,
   "events": 7,
-  "rank": 76
+  "rank": 75
  },
  {
   "fide_id": 2209390,
@@ -1075,7 +1061,7 @@
   "tpr": 2567,
   "true_perf": 2589,
   "events": 15,
-  "rank": 77
+  "rank": 76
  },
  {
   "fide_id": 1017063,
@@ -1089,7 +1075,7 @@
   "tpr": 2566,
   "true_perf": 2610,
   "events": 3,
-  "rank": 78
+  "rank": 77
  },
  {
   "fide_id": 4198603,
@@ -1103,7 +1089,7 @@
   "tpr": 2565,
   "true_perf": 2582,
   "events": 6,
-  "rank": 79
+  "rank": 78
  },
  {
   "fide_id": 44155573,
@@ -1117,7 +1103,7 @@
   "tpr": 2563,
   "true_perf": 2573,
   "events": 5,
-  "rank": 80
+  "rank": 79
  },
  {
   "fide_id": 14103320,
@@ -1131,7 +1117,7 @@
   "tpr": 2562,
   "true_perf": 2578,
   "events": 5,
-  "rank": 81
+  "rank": 80
  },
  {
   "fide_id": 4675789,
@@ -1145,7 +1131,7 @@
   "tpr": 2561,
   "true_perf": 2591,
   "events": 8,
-  "rank": 82
+  "rank": 81
  },
  {
   "fide_id": 8603154,
@@ -1159,21 +1145,21 @@
   "tpr": 2561,
   "true_perf": 2561,
   "events": 5,
-  "rank": 83
+  "rank": 82
  },
  {
-  "fide_id": 13302507,
-  "name": "Hovhannisyan, Robert",
-  "fed": "ARM",
-  "rating": 2534,
-  "games": 26,
-  "score": 12.5,
-  "pct": 48.0,
-  "avg_opp": 2574,
+  "fide_id": 4168003,
+  "name": "Matlakov, Maxim",
+  "fed": "RUS",
+  "rating": 2629,
+  "games": 52,
+  "score": 33.0,
+  "pct": 63.0,
+  "avg_opp": 2465,
   "tpr": 2560,
-  "true_perf": 2572,
-  "events": 3,
-  "rank": 84
+  "true_perf": 2578,
+  "events": 5,
+  "rank": 83
  },
  {
   "fide_id": 5058422,
@@ -1187,7 +1173,7 @@
   "tpr": 2560,
   "true_perf": 2562,
   "events": 2,
-  "rank": 85
+  "rank": 84
  },
  {
   "fide_id": 35028600,
@@ -1201,7 +1187,7 @@
   "tpr": 2557,
   "true_perf": 2600,
   "events": 4,
-  "rank": 86
+  "rank": 85
  },
  {
   "fide_id": 911925,
@@ -1215,7 +1201,7 @@
   "tpr": 2555,
   "true_perf": 2573,
   "events": 5,
-  "rank": 87
+  "rank": 86
  },
  {
   "fide_id": 14117908,
@@ -1229,7 +1215,7 @@
   "tpr": 2553,
   "true_perf": 2572,
   "events": 6,
-  "rank": 88
+  "rank": 87
  },
  {
   "fide_id": 712779,
@@ -1243,7 +1229,7 @@
   "tpr": 2551,
   "true_perf": 2580,
   "events": 3,
-  "rank": 89
+  "rank": 88
  },
  {
   "fide_id": 35093487,
@@ -1257,7 +1243,7 @@
   "tpr": 2551,
   "true_perf": 2557,
   "events": 6,
-  "rank": 90
+  "rank": 89
  },
  {
   "fide_id": 240990,
@@ -1271,7 +1257,7 @@
   "tpr": 2550,
   "true_perf": 2572,
   "events": 10,
-  "rank": 91
+  "rank": 90
  },
  {
   "fide_id": 1039784,
@@ -1285,7 +1271,7 @@
   "tpr": 2550,
   "true_perf": 2557,
   "events": 6,
-  "rank": 92
+  "rank": 91
  },
  {
   "fide_id": 1118358,
@@ -1299,7 +1285,7 @@
   "tpr": 2546,
   "true_perf": 2551,
   "events": 6,
-  "rank": 93
+  "rank": 92
  },
  {
   "fide_id": 2806851,
@@ -1313,7 +1299,7 @@
   "tpr": 2543,
   "true_perf": 2544,
   "events": 5,
-  "rank": 94
+  "rank": 93
  },
  {
   "fide_id": 603767,
@@ -1327,7 +1313,7 @@
   "tpr": 2542,
   "true_perf": 2578,
   "events": 27,
-  "rank": 95
+  "rank": 94
  },
  {
   "fide_id": 13302000,
@@ -1341,7 +1327,7 @@
   "tpr": 2541,
   "true_perf": 2555,
   "events": 3,
-  "rank": 96
+  "rank": 95
  },
  {
   "fide_id": 4108116,
@@ -1355,21 +1341,7 @@
   "tpr": 2541,
   "true_perf": 2552,
   "events": 4,
-  "rank": 97
- },
- {
-  "fide_id": 14204223,
-  "name": "Vokhidov, Shamsiddin",
-  "fed": "UZB",
-  "rating": 2524,
-  "games": 26,
-  "score": 14.0,
-  "pct": 54.0,
-  "avg_opp": 2507,
-  "tpr": 2536,
-  "true_perf": 2540,
-  "events": 4,
-  "rank": 98
+  "rank": 96
  },
  {
   "fide_id": 4135539,
@@ -1383,7 +1355,7 @@
   "tpr": 2535,
   "true_perf": 2548,
   "events": 5,
-  "rank": 99
+  "rank": 97
  },
  {
   "fide_id": 4121830,
@@ -1397,7 +1369,21 @@
   "tpr": 2533,
   "true_perf": 2542,
   "events": 3,
-  "rank": 100
+  "rank": 98
+ },
+ {
+  "fide_id": 14204223,
+  "name": "Vokhidov, Shamsiddin",
+  "fed": "UZB",
+  "rating": 2524,
+  "games": 36,
+  "score": 19.5,
+  "pct": 54.0,
+  "avg_opp": 2498,
+  "tpr": 2527,
+  "true_perf": 2534,
+  "events": 5,
+  "rank": 99
  },
  {
   "fide_id": 14507927,
@@ -1411,7 +1397,35 @@
   "tpr": 2525,
   "true_perf": 2570,
   "events": 2,
+  "rank": 100
+ },
+ {
+  "fide_id": 13302507,
+  "name": "Hovhannisyan, Robert",
+  "fed": "ARM",
+  "rating": 2534,
+  "games": 33,
+  "score": 17.0,
+  "pct": 52.0,
+  "avg_opp": 2507,
+  "tpr": 2521,
+  "true_perf": 2536,
+  "events": 4,
   "rank": 101
+ },
+ {
+  "fide_id": 409561,
+  "name": "Maroroa Jones, Gawain C B",
+  "fed": "ENG",
+  "rating": 2638,
+  "games": 25,
+  "score": 15.0,
+  "pct": 60.0,
+  "avg_opp": 2445,
+  "tpr": 2517,
+  "true_perf": 2525,
+  "events": 3,
+  "rank": 102
  },
  {
   "fide_id": 5007003,
@@ -1425,7 +1439,7 @@
   "tpr": 2517,
   "true_perf": 2514,
   "events": 3,
-  "rank": 102
+  "rank": 103
  },
  {
   "fide_id": 10601457,
@@ -1439,7 +1453,7 @@
   "tpr": 2513,
   "true_perf": 2535,
   "events": 3,
-  "rank": 103
+  "rank": 104
  },
  {
   "fide_id": 5061245,
@@ -1453,7 +1467,7 @@
   "tpr": 2504,
   "true_perf": 2544,
   "events": 5,
-  "rank": 104
+  "rank": 105
  },
  {
   "fide_id": 8602980,
@@ -1467,7 +1481,21 @@
   "tpr": 2500,
   "true_perf": 2510,
   "events": 4,
-  "rank": 105
+  "rank": 106
+ },
+ {
+  "fide_id": 1048104,
+  "name": "Warmerdam, Max",
+  "fed": "NED",
+  "rating": 2517,
+  "games": 37,
+  "score": 24.0,
+  "pct": 65.0,
+  "avg_opp": 2387,
+  "tpr": 2497,
+  "true_perf": 2516,
+  "events": 4,
+  "rank": 107
  },
  {
   "fide_id": 4657101,
@@ -1481,7 +1509,7 @@
   "tpr": 2494,
   "true_perf": 2499,
   "events": 4,
-  "rank": 106
+  "rank": 108
  },
  {
   "fide_id": 4108566,
@@ -1495,7 +1523,7 @@
   "tpr": 2487,
   "true_perf": 2515,
   "events": 7,
-  "rank": 107
+  "rank": 109
  },
  {
   "fide_id": 9301348,
@@ -1509,7 +1537,21 @@
   "tpr": 2487,
   "true_perf": 2488,
   "events": 3,
-  "rank": 108
+  "rank": 110
+ },
+ {
+  "fide_id": 13413937,
+  "name": "Suleymanli, Aydin",
+  "fed": "AZE",
+  "rating": 2535,
+  "games": 21,
+  "score": 9.5,
+  "pct": 45.0,
+  "avg_opp": 2517,
+  "tpr": 2481,
+  "true_perf": 2486,
+  "events": 3,
+  "rank": 111
  },
  {
   "fide_id": 4650891,
@@ -1523,7 +1565,7 @@
   "tpr": 2476,
   "true_perf": 2498,
   "events": 9,
-  "rank": 109
+  "rank": 112
  },
  {
   "fide_id": 1512668,
@@ -1537,7 +1579,7 @@
   "tpr": 2468,
   "true_perf": 2517,
   "events": 3,
-  "rank": 110
+  "rank": 113
  },
  {
   "fide_id": 24131423,
@@ -1551,35 +1593,21 @@
   "tpr": 2459,
   "true_perf": 2483,
   "events": 4,
-  "rank": 111
- },
- {
-  "fide_id": 1048104,
-  "name": "Warmerdam, Max",
-  "fed": "NED",
-  "rating": 2517,
-  "games": 28,
-  "score": 15.5,
-  "pct": 55.00000000000001,
-  "avg_opp": 2415,
-  "tpr": 2451,
-  "true_perf": 2460,
-  "events": 3,
-  "rank": 112
+  "rank": 114
  },
  {
   "fide_id": 509825,
   "name": "Keinanen, Toivo",
   "fed": "FIN",
   "rating": 2545,
-  "games": 78,
-  "score": 56.0,
-  "pct": 72.0,
-  "avg_opp": 2283,
-  "tpr": 2449,
-  "true_perf": 2473,
-  "events": 9,
-  "rank": 113
+  "games": 81,
+  "score": 59.0,
+  "pct": 73.0,
+  "avg_opp": 2277,
+  "tpr": 2452,
+  "true_perf": 2478,
+  "events": 10,
+  "rank": 115
  },
  {
   "fide_id": 309095,
@@ -1593,7 +1621,7 @@
   "tpr": 2444,
   "true_perf": 2440,
   "events": 3,
-  "rank": 114
+  "rank": 116
  },
  {
   "fide_id": 16207378,
@@ -1607,7 +1635,7 @@
   "tpr": 2441,
   "true_perf": 2486,
   "events": 6,
-  "rank": 115
+  "rank": 117
  },
  {
   "fide_id": 7101384,
@@ -1621,7 +1649,7 @@
   "tpr": 2425,
   "true_perf": 2441,
   "events": 4,
-  "rank": 116
+  "rank": 118
  },
  {
   "fide_id": 2308649,
@@ -1635,6 +1663,6 @@
   "tpr": 2424,
   "true_perf": 2450,
   "events": 5,
-  "rank": 117
+  "rank": 119
  }
 ]

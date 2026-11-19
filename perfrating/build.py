@@ -45,7 +45,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 from datetime import date
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from .archive import ListArchive, pool_months
 from .fide import FORMAT_ARRAYS, FORMAT_CODES, TOP_LISTS, FideClient
@@ -130,13 +130,39 @@ def periods_with_games(client: FideClient, fide_id: int, periods: List[str],
     return out
 
 
+class FideRefusing(RuntimeError):
+    """FIDE keeps answering with empty pages where the lists say there are games."""
+
+
+class Gaps:
+    """Pages the list archive says have games but FIDE served empty.
+
+    A long run of them in a row means FIDE has stopped serving us, so the
+    build stops instead of grinding on and writing lists with holes."""
+
+    def __init__(self, limit: int = 15) -> None:
+        self.pages: List[Tuple[int, str, str]] = []
+        self.streak = 0
+        self.limit = limit
+
+    def found(self) -> None:
+        self.streak = 0
+
+    def missed(self, fide_id: int, fmt: str, period: str) -> None:
+        self.pages.append((fide_id, fmt, period))
+        self.streak += 1
+        if self.streak >= self.limit:
+            raise FideRefusing(f"FIDE served {self.streak} empty pages in a row that should have games; "
+                               "it is probably refusing requests for now. Try again later: pages already "
+                               "fetched are cached.")
+
+
 def fetch_tournaments(client: FideClient, fide_id: int, period: str, fmt: str,
                       expect_games: bool) -> List[Tournament]:
     tournaments = parse_calculation(client.calculation(fide_id, period, fmt))
-    # FIDE occasionally answers with an empty body.  Ask again: a few times
-    # when the period is known to have games, once otherwise.
-    # FIDE answers with empty pages when it is busy, so wait a little longer
-    # before each new attempt.
+    # FIDE answers with empty pages when it is busy.  Ask again, a few times
+    # when the period is known to have games and once otherwise, waiting a
+    # little longer before each new attempt.
     tries = 3 if expect_games else 1
     pause = 2.0
     while tries and not any(t.games for t in tournaments):
@@ -147,10 +173,22 @@ def fetch_tournaments(client: FideClient, fide_id: int, period: str, fmt: str,
     return tournaments
 
 
+def event_rows(tournaments: List[Tournament], period: str) -> List[dict]:
+    rows = []
+    for t in tournaments:
+        if t.games:
+            d = asdict(t)
+            d["period"] = period
+            rows.append(d)
+    return rows
+
+
 def collect_player(client: FideClient, player: Player, periods: List[str],
-                   exhaustive: bool, known: Optional[Dict[str, List[str]]] = None) -> Dict[str, List[dict]]:
+                   exhaustive: bool, known: Optional[Dict[str, List[str]]] = None,
+                   gaps: Optional[Gaps] = None) -> Dict[str, List[dict]]:
     """Events with games for one player.  ``known`` gives the periods with
-    games per format (from the list archive); otherwise they are looked up."""
+    games per format (from the list archive); otherwise they are looked up.
+    Known periods that come back empty are recorded in ``gaps``."""
     todo = known if known is not None else periods_with_games(client, player.fide_id, periods, exhaustive)
     end_year = periods[-1][:4]
     result: Dict[str, List[dict]] = {}
@@ -158,11 +196,13 @@ def collect_player(client: FideClient, player: Player, periods: List[str],
         events = []
         for period in todo[fmt]:
             expect = known is not None or (not exhaustive and period[:4] == end_year)
-            for t in fetch_tournaments(client, player.fide_id, period, fmt, expect):
-                if t.games:
-                    d = asdict(t)
-                    d["period"] = period
-                    events.append(d)
+            rows = event_rows(fetch_tournaments(client, player.fide_id, period, fmt, expect), period)
+            if gaps is not None and known is not None:
+                if rows:
+                    gaps.found()
+                else:
+                    gaps.missed(player.fide_id, fmt, period)
+            events.extend(rows)
         result[fmt] = events
     return result
 
@@ -283,6 +323,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--min-games", default="20,20,40",
                     help="minimum games for classical,rapid,blitz over a full year (default 20,20,40)")
     ap.add_argument("--top", type=int, default=100, help="rows per list in the Markdown summary")
+    ap.add_argument("--pause", type=lambda v: tuple(float(x) for x in v.split("-")) * (1 if "-" in v else 2),
+                    default=(6.0, 12.0), metavar="MIN-MAX",
+                    help="seconds between the starts of two FIDE requests, picked at random in this "
+                         "range; after every 40-80 requests a 1-2 minute rest. FIDE blocks clients "
+                         "that ask for game pages much faster (default 6-12)")
     ap.add_argument("--workers", type=int, default=1,
                     help="parallel requests; FIDE serves one at a time fastest (default 1)")
     ap.add_argument("--exhaustive", action="store_true",
@@ -336,7 +381,8 @@ def main(argv: Optional[List[str]] = None) -> int:
 
 
 def fetch(args):
-    client = FideClient(cache_dir=Path(args.cache) if args.cache else None)
+    client = FideClient(cache_dir=Path(args.cache) if args.cache else None, min_interval=args.pause[0], max_interval=args.pause[1],
+                        breaks=(40, 80), break_length=(60.0, 120.0))
     top_pages = {fmt: client.get("/a_top.php", {"list": TOP_LISTS[fmt]}, refresh=True)
                  for fmt in FORMATS}
     latest = latest_list_month(top_pages["classical"])
@@ -368,15 +414,32 @@ def fetch(args):
     def job(fid: int):
         info = pool[fid]
         player = Player(fid, info["name"], info["fed"], 0)
-        return fid, collect_player(client, player, periods, args.exhaustive, known.get(fid) if past else None)
+        return fid, collect_player(client, player, periods, args.exhaustive,
+                                   known.get(fid) if past else None, gaps)
 
+    def in_year(events: List[dict]) -> List[dict]:
+        return [e for e in events if event_year(e) == args.year] if args.year else events
+
+    gaps = Gaps()
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
         for i, (fid, data) in enumerate(ex.map(job, pool), 1):
-            if args.year:
-                data = {f: [e for e in evs if event_year(e) == args.year] for f, evs in data.items()}
-            games[fid] = data
+            games[fid] = {f: in_year(evs) for f, evs in data.items()}
             if i % 10 == 0 or i == len(pool):
                 print(f"  {i}/{len(pool)} players ({client.requests_made} requests)", file=sys.stderr)
+
+    if gaps.pages:
+        # A second go at the pages FIDE served empty, after the rest.
+        print(f"  {len(gaps.pages)} pages came back empty; asking again", file=sys.stderr)
+        still = []
+        for fid, fmt, period in gaps.pages:
+            time.sleep(5)
+            rows = event_rows(fetch_tournaments(client, fid, period, fmt, True), period)
+            if rows:
+                games[fid][fmt].extend(in_year(rows))
+            else:
+                still.append(f"{pool[fid]['name']} {fmt} {period}")
+        if still:
+            raise FideRefusing(f"{len(still)} pages with games are still empty: " + "; ".join(still))
 
     # Ratings missing from the lists used: take the player's own rating from
     # an event in that format.  For the current lists that is the latest
