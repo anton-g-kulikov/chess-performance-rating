@@ -8,7 +8,7 @@ from perfrating.build import (build_rows, event_year, scaled_minimum, window,
                               year_fraction, year_periods)
 from perfrating.parsers import parse_calculation, parse_period_arrays, parse_top_list
 from perfrating.performance import dp, performance, round_p, true_performance
-from perfrating.web import name_key, player_entries
+from perfrating.web import name_key, player_entries, progress, race_frames
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -162,6 +162,27 @@ class PlayerPageTest(unittest.TestCase):
         b = out[2]["formats"]
         self.assertEqual(list(b), ["blitz"])  # formats without games are left out
         self.assertEqual((b["blitz"]["rank"], b["blitz"]["games"], b["blitz"]["tpr"]), (None, 1, 1900))
+
+
+    def test_progress_is_tpr_to_date_oldest_first(self):
+        def ev(start, ro, games):
+            return {"start": start, "end": start, "period": "2026-01-01", "ro": ro,
+                    "games": [{"opponent_rating": r, "result": x, "counted": True} for r, x in games]}
+        events = [ev("2026-03-01", 2710, [(2700, 0)]), ev("2026-01-01", 2700, [(2700, 1)])]  # newest first
+        self.assertEqual(progress(events), [[2710, 2700, 2], [2700, 3500, 1]])
+
+    def test_race_frames_scale_the_minimum_and_end_on_the_list(self):
+        def ev(end, n, result):
+            return {"start": end, "end": end, "period": "2026-01-01",
+                    "games": [{"opponent_rating": 2700, "result": result, "counted": True}] * n}
+        saved = {"year": 2026, "players": {
+            "1": {"name": "A", "fed": "X", "ratings": {}, "games": {"blitz": [ev("2026-01-10", 4, 1), ev("2026-02-10", 40, 0.5)]}},
+            "2": {"name": "B", "fed": "Y", "ratings": {}, "games": {"blitz": [ev("2026-02-20", 40, 0.6)]}},
+        }}
+        frames = race_frames(saved, "blitz", 2, final_min=7)
+        self.assertEqual([(f["m"], f["min"], f["q"]) for f in frames], [(1, 4, 1), (2, 7, 2)])
+        self.assertEqual(frames[0]["rows"], [[1, 3500, 4]])
+        self.assertEqual([r[0] for r in frames[1]["rows"]], [2, 1])
 
 
 if __name__ == "__main__":

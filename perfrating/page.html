@@ -254,17 +254,17 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 .psum .colh { align-self: end; padding: 0 4px; font-family: var(--display); font-weight: 600; font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
 .psum .rowh { align-self: center; display: grid; font-family: var(--display); font-weight: 700; font-stretch: 88%; font-size: 17px; line-height: 1.2; }
 .psum .rowh small { font-family: var(--body); font-weight: 400; font-stretch: 100%; font-size: 13px; color: var(--muted); }
-.pcell {
+.gcell {
   appearance: none; text-align: left; cursor: pointer; font: inherit; color: inherit; min-width: 0;
   background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
   padding: 10px 14px; display: grid; gap: 1px; align-content: center; transition: border-color .15s, box-shadow .15s;
 }
-.pcell:hover { border-color: var(--accent); }
-.pcell[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--accent-soft); }
-.pcell:disabled { cursor: default; background: transparent; border-style: dashed; color: var(--muted); }
-.pcell .ctpr { font-family: var(--display); font-weight: 800; font-stretch: 80%; font-size: 26px; line-height: 1.1; color: var(--accent); }
-.pcell .cnr { font-weight: 600; color: var(--muted); }
-.pcell .csub { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.gcell:hover { border-color: var(--accent); }
+.gcell[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--accent-soft); }
+.gcell:disabled { cursor: default; background: transparent; border-style: dashed; color: var(--muted); }
+.gcell .ctpr { font-family: var(--display); font-weight: 800; font-stretch: 80%; font-size: 26px; line-height: 1.1; color: var(--accent); }
+.gcell .cnr { font-weight: 600; color: var(--muted); }
+.gcell .csub { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
 .psum .gap { grid-column: span 3; align-self: center; padding: 10px 14px; border: 1px dashed var(--line); border-radius: 10px; font-size: 14px; color: var(--muted); }
 .pdetail { display: grid; gap: 14px; min-width: 0; }
 .pdetail h2 { font-family: var(--display); font-weight: 800; font-stretch: 85%; font-size: 26px; line-height: 1.1; margin: 0; }
@@ -286,13 +286,89 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 .games td.opp { white-space: normal; text-align: left; }
 .games td.res { font-weight: 700; }
 .games .cap { color: var(--muted); }
+/* Race replay (year lists): the top 10 at the end of each month, as dots on a TPR axis that
+   rescales with the month. Rows slide to their new rank; the dot slides to the new TPR. */
+.race { display: grid; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.race[hidden] { display: none; }
+.race-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.race h2 { margin: 0; font-family: var(--display); font-weight: 800; font-stretch: 85%; font-size: 20px; }
+.race-month { font-family: var(--display); font-weight: 800; font-stretch: 80%; font-size: 26px; line-height: 1; }
+.race-sub { font-size: 13px; color: var(--muted); }
+.race-ctl { display: flex; align-items: center; gap: 10px; flex: 1 1 260px; max-width: 420px; }
+.race-ctl input { flex: 1; min-width: 0; accent-color: var(--accent); }
+.race-play {
+  appearance: none; cursor: pointer; font: inherit; font-weight: 600; font-size: 14px; flex: none;
+  border: 1px solid var(--accent); background: var(--accent); color: var(--surface); border-radius: 8px; padding: 6px 12px; min-width: 76px;
+}
+.race-plot { --row: 30px; --rank: 26px; --name: 190px; --val: 84px; --gap: 10px; position: relative; height: calc(var(--row) * 10 + 22px); }
+.race-axis { position: absolute; top: 0; bottom: 0; left: calc(var(--rank) + var(--name) + 2 * var(--gap)); right: calc(var(--val) + var(--gap)); }
+.race-axis .t { position: absolute; top: 18px; bottom: 0; width: 0; border-left: 1px solid var(--line); transition: left .8s ease, opacity .4s; }
+.race-axis .t span { position: absolute; top: -18px; transform: translateX(-50%); font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.race-row {
+  position: absolute; left: 0; right: 0; top: 22px; height: var(--row);
+  display: grid; grid-template-columns: var(--rank) var(--name) 1fr var(--val); gap: var(--gap); align-items: center;
+  transition: transform .8s ease, opacity .4s;
+}
+.race-row .rk { text-align: right; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.race-row .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; font-size: 14px; color: var(--ink); text-decoration: none; }
+.race-row .nm:hover { color: var(--accent); text-decoration: underline; }
+.race-row .tr { position: relative; height: 100%; }
+.race-row .tr::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid var(--line); opacity: .6; }
+.race-row .dt {
+  position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 0 2px var(--surface); transition: left .8s ease;
+}
+.race-row .vl { text-align: right; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.race-row .vl small { font-weight: 400; color: var(--muted); font-size: 12px; }
 @media (max-width: 560px) {
+  .race { padding: 12px 10px; }
+  .race-plot { --row: 28px; --rank: 20px; --name: 92px; --val: 66px; --gap: 6px; }
+  .race-row .nm { font-size: 13px; }
+}
+@media (prefers-reduced-motion: reduce) { .race-row, .race-row .dt, .race-axis .t { transition: none; } }
+
+/* Player chart: TPR to date (accent) and the FIDE rating going into each event (muted), one rating axis. */
+.pchart { display: grid; gap: 8px; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px 10px; }
+.pchart-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 16px; }
+.pchart h3 { margin: 0; font-family: var(--display); font-weight: 700; font-stretch: 88%; font-size: 17px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { display: inline-block; width: 16px; height: 2px; border-radius: 1px; background: currentColor; }
+.legend .k-tpr i { background: var(--accent); }
+.legend .k-fide i { background: var(--muted); }
+.plot { position: relative; min-width: 0; }
+.plot svg { display: block; width: 100%; overflow: visible; }
+.plot svg:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; border-radius: 4px; }
+.plot .grid line { stroke: var(--line); stroke-width: 1; }
+.plot .tick { font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.plot .l-tpr { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.plot .l-fide { fill: none; stroke: var(--muted); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; opacity: .7; }
+.plot .dot { fill: var(--accent); stroke: var(--surface); stroke-width: 2; }
+.plot .dot.on { r: 6; }
+.plot .endl { font-size: 13px; font-weight: 700; fill: var(--ink); font-variant-numeric: tabular-nums; }
+.plot .endl tspan { font-weight: 400; fill: var(--muted); }
+.plot .qual line { stroke: var(--muted); stroke-width: 1; }
+.plot .qual text { font-size: 11px; fill: var(--muted); }
+.plot .cross { stroke: var(--muted); stroke-width: 1; }
+.tip {
+  position: absolute; z-index: 2; pointer-events: none; min-width: 180px; max-width: 260px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .12); font-size: 13px; line-height: 1.4;
+}
+.tip b { display: block; font-size: 14px; }
+.tip .muted { font-size: 12px; }
+.tip .row2 { display: flex; justify-content: space-between; gap: 12px; }
+.anim .l-tpr { transition: stroke-dashoffset 1.2s cubic-bezier(.3, .6, .3, 1); }
+.anim .dot, .anim .l-fide, .anim .endl, .anim .qual { transition: opacity .35s; }
+
+@media (max-width: 560px) {
+  .pchart { padding: 12px 10px 8px; }
   .psum { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
   .psum .corner { display: none; }
   .psum .rowh { grid-column: 1 / -1; margin-top: 8px; grid-template-columns: auto 1fr; gap: 8px; align-items: baseline; }
   .psum .gap { grid-column: 1 / -1; }
-  .pcell { padding: 8px 10px; }
-  .pcell .ctpr { font-size: 22px; }
+  .gcell { padding: 8px 10px; }
+  .gcell .ctpr { font-size: 22px; }
   .pev td.name { min-width: 0; width: 100%; }
 }
 </style>
@@ -322,6 +398,18 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
   </div>
 
   <nav class="formats lists-only" role="tablist" aria-label="Format" id="formats"></nav>
+
+  <section class="race lists-only" id="race" aria-labelledby="race-title" hidden>
+    <div class="race-head">
+      <div><h2 id="race-title">How the race unfolded</h2><div class="race-sub" id="race-sub"></div></div>
+      <div class="race-month" id="race-month" aria-hidden="true"></div>
+    </div>
+    <div class="race-ctl">
+      <button type="button" class="race-play" id="race-play">Play</button>
+      <input type="range" id="race-seek" min="0" max="0" value="0" aria-label="Month">
+    </div>
+    <div class="race-plot" id="race-plot"><div class="race-axis" id="race-axis"></div></div>
+  </section>
 
   <section class="lists-only" aria-labelledby="list-title" style="display:grid; gap:12px; min-width:0">
     <div class="toolbar">
@@ -622,7 +710,7 @@ function renderBody() {
 
 function render() {
   $("formats").classList.remove("loading");
-  renderModes(); renderFormats(); renderHead(); renderBody(); renderMethod();
+  renderModes(); renderFormats(); renderRace(); renderHead(); renderBody(); renderMethod();
 }
 
 // The hash holds the view and the kept players' FIDE ids, so a comparison can be shared:
@@ -644,6 +732,7 @@ function go(mode, fmt, push) {
   const want = M;
   renderModes();
   $("formats").classList.add("loading");
+  stopRace(); race.key = ""; $("race").hidden = true;
   $("count").textContent = "";
   $("body").innerHTML = `<tr><td colspan="${COLS.length}" class="empty">Loading ${esc(want.label)}…</td></tr>`;
   fetch(want.src)
@@ -735,10 +824,10 @@ function cell(m, f) {
   const e = ps.d.modes[m.id][f];
   const on = m.id === ps.mode && f === ps.fmt;
   const where = `${m.label}, ${LABEL[f].toLowerCase()}`;
-  if (!e) return `<button type="button" class="pcell" disabled aria-label="${esc(where)}: no rated games"><span class="csub">No games</span></button>`;
-  if (e.rank) return `<button type="button" class="pcell" data-m="${m.id}" data-f="${f}" aria-pressed="${on}" aria-label="${esc(where)}: TPR ${e.tpr}, rank ${e.rank} of ${e.of}">` +
+  if (!e) return `<button type="button" class="gcell" disabled aria-label="${esc(where)}: no rated games"><span class="csub">No games</span></button>`;
+  if (e.rank) return `<button type="button" class="gcell" data-m="${m.id}" data-f="${f}" aria-pressed="${on}" aria-label="${esc(where)}: TPR ${e.tpr}, rank ${e.rank} of ${e.of}">` +
     `<span class="ctpr num">${e.tpr}</span><span class="csub num">#${e.rank} of ${e.of}</span></button>`;
-  return `<button type="button" class="pcell" data-m="${m.id}" data-f="${f}" aria-pressed="${on}" aria-label="${esc(where)}: not ranked, ${e.games} of ${m.min[f]} games">` +
+  return `<button type="button" class="gcell" data-m="${m.id}" data-f="${f}" aria-pressed="${on}" aria-label="${esc(where)}: not ranked, ${e.games} of ${m.min[f]} games">` +
     `<span class="cnr">Not ranked</span><span class="csub num">${e.games} of ${m.min[f]} games</span></button>`;
 }
 
@@ -756,7 +845,7 @@ function stat(label, value, cls = "") {
   return `<div${cls ? ` class="${cls}"` : ""}><dt>${label}</dt><dd class="num">${value}</dd></div>`;
 }
 
-function renderPlayerDetail() {
+function renderPlayerDetail(animate = false) {
   const m = DATA.modes.find((x) => x.id === ps.mode), e = pentry();
   const title = `${LABEL[ps.fmt]} · ${esc(m.label)}`;
   if (!e) {
@@ -778,7 +867,7 @@ function renderPlayerDetail() {
     return `<tr class="row${open ? " open" : ""}" data-i="${i}" tabindex="0" aria-expanded="${open}">
       <td class="name"><span class="evname"><span class="chev" aria-hidden="true">›</span><span>${esc(name)}<div class="dates">${esc(dates)}</div></span></span></td>
       <td class="l hide-sm">${period(p + "-01")}</td><td class="num">${score(s)}/${n}</td>
-      <td class="num hide-sm">${avg ?? "—"}</td><td class="num">${tpr ?? "—"}</td></tr>` + (open ? gamesRow(games) : "");
+      <td class="num hide-sm">${avg ?? "—"}</td><td class="num">${tpr ?? "—"}</td><td class="num hide-sm">${x[10] ?? "—"}</td></tr>` + (open ? gamesRow(games) : "");
   }).join("");
   $("p-detail").innerHTML = `<h2>${title}</h2>
     <p class="mode-note">${windowNote(m)}${e.rank ? ` Ranked ${e.rank} of the ${e.of} players with ${m.min[ps.fmt]} or more games.${outside}` : ""}</p>
@@ -787,11 +876,223 @@ function renderPlayerDetail() {
       ${stat("TPR", e.tpr ?? "—", "main")}${stat("Rank", rank)}${stat("Score", e.games ? `${score(e.score)}/${e.games} <small>${Math.round(e.pct)}%</small>` : "—")}
       ${stat("True", e.true_perf ?? "—")}${stat("Avg opp", e.avg_opp ?? "—")}${stat("FIDE", e.rating ?? "—")}${stat("Δ", dTxt)}
     </dl>
+    ${chartBlock(e, m)}
     ${inList ? `<div class="plinks">${inList}</div>` : ""}
     <div class="table-box"><table class="pev">
-      <thead><tr><th class="l">Event</th><th class="l hide-sm">FIDE list</th><th>Score</th><th class="hide-sm">Avg opp</th><th>TPR</th></tr></thead>
+      <thead><tr><th class="l">Event</th><th class="l hide-sm">FIDE list</th><th>Score</th><th class="hide-sm">Avg opp</th><th>TPR</th><th class="hide-sm" title="TPR over all games up to and including this event">To date</th></tr></thead>
       <tbody>${evs}</tbody></table></div>`;
+  drawChart(animate);
 }
+
+// ---- Player chart: TPR over all games so far, after each event ----
+const SVGNS = "http://www.w3.org/2000/svg";
+const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+const evDate = (x) => Date.parse(x[3] || x[2] || `${x[0]}-01`);
+const fmtDay = (t) => { const d = new Date(t); return `${d.getUTCDate()} ${MON[d.getUTCMonth()]} ${d.getUTCFullYear()}`; };
+const niceStep = (span) => span <= 160 ? 25 : span <= 400 ? 50 : 100;
+
+function chartBlock(e, m) {
+  const pts = e.ev.slice().reverse().filter((x) => x[10] != null);
+  if (!pts.length) return "";
+  return `<div class="pchart"><div class="pchart-head"><h3>TPR to date, event by event</h3>
+    <div class="legend"><span class="k-tpr"><i></i>TPR over all games so far</span><span class="k-fide"><i></i>FIDE rating going into the event</span></div></div>
+    <div class="plot" id="p-plot"></div></div>`;
+}
+
+let chartState = null, lastW = 0;
+function drawChart(animate) {
+  const box = $("p-plot"); if (!box) return;
+  const e = pentry(), m = DATA.modes.find((x) => x.id === ps.mode);
+  const pts = e.ev.slice().reverse().filter((x) => x[10] != null).map((x) => ({ x, t: evDate(x), tpr: x[10], fide: x[9], n: x[11] }));
+  lastW = box.clientWidth;
+  const W = Math.max(280, box.clientWidth), small = W < 480;
+  const H = small ? 190 : 230, L = 40, R = small ? 52 : 74, T = 18, B = 26;
+  const pw = W - L - R, ph = H - T - B;
+  let t0 = Math.min(...pts.map((p) => p.t)), t1 = Math.max(...pts.map((p) => p.t));
+  if (t1 - t0 < 864e5 * 20) { t0 -= 864e5 * 15; t1 += 864e5 * 15; }
+  const pad = (t1 - t0) * 0.03; t0 -= pad; t1 += pad;
+  const vals = pts.flatMap((p) => [p.tpr, p.fide]).filter((v) => v != null);
+  const step = niceStep(Math.max(...vals) - Math.min(...vals));
+  let y0 = Math.floor((Math.min(...vals) - 10) / step) * step, y1 = Math.ceil((Math.max(...vals) + 10) / step) * step;
+  if (y1 - y0 < 2 * step) y1 = y0 + 2 * step;
+  const X = (t) => L + ((t - t0) / (t1 - t0)) * pw, Y = (v) => T + (1 - (v - y0) / (y1 - y0)) * ph;
+
+  let grid = "";
+  for (let v = y0; v <= y1; v += step) grid += `<line x1="${L}" x2="${L + pw}" y1="${Y(v)}" y2="${Y(v)}"/><text class="tick" x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${v}</text>`;
+  // Month ticks, thinned to fit; January carries the year.
+  const months = [];
+  for (let d = new Date(t0), c = Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1); c <= t1; ) {
+    months.push(c); const n = new Date(c); c = Date.UTC(n.getUTCFullYear(), n.getUTCMonth() + 1, 1);
+  }
+  const every = Math.max(1, Math.ceil(months.length / Math.max(2, Math.floor(pw / 46))));
+  const xt = months.filter((_, i) => i % every === 0).map((c) => {
+    const d = new Date(c), lab = d.getUTCMonth() === 0 || c === months[0] ? `${MON[d.getUTCMonth()]} ’${String(d.getUTCFullYear()).slice(2)}` : MON[d.getUTCMonth()];
+    return `<text class="tick" x="${X(c)}" y="${H - 6}" text-anchor="middle">${lab}</text>`;
+  }).join("");
+
+  const tprPath = pts.map((p, i) => `${i ? "L" : "M"}${X(p.t).toFixed(1)},${Y(p.tpr).toFixed(1)}`).join("");
+  const fp = pts.filter((p) => p.fide != null);
+  // The FIDE rating holds until the next event, so it's drawn as steps.
+  const fidePath = fp.map((p, i) => i ? `H${X(p.t).toFixed(1)}V${Y(p.fide).toFixed(1)}` : `M${X(p.t).toFixed(1)},${Y(p.fide).toFixed(1)}`).join("") +
+    (fp.length ? `H${(L + pw).toFixed(1)}` : "");
+  const min = m.min[ps.fmt], qi = pts.findIndex((p) => p.n >= min);
+  const qual = qi >= 0 ? `<g class="qual"><line x1="${X(pts[qi].t)}" x2="${X(pts[qi].t)}" y1="${T - 6}" y2="${T + ph}"/>` +
+    `<text x="${X(pts[qi].t) + (X(pts[qi].t) > L + pw * 0.7 ? -4 : 4)}" y="${T - 8}" text-anchor="${X(pts[qi].t) > L + pw * 0.7 ? "end" : "start"}">Qualified: ${min} games</text></g>` : "";
+  const last = pts[pts.length - 1], lf = fp[fp.length - 1];
+  const yT = Y(last.tpr), yF = lf ? Y(lf.fide) : null;
+  // End labels only where they don't collide; the legend and tooltip carry the rest.
+  const ends = `<text class="endl" x="${X(last.t) + 9}" y="${yT + 4}">${last.tpr}<tspan dx="4">${small ? "" : "TPR"}</tspan></text>` +
+    (lf && Math.abs(yF - yT) >= 16 ? `<text class="endl" x="${L + pw + 6}" y="${yF + 4}">${lf.fide}<tspan dx="4">${small ? "" : "FIDE"}</tspan></text>` : "");
+  const dots = pts.map((p, i) => `<circle class="dot" data-i="${i}" cx="${X(p.t)}" cy="${Y(p.tpr)}" r="4"/>`).join("");
+
+  const label = `${LABEL[ps.fmt]} TPR over all games so far, after each of ${pts.length} events: from ${pts[0].tpr} to ${last.tpr}` +
+    (lf ? `; FIDE rating going into the last event ${lf.fide}` : "") + ". Use the arrow keys to step through the events.";
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}" tabindex="0" role="img" aria-label="${esc(label)}">
+    <g class="grid">${grid}</g>${xt}${qual}
+    <path class="l-fide" d="${fidePath}"/><path class="l-tpr" d="${tprPath}"/>${dots}${ends}
+    <line class="cross" y1="${T}" y2="${T + ph}" visibility="hidden"/>
+    <rect x="${L}" y="0" width="${pw}" height="${H}" fill="transparent"/></svg><div class="tip" hidden></div>`;
+  chartState = { pts, X, Y, W, i: -1 };
+
+  if (animate && !reduced()) {
+    const svg = box.querySelector("svg"), path = svg.querySelector(".l-tpr"), len = path.getTotalLength();
+    const fade = svg.querySelectorAll(".dot, .l-fide, .endl, .qual");
+    path.style.strokeDasharray = `${len} ${len}`; path.style.strokeDashoffset = len;
+    fade.forEach((el) => { el.style.opacity = 0; });
+    svg.getBoundingClientRect();
+    svg.classList.add("anim");
+    path.style.strokeDashoffset = 0;
+    // Each dot appears as the line reaches it.
+    svg.querySelectorAll(".dot").forEach((d) => { d.style.transitionDelay = `${((+d.getAttribute("cx") - L) / pw) * 1.1}s`; d.style.opacity = 1; });
+    svg.querySelectorAll(".l-fide, .qual").forEach((el) => { el.style.transitionDelay = ".2s"; el.style.opacity = 1; });
+    svg.querySelectorAll(".endl").forEach((el) => { el.style.transitionDelay = "1.1s"; el.style.opacity = 1; });
+  }
+}
+
+function chartFocus(i) {
+  const box = $("p-plot"), cs = chartState; if (!box || !cs) return;
+  const svg = box.querySelector("svg"), tip = box.querySelector(".tip"), cross = svg.querySelector(".cross");
+  svg.querySelectorAll(".dot.on").forEach((d) => d.classList.remove("on"));
+  if (i < 0) { tip.hidden = true; cross.setAttribute("visibility", "hidden"); cs.i = -1; return; }
+  cs.i = i;
+  const p = cs.pts[i], [, name, start, end, n, s, , tpr] = p.x, x = cs.X(p.t), y = cs.Y(p.tpr);
+  svg.querySelector(`.dot[data-i="${i}"]`).classList.add("on");
+  cross.setAttribute("x1", x); cross.setAttribute("x2", x); cross.setAttribute("visibility", "visible");
+  tip.innerHTML = `<b>${esc(name)}</b><div class="muted">${esc(start && end && start !== end ? `${fmtDay(Date.parse(start))} – ${fmtDay(Date.parse(end))}` : fmtDay(p.t))}</div>
+    <div class="row2"><span>This event</span><span class="num">${score(s)}/${n} · TPR ${tpr ?? "—"}</span></div>
+    <div class="row2"><span>TPR to date</span><span class="num"><strong>${p.tpr}</strong> · ${p.n} games</span></div>
+    ${p.fide != null ? `<div class="row2"><span>FIDE going in</span><span class="num">${p.fide}</span></div>` : ""}`;
+  tip.hidden = false;
+  const scale = box.clientWidth / cs.W, tw = tip.offsetWidth;
+  let left = x * scale + 12; if (left + tw > box.clientWidth) left = x * scale - tw - 12;
+  tip.style.left = `${Math.max(0, left)}px`; tip.style.top = `${Math.max(0, y * scale - 40)}px`;
+}
+
+function nearest(clientX) {
+  const box = $("p-plot"), cs = chartState, r = box.getBoundingClientRect();
+  const x = ((clientX - r.left) / r.width) * cs.W;
+  let best = 0; cs.pts.forEach((p, i) => { if (Math.abs(cs.X(p.t) - x) < Math.abs(cs.X(cs.pts[best].t) - x)) best = i; });
+  return best;
+}
+
+// ---- Race replay: the year list's top 10 at the end of each month ----
+const race = { key: "", frames: null, i: 0, timer: null, rows: new Map(), played: new Set() };
+const raceKey = () => `${state.mode}-${state.fmt}`;
+
+function renderRace() {
+  const frames = M.year && M.lists?.[state.fmt]?.race;
+  stopRace();
+  $("race").hidden = !frames?.length;
+  if (!frames?.length) { race.key = ""; return; }
+  if (race.key === raceKey()) return;
+  race.key = raceKey(); race.frames = frames;
+  race.rows.forEach((el) => el.remove()); race.rows.clear();
+  $("race-axis").innerHTML = "";
+  $("race-seek").max = frames.length - 1;
+  showFrame(frames.length - 1, false);
+}
+
+function monthName(m) { return `${MONTH_FULL[m - 1]} ${M.year}`; }
+
+function showFrame(i, animate = true) {
+  const f = race.frames[i], fmtName = LABEL[state.fmt].toLowerCase();
+  race.i = i;
+  $("race-seek").value = i;
+  $("race-seek").setAttribute("aria-valuetext", `Through ${monthName(f.m)}`);
+  $("race-month").textContent = `${MON[f.m - 1]} ${M.year}`;
+  $("race-sub").textContent = `Top 10 in ${fmtName} at the end of ${monthName(f.m)}: ${f.q} players with ${f.min}+ games` +
+    (i === race.frames.length - 1 ? (M.fraction ?? 1) >= 1 ? " (final)" : " (now)" : "");
+  const plot = $("race-plot"), anim = animate && !reduced();
+  // This month's axis: round steps around the visible TPRs, as many as fit the width.
+  const tprs = f.rows.map((r) => r[1]), a = Math.min(...tprs), b = Math.max(...tprs);
+  const fit = Math.max(2, Math.floor($("race-axis").clientWidth / 40));
+  const step = [25, 50, 100, 200, 250, 500, 1000].find((st) => Math.ceil((b + st / 4) / st) - Math.floor((a - st / 4) / st) <= fit) ?? 1000;
+  const lo = Math.floor((a - step / 4) / step) * step, hi = Math.ceil((b + step / 4) / step) * step;
+  const pct = (v) => ((v - lo) / (hi - lo)) * 100;
+  const axis = $("race-axis"), seen = new Set();
+  for (let v = lo; v <= hi; v += step) {
+    let t = axis.querySelector(`.t[data-v="${v}"]`);
+    if (!t) { t = document.createElement("div"); t.className = "t"; t.dataset.v = v; t.innerHTML = `<span>${v}</span>`; t.style.opacity = 0; t.style.left = `${pct(v)}%`; axis.append(t); }
+    seen.add(t);
+  }
+  axis.querySelectorAll(".t").forEach((t) => {
+    const v = +t.dataset.v, inside = seen.has(t);
+    t.style.left = `${Math.min(110, Math.max(-10, pct(v)))}%`;
+    t.style.opacity = inside ? 1 : 0;
+  });
+  const keep = new Set();
+  f.rows.forEach(([id, tpr, games], rank) => {
+    keep.add(id);
+    let el = race.rows.get(id);
+    const fresh = !el;
+    if (fresh) {
+      const p = PEOPLE.get(id);
+      el = document.createElement("div"); el.className = "race-row";
+      el.innerHTML = `<span class="rk"></span><a class="nm" data-player href="/player/${id}#${viewHash()}">${esc(p ? shortName(p.name) : id)}</a><span class="tr"><span class="dt"></span></span><span class="vl"></span>`;
+      el.style.opacity = 0; el.style.transform = `translateY(calc(var(--row) * ${rank}))`;
+      plot.append(el); race.rows.set(id, el);
+      el.querySelector(".dt").style.left = `${pct(tpr)}%`;
+      if (anim) el.getBoundingClientRect();
+    }
+    el.querySelector(".rk").textContent = rank + 1;
+    el.querySelector(".vl").innerHTML = `${tpr} <small>${games}g</small>`;
+    el.querySelector(".vl").title = `TPR ${tpr} over ${games} games`;
+    el.querySelector(".dt").style.left = `${pct(tpr)}%`;
+    el.style.transform = `translateY(calc(var(--row) * ${rank}))`;
+    el.style.opacity = 1;
+  });
+  race.rows.forEach((el, id) => {
+    if (keep.has(id)) return;
+    race.rows.delete(id);
+    el.style.opacity = 0; el.style.pointerEvents = "none";
+    setTimeout(() => el.remove(), anim ? 500 : 0);
+  });
+  if (!anim) plot.querySelectorAll(".race-row, .dt, .t").forEach((el) => { el.style.transition = "none"; el.getBoundingClientRect(); el.style.transition = ""; });
+  $("race-play").textContent = race.timer ? "Pause" : i === race.frames.length - 1 ? "Replay" : "Play";
+}
+
+function playRace() {
+  if (!race.frames) return;
+  stopRace();
+  race.played.add(race.key);
+  if (race.i >= race.frames.length - 1) showFrame(0);
+  race.timer = setInterval(() => {
+    if (race.i >= race.frames.length - 1) return stopRace();
+    showFrame(race.i + 1);
+  }, 1300);
+  $("race-play").textContent = "Pause";
+}
+function stopRace() {
+  if (race.timer) clearInterval(race.timer);
+  race.timer = null;
+  if (race.frames) $("race-play").textContent = race.i === race.frames.length - 1 ? "Replay" : "Play";
+}
+$("race-play").addEventListener("click", () => race.timer ? stopRace() : playRace());
+$("race-seek").addEventListener("input", (e) => { stopRace(); race.played.add(race.key); showFrame(+e.target.value); });
+// The first time a race scrolls into view it plays from January, once per list.
+new IntersectionObserver((es) => {
+  if (es.some((x) => x.isIntersecting) && race.frames && !race.played.has(race.key) && !reduced() && !$("race").hidden) playRace();
+}, { threshold: 0.6 }).observe($("race"));
 
 function gamesRow(games) {
   const rows = games.map(([opp, r, res, capped, oid], i) => {
@@ -802,7 +1103,7 @@ function gamesRow(games) {
     return `<tr><td class="num muted">${i + 1}</td><td class="opp">${who}</td><td class="num">${rating}</td><td class="num res ${cls}">${txt}</td></tr>`;
   }).join("");
   const capped = games.some((g) => g[3]) ? `<div class="muted" style="font-size:13px">* Rated more than 400 points below the player, so counted as the player's rating minus 400, as FIDE does.</div>` : "";
-  return `<tr class="detail"><td colspan="5"><div class="detail-inner"><div class="ev-box"><table class="ev games">
+  return `<tr class="detail"><td colspan="6"><div class="detail-inner"><div class="ev-box"><table class="ev games">
     <thead><tr><th>#</th><th class="l">Opponent</th><th>Rating</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table></div>${capped}</div></td></tr>`;
 }
 
@@ -810,24 +1111,24 @@ function renderPlayer() {
   const d = ps.d;
   setPlayerHead(d.name, d.fed, d.id);
   $("p-back").href = `/#${viewHash(ps.mode, ps.fmt)}`;
-  renderPlayerGrid(); renderPlayerDetail();
+  renderPlayerGrid(); renderPlayerDetail(true);
 }
 
 function route() {
   const id = playerId();
   document.body.classList.toggle("pview", !!id);
-  if (id) return showPlayer(id);
+  if (id) { stopRace(); return showPlayer(id); }
   ps.id = null;
   fromHash();
 }
 
 $("p-grid").addEventListener("click", (e) => {
-  const b = e.target.closest(".pcell[data-f]"); if (!b) return;
+  const b = e.target.closest(".gcell[data-f]"); if (!b) return;
   ps.mode = b.dataset.m; ps.fmt = b.dataset.f; ps.open.clear();
   history.replaceState(history.state, "", `#${viewHash(ps.mode, ps.fmt)}`);
   $("p-back").href = `/#${viewHash(ps.mode, ps.fmt)}`;
-  renderPlayerGrid(); renderPlayerDetail();
-  $("p-grid").querySelector(`.pcell[data-m="${ps.mode}"][data-f="${ps.fmt}"]`).focus();
+  renderPlayerGrid(); renderPlayerDetail(true);
+  $("p-grid").querySelector(`.gcell[data-m="${ps.mode}"][data-f="${ps.fmt}"]`).focus();
 });
 function toggleEvent(tr) {
   const i = +tr.dataset.i;
@@ -835,6 +1136,18 @@ function toggleEvent(tr) {
   renderPlayerDetail();
   $("p-detail").querySelector(`tr.row[data-i="${i}"]`).focus();
 }
+$("p-detail").addEventListener("pointermove", (e) => { if (e.target.closest("#p-plot svg")) chartFocus(nearest(e.clientX)); });
+$("p-detail").addEventListener("pointerleave", (e) => { if (e.target.matches("#p-plot svg")) chartFocus(-1); }, true);
+$("p-detail").addEventListener("focusout", (e) => { if (e.target.closest("#p-plot svg")) chartFocus(-1); });
+$("p-detail").addEventListener("keydown", (e) => {
+  if (!e.target.closest("#p-plot svg") || !chartState) return;
+  const n = chartState.pts.length, i = chartState.i;
+  const to = { ArrowRight: Math.min(n - 1, i + 1), ArrowLeft: Math.max(0, i < 0 ? n - 1 : i - 1), Home: 0, End: n - 1, Escape: -1 }[e.key];
+  if (to === undefined) return;
+  e.preventDefault(); chartFocus(to);
+});
+// Redraw (without the animation) when the width changes.
+new ResizeObserver(() => { const b = $("p-plot"); if (b && b.clientWidth !== lastW) { lastW = b.clientWidth; drawChart(false); } }).observe($("player"));
 $("p-detail").addEventListener("click", (e) => {
   if (e.target.closest("a")) return; const tr = e.target.closest("tr.row"); if (tr) toggleEvent(tr); });
 $("p-detail").addEventListener("keydown", (e) => {

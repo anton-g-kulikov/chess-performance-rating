@@ -25,7 +25,10 @@ Each list is in `results/…/{classical,rapid,blitz}.csv`. The web page,
 columns, search, side-by-side players and each player's events. Every player
 in the pool also has a page, `chesstpr.com/player/<FIDE id>`, with their
 results in every period and format, including those where they have too few
-games to be ranked or finish outside the top 100, down to single games.
+games to be ranked or finish outside the top 100, down to single games, and a
+chart of their TPR over all games so far after each event. Each year race can
+be replayed month by month: the top 10 at the end of each month, with the
+minimum number of games scaled to the months played.
 
 ## How it works
 

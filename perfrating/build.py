@@ -73,6 +73,17 @@ def latest_list_month(top_page: str) -> date:
     return date(int(m.group(2)), MONTHS.index(m.group(1)) + 1, 1)
 
 
+DEFAULT_MIN_GAMES = "20,20,40"  # classical, rapid, blitz over a full year
+
+
+def event_month(e: dict) -> str:
+    """Month an event belongs to, "YYYY-MM": the month it ended."""
+    d = e.get("end") or e.get("start")
+    if d:
+        return d[:7]
+    return month_add(date.fromisoformat(e["period"]), -1).isoformat()[:7]
+
+
 def event_year(e: dict) -> int:
     """Calendar year an event belongs to: the year it ended."""
     d = e.get("end") or e.get("start")
@@ -320,7 +331,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--year", type=int, help="calendar-year mode for this year")
     ap.add_argument("--end", help="rolling mode: last rating period, YYYY-MM (default: FIDE's latest list)")
     ap.add_argument("--months", type=int, default=12, help="rolling mode: number of rating periods (default 12)")
-    ap.add_argument("--min-games", default="20,20,40",
+    ap.add_argument("--min-games", default=DEFAULT_MIN_GAMES,
                     help="minimum games for classical,rapid,blitz over a full year (default 20,20,40)")
     ap.add_argument("--top", type=int, default=100, help="rows per list in the Markdown summary")
     ap.add_argument("--pause", type=lambda v: tuple(float(x) for x in v.split("-")) * (1 if "-" in v else 2),

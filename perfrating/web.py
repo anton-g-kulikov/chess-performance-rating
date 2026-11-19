@@ -20,7 +20,8 @@ import hashlib
 import json
 from pathlib import Path
 
-from .build import FORMATS, rated_games
+from .build import (DEFAULT_MIN_GAMES, FORMATS, build_rows, event_month, rated_games,
+                    scaled_minimum)
 from .performance import dp, performance, round_p
 
 TEMPLATE = Path(__file__).with_name("page.html")
@@ -48,6 +49,41 @@ def event_games(e: dict, ids: dict) -> list:
             for g in e["games"] if g["counted"] and g["opponent_rating"]]
 
 
+def progress(events: list) -> list:
+    """For each event (newest first, as listed): [player's rating going into
+    it, TPR over all games up to and including it, games up to it]."""
+    out, so_far = [], []
+    for e in reversed(events):
+        so_far += [g for g in rated_games([e])]
+        perf = performance(so_far)
+        out.append([int(e["ro"]) if e.get("ro") else None, perf.tpr if perf else None, len(so_far)])
+    return out[::-1]
+
+
+RACE_TOP = 10
+
+
+def race_frames(saved: dict, fmt: str, months: int, final_min: int) -> list:
+    """The top of a year's list at the end of each month so far.
+
+    Each frame counts events that ended by then, with the minimum number of
+    games scaled to the months played; the last frame is the published list."""
+    base = dict(zip(FORMATS, (int(x) for x in DEFAULT_MIN_GAMES.split(","))))
+    year = saved["year"]
+    pool = {int(fid): info for fid, info in saved["players"].items()}
+    frames = []
+    for m in range(1, months + 1):
+        cut = f"{year}-{m:02d}"
+        last = m == months
+        games = {fid: {fmt: [e for e in info["games"][fmt] if last or event_month(e) <= cut]}
+                 for fid, info in pool.items()}
+        need = final_min if last else scaled_minimum(base, m / 12)[fmt]
+        rows = build_rows(pool, games, fmt, need)
+        frames.append({"m": m, "min": need, "q": len(rows),
+                       "rows": [[r["fide_id"], r["tpr"], r["games"]] for r in rows[:RACE_TOP]]})
+    return frames
+
+
 def player_entries(saved: dict, rows_by_fmt: dict, ids: dict) -> dict:
     """One period's results for every player in its pool, per format.
 
@@ -73,7 +109,8 @@ def player_entries(saved: dict, rows_by_fmt: dict, ids: dict) -> dict:
             fmts[fmt] = {
                 "rank": r["rank"], "of": len(rows_by_fmt[fmt]), "rating": info["ratings"].get(fmt),
                 **{k: r[k] for k in ("games", "score", "pct", "avg_opp", "tpr", "true_perf")},
-                "ev": [event_summary(e) + [event_games(e, ids)] for e in events],
+                "ev": [event_summary(e) + [event_games(e, ids)] + p
+                       for e, p in zip(events, progress(events))],
             }
         out[fid] = {"name": info["name"], "fed": info["fed"], "formats": fmts}
     return out
@@ -94,6 +131,9 @@ def mode_data(results: Path, data: Path, top: int, mode_id: str, label: str) -> 
             lst.append({**r, "dp": dp(round_p(r["score"], r["games"])),
                         "ev": [event_summary(e) for e in events]})
         lists[fmt] = {"qualified": len(rows), "rows": lst}
+        if meta.get("year"):
+            lists[fmt]["race"] = race_frames(saved, fmt, round((meta.get("fraction") or 1) * 12),
+                                             meta["min_games"][fmt])
     return {
         "id": mode_id,
         "label": label,
@@ -138,6 +178,14 @@ def main(argv=None) -> int:
         for fmt in FORMATS:
             for r in m["lists"][fmt]["rows"]:
                 people[r["fide_id"]] = [r["name"], r["fed"]]
+    # Race leaders early in a year can be players who end up outside the top 100.
+    for m, saved, _ in builds:
+        for fmt in FORMATS:
+            for f in m["lists"][fmt].get("race", []):
+                for fid, _, _ in f["rows"]:
+                    if fid not in people:
+                        p = saved["players"][str(fid)]
+                        people[fid] = [p["name"], p["fed"]]
 
     # Player pages.  Opponents are linked by name when exactly one player in
     # any pool has it.
