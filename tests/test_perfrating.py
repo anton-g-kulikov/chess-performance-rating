@@ -8,6 +8,7 @@ from perfrating.build import (build_rows, event_year, scaled_minimum, window,
                               year_fraction, year_periods)
 from perfrating.parsers import parse_calculation, parse_period_arrays, parse_top_list
 from perfrating.performance import dp, performance, round_p, true_performance
+from perfrating.web import name_key, player_entries
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -130,6 +131,37 @@ class YearModeTest(unittest.TestCase):
         self.assertEqual(year_fraction(2025, window(date(2026, 4, 1), 16)), 1.0)
         self.assertEqual(scaled_minimum({"classical": 20, "blitz": 40}, 10 / 12), {"classical": 17, "blitz": 34})
         self.assertEqual(scaled_minimum({"classical": 20}, 0.0), {"classical": 1})
+
+
+class PlayerPageTest(unittest.TestCase):
+    def test_name_key_matches_list_and_calculation_spellings(self):
+        self.assertEqual(name_key("Gukesh D"), name_key("Gukesh, D"))
+        self.assertEqual(name_key("Aravindh, Chithambaram VR."), name_key("Aravindh, Chithambaram VR"))
+        self.assertNotEqual(name_key("So, Wesley"), name_key("So, Wesley b"))
+
+    def test_player_entries_cover_ranked_and_unranked_players(self):
+        def ev(name, start, games):
+            return {"name": name, "start": start, "end": start, "period": "2026-01-01",
+                    "games": [{"opponent": o, "opponent_rating": r, "result": s, "counted": True, "capped": c}
+                              for o, r, s, c in games]}
+        saved = {"players": {
+            "1": {"name": "A", "fed": "X", "ratings": {"blitz": 2700},
+                  "games": {"blitz": [ev("Old", "2025-12-01", [("B", 2700, 1, False)]),
+                                      ev("New", "2026-01-05", [("B", 2700, 1, False), ("Z, Q", 2300, 0.5, True)])]}},
+            "2": {"name": "B", "fed": "Y", "ratings": {"blitz": 2750},
+                  "games": {"blitz": [ev("New", "2026-01-05", [("A", 2700, 0, False)])], "rapid": []}},
+        }}
+        rows = {"classical": [], "rapid": [],
+                "blitz": [{"fide_id": 1, "rank": 1, "games": 3, "score": 2.5, "pct": 83.0,
+                           "avg_opp": 2567, "tpr": 2840, "true_perf": 2850}]}
+        out = player_entries(saved, rows, {name_key("B"): 2})
+        a = out[1]["formats"]["blitz"]
+        self.assertEqual((a["rank"], a["of"], a["tpr"], a["rating"]), (1, 1, 2840, 2700))
+        self.assertEqual([e[1] for e in a["ev"]], ["New", "Old"])  # newest first
+        self.assertEqual(a["ev"][0][8], [["B", 2700, 1, 0, 2], ["Z, Q", 2300, 0.5, 1, 0]])
+        b = out[2]["formats"]
+        self.assertEqual(list(b), ["blitz"])  # formats without games are left out
+        self.assertEqual((b["blitz"]["rank"], b["blitz"]["games"], b["blitz"]["tpr"]), (None, 1, 1900))
 
 
 if __name__ == "__main__":

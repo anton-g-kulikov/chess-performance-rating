@@ -242,23 +242,88 @@ tr.detail > td { padding: 0 16px 16px; text-align: left; white-space: normal; ba
   tr.detail > td { padding: 0 10px 12px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* Player page (/player/<FIDE id>): the lists' sections are hidden and #player shown. */
+body.pview .lists-only, body:not(.pview) .pview-only { display: none !important; }
+#player { display: grid; gap: 24px; min-width: 0; }
+.back { justify-self: start; font-family: var(--display); font-weight: 700; font-stretch: 88%; font-size: 15px; color: var(--muted); text-decoration: none; }
+.back:hover { color: var(--ink); }
+.plinks { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 15px; }
+/* Period × format grid: one cell per list, the selected one opens below. */
+.psum { display: grid; grid-template-columns: minmax(120px, 1fr) repeat(3, minmax(0, 1.3fr)); gap: 8px var(--card-gap); }
+.psum .colh { align-self: end; padding: 0 4px; font-family: var(--display); font-weight: 600; font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.psum .rowh { align-self: center; display: grid; font-family: var(--display); font-weight: 700; font-stretch: 88%; font-size: 17px; line-height: 1.2; }
+.psum .rowh small { font-family: var(--body); font-weight: 400; font-stretch: 100%; font-size: 13px; color: var(--muted); }
+.pcell {
+  appearance: none; text-align: left; cursor: pointer; font: inherit; color: inherit; min-width: 0;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  padding: 10px 14px; display: grid; gap: 1px; align-content: center; transition: border-color .15s, box-shadow .15s;
+}
+.pcell:hover { border-color: var(--accent); }
+.pcell[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--accent-soft); }
+.pcell:disabled { cursor: default; background: transparent; border-style: dashed; color: var(--muted); }
+.pcell .ctpr { font-family: var(--display); font-weight: 800; font-stretch: 80%; font-size: 26px; line-height: 1.1; color: var(--accent); }
+.pcell .cnr { font-weight: 600; color: var(--muted); }
+.pcell .csub { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.psum .gap { grid-column: span 3; align-self: center; padding: 10px 14px; border: 1px dashed var(--line); border-radius: 10px; font-size: 14px; color: var(--muted); }
+.pdetail { display: grid; gap: 14px; min-width: 0; }
+.pdetail h2 { font-family: var(--display); font-weight: 800; font-stretch: 85%; font-size: 26px; line-height: 1.1; margin: 0; }
+.pdetail .mode-note { max-width: 62ch; }
+.pstats {
+  margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 12px 16px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
+}
+.pstats div { display: grid; gap: 2px; min-width: 0; }
+.pstats dt { font-family: var(--display); font-weight: 600; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.pstats dd { margin: 0; font-family: var(--display); font-weight: 800; font-stretch: 85%; font-size: 22px; line-height: 1.15; }
+.pstats dd small { font-family: var(--body); font-weight: 400; font-stretch: 100%; font-size: 13px; color: var(--muted); }
+.pstats .main dd { font-size: 30px; color: var(--accent); }
+.unranked { margin: 0; padding: 10px 14px; border-radius: 8px; background: var(--accent-soft); font-size: 15px; }
+.pev td.name { white-space: normal; min-width: 200px; text-align: left; }
+.pev td.name .dates { font-size: 12px; color: var(--muted); }
+.pev .evname { display: flex; gap: 6px; align-items: baseline; }
+.pev tr.open .chev { transform: rotate(90deg); }
+.games td.opp { white-space: normal; text-align: left; }
+.games td.res { font-weight: 700; }
+.games .cap { color: var(--muted); }
+@media (max-width: 560px) {
+  .psum { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .psum .corner { display: none; }
+  .psum .rowh { grid-column: 1 / -1; margin-top: 8px; grid-template-columns: auto 1fr; gap: 8px; align-items: baseline; }
+  .psum .gap { grid-column: 1 / -1; }
+  .pcell { padding: 8px 10px; }
+  .pcell .ctpr { font-size: 22px; }
+  .pev td.name { min-width: 0; width: 100%; }
+}
 </style>
 
 <div class="wrap">
-  <header>
+  <section id="player" class="pview-only" aria-labelledby="p-name">
+    <a class="back" id="p-back" href="/" data-home>← All rankings</a>
+    <header>
+      <div class="eyebrow" id="p-eyebrow">Player</div>
+      <h1 id="p-name">&nbsp;</h1>
+      <p class="lede">Every rated game on this site, by period and format, ranked or not. Pick a period and format to see the events and games behind it.</p>
+      <div class="plinks" id="p-links"></div>
+    </header>
+    <div class="psum" id="p-grid"></div>
+    <div class="pdetail" id="p-detail" aria-live="polite"></div>
+  </section>
+
+  <header class="lists-only">
     <div class="eyebrow" id="eyebrow">FIDE rated games</div>
     <h1 id="headline">Who is playing best right now</h1>
     <p class="lede" id="lede">An alternative to the FIDE rating, which carries results forward for years. Here players are ranked only by recent performance, in classical, rapid and blitz. <strong>No recent games, no ranking.</strong></p>
   </header>
 
-  <div class="modebar">
+  <div class="modebar lists-only">
     <div class="modes" role="tablist" aria-label="Period" id="modes"></div>
     <p class="mode-note" id="mode-note"></p>
   </div>
 
-  <nav class="formats" role="tablist" aria-label="Format" id="formats"></nav>
+  <nav class="formats lists-only" role="tablist" aria-label="Format" id="formats"></nav>
 
-  <section aria-labelledby="list-title" style="display:grid; gap:12px; min-width:0">
+  <section class="lists-only" aria-labelledby="list-title" style="display:grid; gap:12px; min-width:0">
     <div class="toolbar">
       <div class="finders" id="finders" role="search">
         <label for="q">Find a player</label>
@@ -515,6 +580,7 @@ function detailRow(r) {
   }).join("");
   return `<tr class="detail"><td colspan="${COLS.length}"><div class="detail-inner">
     <div class="detail-head"><span>${r.events} events · ${score(r.score)}/${r.games}</span>
+    <a href="/player/${r.fide_id}#${viewHash()}" data-player>Player page: every period and game</a>
     <a href="https://ratings.fide.com/profile/${r.fide_id}" target="_blank" rel="noopener">FIDE profile</a></div>
     <div class="ev-box"><table class="ev"><thead><tr><th class="l">Event</th><th class="l hide-sm">FIDE list</th><th>Score</th><th class="hide-sm">Avg opp</th><th>TPR</th></tr></thead><tbody>${ev}</tbody></table></div>
   </div></td></tr>`;
@@ -561,15 +627,17 @@ function render() {
 
 // The hash holds the view and the kept players' FIDE ids, so a comparison can be shared:
 // #y2026-blitz/1503014,2020009 is the 2026 blitz race with Carlsen and Caruana kept.
-const hashFor = () => (state.mode ? `${state.mode}-` : "") + state.fmt +
-  (state.picks.length ? "/" + state.picks.map((p) => p.id).join(",") : "");
+const viewHash = (mode = state.mode, fmt = state.fmt) => (mode ? `${mode}-` : "") + fmt;
+const hashFor = () => viewHash() + (state.picks.length ? "/" + state.picks.map((p) => p.id).join(",") : "");
 function syncHash() { const h = "#" + hashFor(); if (location.hash !== h) history.replaceState(null, "", h); }
 
 function go(mode, fmt, push) {
+  const was = viewHash();
   M = DATA.modes.find((m) => m.id === mode) || DATA.modes[0];
   state.mode = M.id;
   state.fmt = FMTS.includes(fmt) ? fmt : "classical";
-  state.open.clear();
+  // Open rows stay open when the view comes back unchanged (back from a player page).
+  if (viewHash() !== was) state.open.clear();
   if (push) syncHash();
   if (M.lists) return render();
   // An older year: show its heading straight away, then fetch its lists.
@@ -584,14 +652,209 @@ function go(mode, fmt, push) {
     .catch(() => { if (M === want) $("body").innerHTML = `<tr><td colspan="${COLS.length}" class="empty">Couldn't load ${esc(want.label)}. Check your connection and try again.</td></tr>`; });
 }
 
+// "#y2026-blitz" -> ["y2026", "blitz"]; "#rapid" -> ["", "rapid"].
+function parseView(view) {
+  const i = view.lastIndexOf("-");
+  return i < 0 ? ["", view] : [view.slice(0, i), view.slice(i + 1)];
+}
+
 function fromHash() {
   const [view, ids = ""] = location.hash.slice(1).split("/");
   // Unknown or repeated ids are dropped rather than breaking the page.
   state.picks = [...new Set(ids.split(",").map(Number))].filter((id) => PEOPLE.has(id)).map(pickOf);
-  const i = view.lastIndexOf("-");
-  if (i < 0) return go("", view, false);
-  go(view.slice(0, i), view.slice(i + 1), false);
+  const [mode, fmt] = parseView(view);
+  go(mode, fmt, false);
 }
+
+// ---- Player page: /player/<FIDE id>#<mode>-<format> ----
+// The same page serves it (Firebase rewrites /player/** here). The player's
+// results come from /data/p/<id>.json, fetched once per visit.
+const playerId = () => { const m = location.pathname.match(/^\/player\/(\d+)\/?$/); return m ? +m[1] : null; };
+const PFILES = new Map();
+function loadPlayer(id) {
+  if (!PFILES.has(id)) {
+    const p = fetch(`/data/p/${id}.json?v=${DATA.pver}`).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); });
+    p.catch(() => PFILES.delete(id));
+    PFILES.set(id, p);
+  }
+  return PFILES.get(id);
+}
+const ps = { id: null, d: null, mode: "", fmt: "classical", open: new Set() };
+const pentry = (mode = ps.mode, fmt = ps.fmt) => ps.d?.modes[mode]?.[fmt];
+
+// The list to open when none is asked for: the player's best rank in the first
+// period they're ranked in, or, if they're ranked nowhere, their most games.
+function bestFormat(fmts) {
+  const have = FMTS.filter((f) => fmts[f]);
+  const ranked = have.filter((f) => fmts[f].rank).sort((a, b) => fmts[a].rank - fmts[b].rank);
+  return ranked[0] || have.sort((a, b) => fmts[b].games - fmts[a].games)[0] || "classical";
+}
+
+function showPlayer(id) {
+  const [mode, fmt] = parseView(location.hash.slice(1).split("/")[0]);
+  if (ps.id !== id) { ps.id = id; ps.d = null; }
+  ps.open.clear();
+  const known = PEOPLE.get(id);
+  setPlayerHead(known ? known.name : null, known ? known.fed : null, id);
+  if (!ps.d) {
+    $("p-grid").innerHTML = "";
+    $("p-detail").innerHTML = `<p class="empty">Loading…</p>`;
+  }
+  loadPlayer(id).then((d) => {
+    if (ps.id !== id) return;
+    ps.d = d;
+    const ids = DATA.modes.map((x) => x.id).filter((x) => d.modes[x]);
+    // No hash means no period asked for ("" is also the rolling period's id).
+    const m = location.hash.length > 1 && d.modes[mode] ? mode : ids.find((x) => FMTS.some((f) => d.modes[x][f]?.rank)) ?? ids[0] ?? "";
+    ps.mode = m;
+    ps.fmt = d.modes[m]?.[fmt] ? fmt : bestFormat(d.modes[m] || {});
+    renderPlayer();
+  }).catch(() => {
+    if (ps.id !== id) return;
+    $("p-grid").innerHTML = "";
+    $("p-detail").innerHTML = `<p class="empty">${known ? "Couldn't load this player. Check your connection and try again." :
+      `No player with FIDE ID ${id} is on these lists. Players come from FIDE's open top-100 lists.`}</p>`;
+  });
+}
+
+function setPlayerHead(name, fed, id) {
+  $("p-name").textContent = name ? fullName(name) : `FIDE ID ${id}`;
+  $("p-eyebrow").textContent = name ? [fed, `FIDE ID ${id}`].filter(Boolean).join(" · ") : "Player";
+  document.title = `${name ? fullName(name) : `Player ${id}`} · Chess Performance Ratings`;
+  $("p-links").innerHTML = `<a href="https://ratings.fide.com/profile/${id}" target="_blank" rel="noopener">FIDE profile</a>`;
+}
+
+// What a period counts, in a sentence.
+function windowNote(m) {
+  if (!m.year) return `Every game rated on the ${period(m.periods[0])} – ${period(m.periods[m.periods.length - 1])} FIDE lists.`;
+  const months = Math.round((m.fraction ?? 1) * 12);
+  return `Games from events that ended in ${m.year}` + (months >= 12 ? "." : `, January – ${MONTH_FULL[months - 1]} so far.`);
+}
+
+function cell(m, f) {
+  const e = ps.d.modes[m.id][f];
+  const on = m.id === ps.mode && f === ps.fmt;
+  const where = `${m.label}, ${LABEL[f].toLowerCase()}`;
+  if (!e) return `<button type="button" class="pcell" disabled aria-label="${esc(where)}: no rated games"><span class="csub">No games</span></button>`;
+  if (e.rank) return `<button type="button" class="pcell" data-m="${m.id}" data-f="${f}" aria-pressed="${on}" aria-label="${esc(where)}: TPR ${e.tpr}, rank ${e.rank} of ${e.of}">` +
+    `<span class="ctpr num">${e.tpr}</span><span class="csub num">#${e.rank} of ${e.of}</span></button>`;
+  return `<button type="button" class="pcell" data-m="${m.id}" data-f="${f}" aria-pressed="${on}" aria-label="${esc(where)}: not ranked, ${e.games} of ${m.min[f]} games">` +
+    `<span class="cnr">Not ranked</span><span class="csub num">${e.games} of ${m.min[f]} games</span></button>`;
+}
+
+function renderPlayerGrid() {
+  const d = ps.d;
+  $("p-grid").innerHTML = `<span class="corner"></span>` + FMTS.map((f) => `<span class="colh">${LABEL[f]}</span>`).join("") +
+    DATA.modes.map((m) => {
+      const head = `<span class="rowh">${esc(m.label)}<small>${m.year ? ((m.fraction ?? 1) >= 1 ? "Calendar year" : "Year so far") : "Rolling"}</small></span>`;
+      if (!d.modes[m.id]) return head + `<span class="gap">Not in this period's player pool</span>`;
+      return head + FMTS.map((f) => cell(m, f)).join("");
+    }).join("");
+}
+
+function stat(label, value, cls = "") {
+  return `<div${cls ? ` class="${cls}"` : ""}><dt>${label}</dt><dd class="num">${value}</dd></div>`;
+}
+
+function renderPlayerDetail() {
+  const m = DATA.modes.find((x) => x.id === ps.mode), e = pentry();
+  const title = `${LABEL[ps.fmt]} · ${esc(m.label)}`;
+  if (!e) {
+    $("p-detail").innerHTML = `<h2>${title}</h2><p class="mode-note">No rated ${LABEL[ps.fmt].toLowerCase()} games in this period.</p>`;
+    return;
+  }
+  const delta = e.tpr != null && e.rating ? e.tpr - e.rating : null;
+  const dTxt = delta == null ? "—" : `<span class="${delta > 0 ? "up" : delta < 0 ? "down" : "flat"}">${delta > 0 ? "+" : delta < 0 ? "−" : "±"}${Math.abs(delta)}</span>`;
+  const rank = e.rank ? `#${e.rank} <small>of ${e.of}</small>` : `— <small>not ranked</small>`;
+  // The page lists the top 100 of each list; the full list is in the repository.
+  const shown = e.rank && e.rank <= (m.lists ? m.lists[ps.fmt].rows.length : 100);
+  const csv = `https://github.com/anton-g-kulikov/chess-performance-rating/blob/main/results/${m.year ? m.year + "/" : ""}${ps.fmt}.csv`;
+  const inList = shown && PEOPLE.has(ps.d.id) ? `<a href="/#${viewHash(m.id, ps.fmt)}/${ps.d.id}" data-home>Show in the ${esc(m.label.toLowerCase())} ${LABEL[ps.fmt].toLowerCase()} list</a>` : "";
+  const outside = e.rank && !shown ? ` This page lists the top 100, so they're only in the <a href="${csv}" target="_blank" rel="noopener">full list</a>.` : "";
+  const evs = e.ev.map((x, i) => {
+    const [p, name, start, end, n, s, avg, tpr, games] = x;
+    const dates = start ? (start === end || !end ? start : `${start} – ${end}`) : "";
+    const open = ps.open.has(i);
+    return `<tr class="row${open ? " open" : ""}" data-i="${i}" tabindex="0" aria-expanded="${open}">
+      <td class="name"><span class="evname"><span class="chev" aria-hidden="true">›</span><span>${esc(name)}<div class="dates">${esc(dates)}</div></span></span></td>
+      <td class="l hide-sm">${period(p + "-01")}</td><td class="num">${score(s)}/${n}</td>
+      <td class="num hide-sm">${avg ?? "—"}</td><td class="num">${tpr ?? "—"}</td></tr>` + (open ? gamesRow(games) : "");
+  }).join("");
+  $("p-detail").innerHTML = `<h2>${title}</h2>
+    <p class="mode-note">${windowNote(m)}${e.rank ? ` Ranked ${e.rank} of the ${e.of} players with ${m.min[ps.fmt]} or more games.${outside}` : ""}</p>
+    ${e.rank ? "" : `<p class="unranked"><strong>Not ranked:</strong> ${e.games} rated ${LABEL[ps.fmt].toLowerCase()} game${e.games === 1 ? "" : "s"}, and the list needs ${m.min[ps.fmt]}. The numbers below are over the games played.</p>`}
+    <dl class="pstats">
+      ${stat("TPR", e.tpr ?? "—", "main")}${stat("Rank", rank)}${stat("Score", e.games ? `${score(e.score)}/${e.games} <small>${Math.round(e.pct)}%</small>` : "—")}
+      ${stat("True", e.true_perf ?? "—")}${stat("Avg opp", e.avg_opp ?? "—")}${stat("FIDE", e.rating ?? "—")}${stat("Δ", dTxt)}
+    </dl>
+    ${inList ? `<div class="plinks">${inList}</div>` : ""}
+    <div class="table-box"><table class="pev">
+      <thead><tr><th class="l">Event</th><th class="l hide-sm">FIDE list</th><th>Score</th><th class="hide-sm">Avg opp</th><th>TPR</th></tr></thead>
+      <tbody>${evs}</tbody></table></div>`;
+}
+
+function gamesRow(games) {
+  const rows = games.map(([opp, r, res, capped, oid], i) => {
+    const nm = esc(fullName(opp));
+    const who = oid ? `<a href="/player/${oid}#${viewHash(ps.mode, ps.fmt)}" data-player>${nm}</a>` : nm;
+    const rating = capped ? `${r}<span class="cap" title="FIDE's 400-point rule: counted as the player's rating minus 400">*</span>` : r;
+    const [txt, cls] = res === 1 ? ["1", "up"] : res === 0 ? ["0", "down"] : ["½", "flat"];
+    return `<tr><td class="num muted">${i + 1}</td><td class="opp">${who}</td><td class="num">${rating}</td><td class="num res ${cls}">${txt}</td></tr>`;
+  }).join("");
+  const capped = games.some((g) => g[3]) ? `<div class="muted" style="font-size:13px">* Rated more than 400 points below the player, so counted as the player's rating minus 400, as FIDE does.</div>` : "";
+  return `<tr class="detail"><td colspan="5"><div class="detail-inner"><div class="ev-box"><table class="ev games">
+    <thead><tr><th>#</th><th class="l">Opponent</th><th>Rating</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table></div>${capped}</div></td></tr>`;
+}
+
+function renderPlayer() {
+  const d = ps.d;
+  setPlayerHead(d.name, d.fed, d.id);
+  $("p-back").href = `/#${viewHash(ps.mode, ps.fmt)}`;
+  renderPlayerGrid(); renderPlayerDetail();
+}
+
+function route() {
+  const id = playerId();
+  document.body.classList.toggle("pview", !!id);
+  if (id) return showPlayer(id);
+  ps.id = null;
+  fromHash();
+}
+
+$("p-grid").addEventListener("click", (e) => {
+  const b = e.target.closest(".pcell[data-f]"); if (!b) return;
+  ps.mode = b.dataset.m; ps.fmt = b.dataset.f; ps.open.clear();
+  history.replaceState(history.state, "", `#${viewHash(ps.mode, ps.fmt)}`);
+  $("p-back").href = `/#${viewHash(ps.mode, ps.fmt)}`;
+  renderPlayerGrid(); renderPlayerDetail();
+  $("p-grid").querySelector(`.pcell[data-m="${ps.mode}"][data-f="${ps.fmt}"]`).focus();
+});
+function toggleEvent(tr) {
+  const i = +tr.dataset.i;
+  ps.open.has(i) ? ps.open.delete(i) : ps.open.add(i);
+  renderPlayerDetail();
+  $("p-detail").querySelector(`tr.row[data-i="${i}"]`).focus();
+}
+$("p-detail").addEventListener("click", (e) => {
+  if (e.target.closest("a")) return; const tr = e.target.closest("tr.row"); if (tr) toggleEvent(tr); });
+$("p-detail").addEventListener("keydown", (e) => {
+  const tr = e.target.closest("tr.row");
+  if (tr && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); toggleEvent(tr); }
+});
+
+// Links between the lists and player pages change the view in place. Modified
+// clicks (new tab) are left to the browser.
+document.addEventListener("click", (e) => {
+  const a = e.target.closest("a[data-player], a[data-home]");
+  if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  e.preventDefault();
+  const fromList = !playerId();
+  // "← All rankings" goes back to the very list the player was opened from, with its search.
+  if (a.id === "p-back" && history.state?.fromList) return history.back();
+  history.pushState({ fromList: fromList && a.hasAttribute("data-player") }, "", a.getAttribute("href"));
+  route();
+  window.scrollTo(0, 0);
+});
 
 $("modes").addEventListener("click", (e) => { const b = e.target.closest(".mode"); if (b) go(b.dataset.m, state.fmt, true); });
 $("modes").addEventListener("change", (e) => { if (e.target.id === "older" && e.target.value) go(e.target.value, state.fmt, true); });
@@ -624,7 +887,10 @@ $("chips").addEventListener("click", (e) => {
   state.picks.splice(+x.dataset.x, 1);
   syncHash(); renderBody(); $("q").focus();
 });
-window.addEventListener("hashchange", fromHash);
+window.addEventListener("hashchange", route);
+window.addEventListener("popstate", route);
 
-fromHash();
+route();
+// The method section shows on player pages too; fill it once if the lists never rendered.
+if (playerId()) renderMethod();
 </script>

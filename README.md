@@ -22,7 +22,10 @@ There are two modes, like tennis's ranking and race:
 
 Each list is in `results/…/{classical,rapid,blitz}.csv`. The web page,
 [chesstpr.com](https://chesstpr.com), has both modes and every year, sortable
-columns, search, side-by-side players and each player's events.
+columns, search, side-by-side players and each player's events. Every player
+in the pool also has a page, `chesstpr.com/player/<FIDE id>`, with their
+results in every period and format, including those where they have too few
+games to be ranked or finish outside the top 100, down to single games.
 
 ## How it works
 
