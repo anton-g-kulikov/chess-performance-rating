@@ -9,7 +9,7 @@ from perfrating.build import (build_rows, event_year, scaled_minimum, window,
 from perfrating.parsers import parse_calculation, parse_period_arrays, parse_top_list
 from perfrating.performance import dp, performance, round_p, true_performance
 from perfrating.race import race_frames, rolling_frames
-from perfrating.web import name_key, player_entries, progress
+from perfrating.web import name_key, opponent_ids, player_entries, progress
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -141,6 +141,28 @@ class PlayerPageTest(unittest.TestCase):
         self.assertEqual(name_key("Gukesh D"), name_key("Gukesh, D"))
         self.assertEqual(name_key("Aravindh, Chithambaram VR."), name_key("Aravindh, Chithambaram VR"))
         self.assertNotEqual(name_key("So, Wesley"), name_key("So, Wesley b"))
+
+    def test_opponent_spellings_resolve_to_one_pool_player(self):
+        def player(name, rating, opponents):
+            return {"name": name, "fed": "X", "ratings": {"classical": rating},
+                    "games": {"classical": [{"games": [{"opponent": o, "opponent_rating": r} for o, r in opponents]}]}}
+        saved = {"players": {
+            "1": player("Praggnanandhaa R", 2750, []),
+            "2": player("Niemann, Hans Moke", 2730, []),
+            "3": player("Flores, Diego", 2600, []),
+            "4": player("Keymer, Vincent", 2760, [
+                ("Praggnanandhaa, R", 2750), ("Rameshbabu, Praggnanandhaa", 2750), ("R, Praggnanandhaa", 2750),
+                ("Niemann, Hans", 2725), ("Flores Quillas, Diego Saul Rodri", 2398), ("Niemann, Bob", 2100),
+                ("Flores, D", 2150)]),
+        }}
+        ids, listed = opponent_ids([saved])
+        for spelling in ("Praggnanandhaa, R", "Rameshbabu, Praggnanandhaa", "R, Praggnanandhaa"):
+            self.assertEqual(ids[name_key(spelling)], 1)   # word order and initials
+        self.assertEqual(ids[name_key("Niemann, Hans")], 2)  # a name left out, ratings agree
+        self.assertNotIn(name_key("Flores Quillas, Diego Saul Rodri"), ids)  # a namesake 200 points away
+        self.assertNotIn(name_key("Niemann, Bob"), ids)
+        self.assertNotIn(name_key("Flores, D"), ids)  # initials fit, but a namesake 450 points away
+        self.assertEqual(listed[1], "Praggnanandhaa R")
 
     def test_player_entries_cover_ranked_and_unranked_players(self):
         def ev(name, start, games):
