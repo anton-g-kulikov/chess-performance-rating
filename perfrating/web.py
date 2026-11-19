@@ -12,6 +12,7 @@ in ``perfrating/page.html``; every older year is written to
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
@@ -90,10 +91,12 @@ def main(argv=None) -> int:
 
     # The rolling lists and the newest year go in the page; older years are
     # separate files, fetched on demand.
+    # The file's hash goes in its URL, so browsers holding an older copy
+    # fetch the new one after a rebuild.
     for m in modes[2:]:
-        (data_dir / f"{m['id']}.json").write_text(
-            json.dumps({"lists": m.pop("lists")}, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-        m["src"] = f"data/{m['id']}.json"
+        body = json.dumps({"lists": m.pop("lists")}, ensure_ascii=False, separators=(",", ":"))
+        (data_dir / f"{m['id']}.json").write_text(body, encoding="utf-8")
+        m["src"] = f"data/{m['id']}.json?v={hashlib.sha1(body.encode()).hexdigest()[:10]}"
     blob = json.dumps({"modes": modes, "people": people}, ensure_ascii=False,
                       separators=(",", ":")).replace("</", "<\\/")
     html = TEMPLATE.read_text(encoding="utf-8").replace("/*DATA*/null", blob)
