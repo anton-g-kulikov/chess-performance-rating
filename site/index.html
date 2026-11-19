@@ -448,7 +448,7 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
     </div>
   </section>
 
-  <section class="method" aria-labelledby="how">
+  <section class="method lists-only" aria-labelledby="how">
     <h2 id="how">How it works</h2>
 
     <div class="mblock">
@@ -495,6 +495,9 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
       <p>Source: game-by-game rating calculations on <a href="https://ratings.fide.com" target="_blank" rel="noopener">ratings.fide.com</a>. Code: <a href="https://github.com/anton-g-kulikov/chess-performance-rating" target="_blank" rel="noopener">chess-performance-rating</a>. Contact: <a href="mailto:hello@chesstpr.com">hello@chesstpr.com</a>.</p>
     </div>
   </section>
+
+  <!-- Filled by renderPlayerMethod() for the period and format picked above. -->
+  <section class="method pview-only" id="p-method" aria-labelledby="p-how"></section>
 </div>
 
 <script>
@@ -869,6 +872,7 @@ function renderPlayerDetail(animate = false) {
   const title = `${LABEL[ps.fmt]} · ${esc(m.label)}`;
   if (!e) {
     $("p-detail").innerHTML = `<h2>${title}</h2><p class="mode-note">No rated ${LABEL[ps.fmt].toLowerCase()} games in this period.</p>`;
+    renderPlayerMethod(m, null);
     return;
   }
   const delta = e.tpr != null && e.rating ? e.tpr - e.rating : null;
@@ -901,6 +905,65 @@ function renderPlayerDetail(animate = false) {
       <thead><tr><th class="l">Event</th><th class="l hide-sm">FIDE list</th><th>Score</th><th class="hide-sm">Avg opp</th><th>TPR</th><th class="hide-sm" title="TPR over all games up to and including this event">To date</th></tr></thead>
       <tbody>${evs}</tbody></table></div>`;
   drawChart(animate);
+  renderPlayerMethod(m, e);
+}
+
+// FIDE conversion table (Handbook B.02, table 8.1a): dp for p = .50 .. 1.00.
+const DP_UPPER = [0, 7, 14, 21, 29, 36, 43, 50, 57, 65, 72, 80, 87, 95, 102, 110, 117, 125, 133, 141,
+  149, 158, 166, 175, 184, 193, 202, 211, 220, 230, 240, 251, 262, 273, 284, 296, 309, 322, 336, 351,
+  366, 383, 401, 422, 444, 470, 501, 538, 589, 677, 800];
+// Score as a percentage rounded half up, as FIDE does, and its dp.
+function dpOf(points, n) {
+  const pct = Math.floor((200 * points + n) / (2 * n));  // round(100 * points / n), halves up
+  return { pct, dp: pct >= 50 ? DP_UPPER[pct - 50] : -DP_UPPER[50 - pct] };
+}
+const signed = (v) => `${v > 0 ? "+" : v < 0 ? "−" : "±"}${Math.abs(v)}`;
+
+// "How it works" on a player page: the same rules as the lists, told with this
+// player's numbers for the period and format picked above.
+function renderPlayerMethod(m, e) {
+  const who = fullName(ps.d.name), fmt = LABEL[ps.fmt].toLowerCase(), min = m.min[ps.fmt];
+  const blocks = [];
+  blocks.push(`<h2 id="p-how">How it works</h2>`);
+  blocks.push(`<div class="mblock"><h3>This page</h3>
+    <p>Each cell in the grid at the top is ${esc(who)}'s TPR over all their rated games in one period and format, and their rank among the players with enough games there. A cell marked “Not ranked” shows how many games they have against how many the list needs. Each period counts only its own games. Unlike the FIDE rating, nothing carries over from one period to the next.</p></div>`);
+
+  if (e) {
+    const games = e.ev.flatMap((x) => x[8]);
+    const capped = games.filter((g) => g[3]).length;
+    const { pct, dp } = dpOf(e.score, e.games);
+    const exact = e.avg_opp + dp === e.tpr;
+    const standing = e.rank
+      ? `With ${e.games} games they clear the minimum of ${min}, and rank ${e.rank} of the ${e.of} players who do.`
+      : `With ${e.games} game${e.games === 1 ? "" : "s"} they are short of the ${min} the list needs, so they aren't ranked. The numbers are still worked out the same way, over the games they played.`;
+    const steps = [
+      `<strong>Average rating of the opponents:</strong> ${e.avg_opp}.` + (capped ? ` ${capped} of the ${e.games} opponents were rated more than 400 points below ${esc(who)}. As FIDE does, each counts as exactly 400 below (marked * in the games).` : ""),
+      `<strong>Score:</strong> ${score(e.score)} out of ${e.games} is ${pct}%. FIDE's conversion table ${dp >= 0 ? "adds" : "subtracts"} ${Math.abs(dp)} for ${pct}%.`,
+      `<strong>TPR:</strong> ${e.avg_opp} ${dp >= 0 ? "+" : "−"} ${Math.abs(dp)} ${exact ? "=" : "≈"} <strong>${e.tpr}</strong>` + (exact ? "." : `, the small difference coming from rounding the average.`),
+    ];
+    const truePerf = e.true_perf != null
+      ? `<p><strong>True ${e.true_perf}.</strong> At a rating of ${e.true_perf}, the expected scores against each of the ${e.games} opponents add up to exactly ${score(e.score)}. Unlike TPR, it allows for how spread out the opponents' ratings were.</p>`
+      : `<p><strong>No true performance.</strong> It doesn't exist for a ${pct >= 100 ? "100%" : "0%"} score: no rating expects exactly that.</p>`;
+    const delta = e.rating && e.tpr != null
+      ? `<p><strong>FIDE ${e.rating}</strong> is ${esc(who)}'s ${esc(m.rating_note || "FIDE rating")} in ${fmt}. <strong>Δ ${signed(e.tpr - e.rating)}</strong> is the TPR minus it: ${e.tpr > e.rating ? "they scored above their rating" : e.tpr < e.rating ? "they scored below their rating" : "they scored exactly their rating"}.</p>`
+      : "";
+    blocks.push(`<div class="mblock"><h3>${esc(who)}'s ${fmt} TPR, ${esc(m.label.toLowerCase())}</h3>
+      <p>${windowNote(m)} All of their ${e.games} rated ${fmt} game${e.games === 1 ? "" : "s"} from ${e.ev.length} event${e.ev.length === 1 ? "" : "s"} are pooled, as if they were one long tournament. ${standing}</p>
+      <p>TPR is the rating someone would need to score what ${esc(who)} scored against the same opponents. It's worked out the way FIDE does it:</p>
+      <ol>${steps.map((x) => `<li>${x}</li>`).join("")}</ol>
+      ${truePerf}${delta}</div>`);
+
+    const qualified = e.ev.some((x) => x[11] >= min);
+    blocks.push(`<div class="mblock"><h3>The chart and the events</h3>
+      <p>The events table lists ${esc(who)}'s ${fmt} events in this period, newest first. Score, average opponent and TPR in each row are for that event alone. The FIDE list is the monthly rating list that rated it.${m.year ? ` An event counts in the year it ended, even when FIDE rated it a month or two later.` : ""}</p>
+      <p><strong>To date</strong> pools every game from the first event in the period up to and including that one. The chart draws the same number after each event, so its last point is the TPR above, ${e.tpr}. The step line is ${esc(who)}'s FIDE rating going into each event.${qualified ? ` The “Qualified” marker is the event where they reached the ${min} games the list needs. Before it, the line moves a lot, because a few games decide it.` : ""}</p>
+      <p>Open an event to see its games. Opponents who have a page here are links.</p></div>`);
+  }
+
+  blocks.push(`<div class="mblock"><h3>Who is compared</h3>
+    <p>Rankings compare ${esc(who)} only with this period's player pool: ${esc(m.pool_note || "FIDE's open top-100 players")}.</p>
+    <p>Source: game-by-game rating calculations on <a href="https://ratings.fide.com/profile/${ps.d.id}" target="_blank" rel="noopener">ratings.fide.com</a>. Code: <a href="https://github.com/anton-g-kulikov/chess-performance-rating" target="_blank" rel="noopener">chess-performance-rating</a>. Contact: <a href="mailto:hello@chesstpr.com">hello@chesstpr.com</a>.</p></div>`);
+  $("p-method").innerHTML = blocks.join("");
 }
 
 // ---- Player chart: TPR over all games so far, after each event ----
