@@ -1,0 +1,31 @@
+{
+ "title": "2023 performance race",
+ "scope": "Games from events that ended in **2023** (the full year), read from the January 2023 – April 2024 FIDE lists. Everyone starts again on January 1.",
+ "periods": [
+  "2023-01-01",
+  "2023-02-01",
+  "2023-03-01",
+  "2023-04-01",
+  "2023-05-01",
+  "2023-06-01",
+  "2023-07-01",
+  "2023-08-01",
+  "2023-09-01",
+  "2023-10-01",
+  "2023-11-01",
+  "2023-12-01",
+  "2024-01-01",
+  "2024-02-01",
+  "2024-03-01",
+  "2024-04-01"
+ ],
+ "min_games": {
+  "classical": 20,
+  "rapid": 20,
+  "blitz": 40
+ },
+ "year": 2023,
+ "fraction": 1.0,
+ "pool_note": "the 198 players in FIDE's open top 100 for classical, rapid or blitz on the January, April, July or October 2023 list, or the January 2024 list",
+ "rating_note": "rating on the January 2023 list"
+}
