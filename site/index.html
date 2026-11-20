@@ -384,6 +384,8 @@ tr.detail > td { padding: 2px 12px 16px; text-align: left; white-space: normal; 
 body.pview .lists-only, body:not(.pview) .pview-only { display: none !important; }
 #player { display: grid; gap: 36px; min-width: 0; }
 .back { justify-self: start; font-weight: 600; font-size: 14px; color: var(--muted); text-decoration: none; }
+/* 40px tall to tap; the negative margin keeps the spacing as it was. */
+.back, .plinks a { display: inline-block; padding-block: 10px; margin-block: -10px; }
 .back:hover { color: var(--ink); }
 .plinks { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 15px; }
 /* Career: format tabs, the TPR of every period on one chart, and the periods as chips.
@@ -408,7 +410,7 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 .pchips { display: flex; flex-wrap: wrap; gap: 6px; }
 .pchip {
   appearance: none; cursor: pointer; font: 600 14px/1.3 var(--body); color: var(--ink); background: transparent;
-  border: 1px solid var(--line); border-radius: var(--r); padding: 6px 10px; display: inline-flex; align-items: baseline; gap: 6px;
+  border: 1px solid var(--line); border-radius: var(--r); min-height: 40px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px;
 }
 .pchip small { font-weight: 400; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .pchip:hover { border-color: var(--ink); }
@@ -444,7 +446,12 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 .form-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
 .form h3 { margin: 0; font-weight: 700; font-size: 16px; }
 .form-plot { position: relative; min-width: 0; }
-.form svg { max-width: 100%; cursor: crosshair; }
+/* A long strip scrolls sideways instead of squeezing its ticks. */
+.form-scroll { overflow-x: auto; overflow-y: hidden; padding-bottom: 8px; overscroll-behavior-x: contain; scrollbar-width: thin; }
+.form-scroll.fl { mask-image: linear-gradient(to right, transparent, #000 32px); }
+.form-scroll.fr { mask-image: linear-gradient(to left, transparent, #000 32px); }
+.form-scroll.fl.fr { mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent); }
+.form svg { cursor: crosshair; }
 /* No focus box: the picked point and its tip show where the keys are. */
 .form svg:focus, .form svg:focus-visible { outline: none; }
 /* Results in the colours of the score bar. The picked game stays as it is and the rest fade. */
@@ -555,7 +562,6 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 .plot svg { display: block; width: 100%; overflow: visible; }
 /* No focus box: the picked point and its tip show where the keys are. */
 .plot svg:focus, .plot svg:focus-visible { outline: none; }
-.plot .grid line { stroke: var(--line); stroke-width: 1; }
 .plot .tick { font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
 .plot .prov { fill: url(#hxs); }
 .plot .l-tpr { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
@@ -581,7 +587,13 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 
 @media (max-width: 560px) {
   .pev td.name { min-width: 0; width: 100%; }
+  .pchips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pchip { justify-content: space-between; }
+  /* Six cells fill the grid evenly: the difference sits in the FIDE cell. */
+  .pstats .delta { display: none; }
 }
+.pstats .in-fide { display: none; }
+@media (max-width: 560px) { .pstats .in-fide { display: inline; } }
 </style>
 
 <!-- Hatch patterns for the drawings: the printed diagram's dark square. -->
@@ -1208,7 +1220,7 @@ function drawCareer(animate) {
   const Y = (v) => T + (1 - (v - y0) / (y1 - y0)) * ph;
 
   let grid = "";
-  for (let v = y0; v <= y1; v += step) grid += `<line x1="${L}" x2="${L + pw}" y1="${Y(v)}" y2="${Y(v)}"/><text class="tick" x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${v}</text>`;
+  for (let v = y0; v <= y1; v += step) grid += `<text class="tick" x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${v}</text>`;
   // Year labels, thinned to fit; the selected one is always shown.
   const every = Math.max(1, Math.ceil(36 / sw));
   const lastYear = slots.filter((s) => !s.rolling).length - 1;
@@ -1336,7 +1348,7 @@ function renderPlayerDetail(animate = false) {
     ${e.rank ? "" : `<p class="unranked"><strong>Not ranked:</strong> ${e.games} rated ${LABEL[ps.fmt].toLowerCase()} game${e.games === 1 ? "" : "s"}, and the list needs ${m.min[ps.fmt]}. The numbers below are over the games played.</p>`}
     <dl class="pstats">
       ${stat("TPR", e.tpr ?? "—", "main")}${stat("Rank", rank)}${stat("Score", e.games ? `${score(e.score)}/${e.games} <small>${Math.round(e.pct)}%</small>` : "—")}
-      ${stat("True", e.true_perf ?? "—")}${stat("Avg opp", e.avg_opp ?? "—")}${stat("FIDE", e.rating ?? "—")}${stat("Δ", dTxt)}
+      ${stat("True", e.true_perf ?? "—")}${stat("Avg opp", e.avg_opp ?? "—")}${stat("FIDE", e.rating ? `${e.rating}<small class="in-fide"> Δ ${dTxt}</small>` : "—")}${stat("Δ", dTxt, "delta")}
     </dl>
     ${chartBlock(e, m)}
     ${formBlock(e)}
@@ -1362,7 +1374,9 @@ function dpOf(points, n) {
 // to the width it is given, up to 24px a game.
 // Pointing along the strip, or stepping with the arrow keys, names the game under it.
 // The strip is drawn at the size it is shown, up to 24px a game, and redrawn when the
-// width changes, so the hatching of the draws keeps its angle.
+// width changes, so the hatching of the draws keeps its angle. Ticks never get thinner
+// than a set width (wider on touch screens, so each game can be tapped); a strip
+// that doesn't fit scrolls sideways and opens on its newest games.
 let formState = [], formAt = -1, lastFormW = 0;
 function formBlock(e) {
   const events = e.ev.slice().reverse().filter((x) => x[8].length);
@@ -1383,7 +1397,11 @@ function drawForm() {
   const box = $("p-form"); if (!box || !formState.length) return;
   lastFormW = box.clientWidth; formAt = -1;
   const base = 16, H = 30, units = formState[formState.length - 1].x + 3;
-  const k = Math.min(6, Math.max(1, box.clientWidth) / units), W = units * k, w = 3 * k;
+  // k is pixels per unit: a game takes 4 units (a 3-unit tick and a 1-unit gap).
+  // On touch a game takes at least 20px, its tick 10px of it.
+  const touch = matchMedia("(pointer: coarse)").matches;
+  const k = Math.min(6, Math.max(touch ? 5 : 1.5, Math.max(1, box.clientWidth) / units));
+  const W = units * k, w = (touch ? 2 : 3) * k;
   const ticks = formState.map((g, i) => {
     const x = (g.x * k).toFixed(1);
     return g.res === 1 ? `<rect class="s-win" data-i="${i}" x="${x}" y="0" width="${w.toFixed(1)}" height="${base}"/>`
@@ -1392,7 +1410,13 @@ function drawForm() {
   }).join("");
   const wdl = wdlOf(formState.map((g) => g.res));
   const label = `Every game in order, oldest first: ${wdlLabel(wdl)}. Use the arrow keys to step through the games.`;
-  box.innerHTML = `<svg width="${W.toFixed(1)}" height="${H}" viewBox="0 0 ${W.toFixed(1)} ${H}" tabindex="0" role="img" aria-label="${esc(label)}">${ticks}</svg><div class="tip" hidden></div>`;
+  box.innerHTML = `<div class="form-scroll"><svg width="${W.toFixed(1)}" height="${H}" viewBox="0 0 ${W.toFixed(1)} ${H}" tabindex="0" role="img" aria-label="${esc(label)}">${ticks}</svg></div><div class="tip" hidden></div>`;
+  const sc = box.firstChild; sc.scrollLeft = sc.scrollWidth; formEdges(sc);
+}
+function formEdges(sc) {
+  const max = sc.scrollWidth - sc.clientWidth;
+  sc.classList.toggle("fl", sc.scrollLeft > 1);
+  sc.classList.toggle("fr", sc.scrollLeft < max - 1);
 }
 
 function formFocus(i) {
@@ -1403,6 +1427,10 @@ function formFocus(i) {
   if (i < 0) { tip.hidden = true; return; }
   const g = formState[i], rect = box.querySelector(`rect[data-i="${i}"]`);
   rect.classList.add("on");
+  // Keep the picked tick in view (stepping with the keys can walk off the edge).
+  const sc = box.querySelector(".form-scroll"), sb = sc.getBoundingClientRect(), rb = rect.getBoundingClientRect();
+  if (rb.left < sb.left + 8) sc.scrollLeft -= sb.left + 8 - rb.left;
+  else if (rb.right > sb.right - 8) sc.scrollLeft += rb.right - sb.right + 8;
   const [word, fill] = g.res === 1 ? ["Win", " win"] : g.res === 0 ? ["Loss", " solid"] : ["Draw", " hatch"];
   tip.innerHTML = `<b>${esc(fullName(g.opp))}</b><div class="muted">${esc(g.ev)} · game ${g.k} of ${g.n}</div>
     <div class="row2"><span>Opponent's rating</span><span class="num">${g.rating}</span></div>
@@ -1500,7 +1528,7 @@ function drawChart(animate) {
   const X = (t) => L + ((t - t0) / (t1 - t0)) * pw, Y = (v) => T + (1 - (v - y0) / (y1 - y0)) * ph;
 
   let grid = "";
-  for (let v = y0; v <= y1; v += step) grid += `<line x1="${L}" x2="${L + pw}" y1="${Y(v)}" y2="${Y(v)}"/><text class="tick" x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${v}</text>`;
+  for (let v = y0; v <= y1; v += step) grid += `<text class="tick" x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${v}</text>`;
   // Month ticks, thinned to fit; January carries the year.
   const months = [];
   for (let d = new Date(t0), c = Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1); c <= t1; ) {
@@ -1803,9 +1831,11 @@ $("p-detail").addEventListener("pointermove", (e) => {
   if (e.target.closest("#p-plot svg")) chartFocus(nearest(e.clientX));
   const strip = e.target.closest(".form-plot svg"); if (strip) formFocus(nearestGame(strip, e.clientX));
 });
+$("p-detail").addEventListener("scroll", (e) => { if (e.target.matches?.(".form-scroll")) formEdges(e.target); }, true);
+document.addEventListener("pointerdown", (e) => { if (formAt >= 0 && !e.target.closest(".form-plot")) formFocus(-1); });
 $("p-detail").addEventListener("pointerleave", (e) => {
   if (e.target.matches("#p-plot svg")) chartFocus(-1);
-  if (e.target.matches(".form-plot svg")) formFocus(-1);
+  if (e.target.matches(".form-plot svg") && e.pointerType !== "touch") formFocus(-1);
 }, true);
 $("p-detail").addEventListener("focusout", (e) => {
   if (e.target.closest("#p-plot svg")) chartFocus(-1);
@@ -1832,7 +1862,9 @@ new ResizeObserver(() => {
   const c = $("p-car"); if (ps.d && c.clientWidth && c.clientWidth !== lastCarW) drawCareer(false);
 }).observe($("player"));
 $("p-detail").addEventListener("click", (e) => {
-  if (e.target.closest("a")) return; const tr = e.target.closest("tr.row"); if (tr) toggleEvent(tr); });
+  if (e.target.closest("a")) return;
+  const strip = e.target.closest(".form-plot svg"); if (strip) return formFocus(nearestGame(strip, e.clientX));
+  const tr = e.target.closest("tr.row"); if (tr) toggleEvent(tr); });
 $("p-detail").addEventListener("keydown", (e) => {
   const tr = e.target.closest("tr.row");
   if (tr && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); toggleEvent(tr); }
