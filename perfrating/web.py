@@ -1,19 +1,27 @@
-"""Render the lists as a single self-contained web page.
+"""Render the lists as a web page, and a page for every player.
 
-    python -m perfrating.web            # writes site/index.html
+    python -m perfrating.web            # writes site/index.html and what it loads
 
 Reads the rolling lists (``results/``, ``data/games.json``) and every
 calendar-year race that has been built (``results/YYYY/``,
-``data/games-YYYY.json``).  The rolling lists and the newest year are embedded
-in ``perfrating/page.html``; every older year is written to
-``site/data/yYYYY.json`` and loaded by the page when someone opens it.
+``data/games-YYYY.json``).  ``perfrating/page.html`` is written out in three
+parts: its markup as ``site/index.html``, its styles as ``site/app.css`` and
+its script, with the rolling lists and the newest year in it, as
+``site/app.js``.  Every older year is written to ``site/data/yYYYY.json`` and
+loaded by the page when someone opens it.
 
-Every player in any pool also gets a page at ``/player/<FIDE id>``, from
-``site/data/p/<FIDE id>.json`` (their numbers in each period and format,
-ranked or not) and one ``site/data/p/<FIDE id>/<period>-<hash>.json`` per
-period with the events and games behind them, fetched when the period is
-opened.  A period file's name changes only when its content does, so a new
-year adds files without rewriting the old ones.
+Every player in any pool also gets a page at ``/player/<FIDE id>``:
+``site/player/<FIDE id>/index.html``, the same markup with the player's own
+title, summary, address and heading in it, so a link to it previews as the
+player's and the page shows whose it is before the script runs.  The two
+shared files keep their names from build to build (the server has browsers
+check them on every visit), so a player's page is rewritten only when the
+markup or the player's name changes.  The numbers come from
+``site/data/p/<FIDE id>.json`` (each period and format, ranked or not) and one
+``site/data/p/<FIDE id>/<period>-<hash>.json`` per period with the events and
+games behind them, fetched when the period is opened.  A period file's name
+changes only when its content does, so a new year adds files without
+rewriting the old ones.
 
 Each World Championship match in ``perfrating/matches.py`` gets a page at
 ``/event/world-championship-YYYY``, written to
@@ -21,9 +29,8 @@ Each World Championship match in ``perfrating/matches.py`` gets a page at
 with the main page's styles; the main page shows a line linking to it.
 
 For search engines, ``site/sitemap.xml`` lists the main page and every match
-and player page (``site/robots.txt``, kept by hand, points to it).  A match
-page carries its own title, summary and address in its markup; the main page
-and the player pages, being one file, set theirs in the page's script.
+and player page (``site/robots.txt``, kept by hand, points to it).  Match and
+player pages carry their own title, summary and address in their markup.
 
 Visits are counted by Cloudflare Web Analytics, which sets no cookies: every
 page ends with its script once ``CF_BEACON`` holds the site's token.
@@ -44,7 +51,7 @@ from statistics import median
 from . import race
 from .build import FORMATS, rated_games
 from .matches import href, match_lines, match_pages
-from .names import exceptions
+from .names import exceptions, parts
 from .performance import dp, performance, round_p
 from .race import race_frames, rolling_frames
 
@@ -102,6 +109,62 @@ def match_html(match: dict) -> str:
     title, tags = match_head(match)
     return (with_analytics(MATCH_TEMPLATE.read_text(encoding="utf-8")).replace("/*TITLE*/", title, 1).replace("<!--HEAD-->", tags, 1)
             .replace("/*SITE_CSS*/", css, 1).replace("<!--SITE_DEFS-->", defs, 1).replace("/*MATCH*/null", blob, 1))
+
+
+# A player page's summary, for search engines and link previews.  The page's
+# script gets it too (``head`` in its data), for moving between players in place.
+PLAYER_DESC = "{name}'s performance rating in classical, rapid and blitz, year by year. Every FIDE rated event and game behind it."
+
+_HEAD = {"desc": r'(<meta name="description" content=")([^"]*)(">)',
+         "ogTitle": r'(<meta property="og:title" content=")([^"]*)(">)',
+         "ogDesc": r'(<meta property="og:description" content=")([^"]*)(">)',
+         "ogUrl": r'(<meta property="og:url" content=")([^"]*)(">)',
+         "title": r"(<title>)([^<]*)(</title>)"}
+
+
+def _swap(page: str, pattern: str, value: str) -> str:
+    """``page`` with the one place ``pattern`` matches set to ``value``."""
+    out, n = re.subn(pattern, lambda m: m.group(1) + value + m.group(3), page)
+    if n != 1:
+        raise ValueError(f"expected one {pattern!r} in the page, found {n}")
+    return out
+
+
+def home_head(page: str) -> dict:
+    """The main page's summary and card as its markup has them, and the
+    player pages' summary: what the script needs to set them again."""
+    read = lambda key: html.unescape(re.search(_HEAD[key], page).group(2))
+    return {"desc": read("desc"), "ogTitle": read("ogTitle"), "ogDesc": read("ogDesc"), "player": PLAYER_DESC}
+
+
+def shell_and_assets(page: str) -> tuple:
+    """``(markup, styles, script)``: the page with its stylesheet and its
+    script taken out into the files the markup then loads."""
+    css = re.search(r"<style>\n?(.*?)</style>", page, re.S)
+    js = re.search(r"<script>\n?(.*?)</script>", page, re.S)   # the page's own script: the one with no attributes
+    shell = (page[:css.start()] + '<link rel="stylesheet" href="/app.css">'
+             + page[css.end():js.start()] + '<script src="/app.js"></script>' + page[js.end():])
+    return shell, css.group(1), js.group(1)
+
+
+def player_html(shell: str, fid: int, name: str, fed: str) -> str:
+    """A player's page: the main page's markup, already the player's.  Its head
+    names the player, and its body opens on the player view with the heading
+    filled in, as the script will set them (setPlayerHead in page.html)."""
+    e = lambda text: html.escape(text, quote=True)
+    who, url = parts(name, fed)[0], f"{SITE}/player/{fid}"
+    desc = PLAYER_DESC.format(name=who)
+    page = _swap(shell, _HEAD["title"], e(f"{who} · {SITE_NAME}"))
+    page = _swap(page, _HEAD["desc"], e(desc) + f'">\n<link rel="canonical" href="{url}')
+    page = _swap(page, _HEAD["ogTitle"], e(who))
+    page = _swap(page, _HEAD["ogDesc"], e(desc))
+    page = _swap(page, _HEAD["ogUrl"], url)
+    page = _swap(page, r"(<body)()(>)", ' class="pview"')
+    page = _swap(page, r'(<div class="eyebrow" id="p-eyebrow">)([^<]*)(</div>)',
+                 e(" · ".join(x for x in (fed, f"FIDE ID {fid}") if x)))
+    page = _swap(page, r'(<h1 id="p-name">)([^<]*)(</h1>)', e(who))
+    return _swap(page, r'(<div class="plinks" id="p-links">)()(</div>)',
+                 f'<a href="https://ratings.fide.com/profile/{fid}" target="_blank" rel="noopener">FIDE profile</a>')
 
 
 def sitemap(paths: list) -> str:
@@ -434,14 +497,23 @@ def main(argv=None) -> int:
         body = json.dumps({"lists": m.pop("lists")}, ensure_ascii=False, separators=(",", ":"))
         (data_dir / f"{m['id']}.json").write_text(body, encoding="utf-8")
         m["src"] = f"/data/{m['id']}.json?v={hashlib.sha1(body.encode()).hexdigest()[:10]}"
-    blob = json.dumps({"modes": modes, "people": people, "names": names, "matches": lines, "pver": ver.hexdigest()[:10]}, ensure_ascii=False,
-                      separators=(",", ":")).replace("</", "<\\/")
-    page_html = with_analytics(race.inline(TEMPLATE.read_text(encoding="utf-8"))).replace("/*DATA*/null", blob)
-    out.write_text(page_html, encoding="utf-8")
+    shell, css, js = shell_and_assets(with_analytics(race.inline(TEMPLATE.read_text(encoding="utf-8"))))
+    blob = json.dumps({"modes": modes, "people": people, "names": names, "matches": lines, "pver": ver.hexdigest()[:10],
+                       "head": home_head(shell)}, ensure_ascii=False, separators=(",", ":"))
+    js = js.replace("/*DATA*/null", blob)
+    out.write_text(shell, encoding="utf-8")
+    (out.parent / "app.css").write_text(css, encoding="utf-8")
+    (out.parent / "app.js").write_text(js, encoding="utf-8")
+    # Every player's own page.
+    shutil.rmtree(out.parent / "player", ignore_errors=True)
+    for fid in sorted(pages):
+        (out.parent / "player" / str(fid)).mkdir(parents=True)
+        (out.parent / "player" / str(fid) / "index.html").write_text(
+            player_html(shell, fid, pages[fid]["name"], pages[fid]["fed"]), encoding="utf-8")
     (out.parent / "sitemap.xml").write_text(
         sitemap(["/"] + [href(m["year"]) for m in matches] + [f"/player/{fid}" for fid in sorted(pages)]), encoding="utf-8")
     lazy = sum(f.stat().st_size for f in data_dir.glob("y*.json"))
-    print(f"wrote {out} ({len(page_html) // 1024} KB, modes: {', '.join(m['label'] for m in modes)})"
+    print(f"wrote {out} ({len(shell) // 1024} KB, with app.css {len(css) // 1024} KB and app.js {len(js) // 1024} KB; modes: {', '.join(m['label'] for m in modes)})"
           + (f"; {len(modes) - 2} more in {data_dir}/ ({lazy // 1024} KB)" if len(modes) > 2 else "")
           + f"; {len(pages)} player pages ({sum(f.stat().st_size for f in players_dir.glob('*.json')) // 1024} KB"
           + f" + {sum(f.stat().st_size for f in players_dir.glob('*/*.json')) // 1024} KB by period)"

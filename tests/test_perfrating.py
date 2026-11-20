@@ -272,6 +272,27 @@ class PlayerPageTest(unittest.TestCase):
         self.assertIn("<loc>https://chesstpr.com/event/world-championship-2026</loc>",
                       sitemap(["/", "/event/world-championship-2026", "/player/1503014"]))
 
+    def test_a_player_page_is_the_main_page_with_the_players_own_head(self):
+        from perfrating.web import TEMPLATE, home_head, player_html, shell_and_assets
+        shell, css, js = shell_and_assets(TEMPLATE.read_text(encoding="utf-8"))
+        # The styles and the script are files of their own, loaded by the markup.
+        self.assertNotIn("<style>", shell)
+        self.assertIn('<link rel="stylesheet" href="/app.css">', shell)
+        self.assertIn('<script src="/app.js"></script>', shell)
+        self.assertIn("body.pview", css)
+        self.assertTrue(js.startswith("const DATA = /*DATA*/null;"))
+        page = player_html(shell, 2016192, "O'Neil, Hikaru", "USA")
+        self.assertIn("<title>Hikaru O&#x27;Neil · Chess Performance Ratings</title>", page)
+        self.assertIn('<link rel="canonical" href="https://chesstpr.com/player/2016192">', page)
+        self.assertIn('<meta property="og:title" content="Hikaru O&#x27;Neil">', page)
+        self.assertIn('<meta property="og:url" content="https://chesstpr.com/player/2016192">', page)
+        self.assertIn('<body class="pview">', page)
+        self.assertIn('<h1 id="p-name">Hikaru O&#x27;Neil</h1>', page)
+        self.assertIn('id="p-eyebrow">USA · FIDE ID 2016192</div>', page)
+        # The main page keeps its own head, and hands it to the script.
+        self.assertEqual(home_head(shell)["ogTitle"], "Who is playing the best chess right now")
+        self.assertNotIn('rel="canonical"', shell)
+
     def test_pages_carry_the_analytics_script_only_with_a_token(self):
         from perfrating.web import with_analytics
         page = "</script>\n<!--ANALYTICS-->\n"

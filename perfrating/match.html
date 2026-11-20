@@ -16,6 +16,9 @@
 /* ---- Event page: a match. Two players, always in the same order: the champion first
    (left, or the upper line), the challenger second. Fills keep their site meanings: outline
    = FIDE rating, solid = TPR, green = whoever is ahead, and a win. ---- */
+/* As on the main page, nothing shows that a later render would push down: the page is the
+   brand and the way back until the two players' games have arrived. */
+body:not(.ready) :is(header, .duel, .result, .ev-sec) { display: none !important; }
 .ev-sec { display: grid; gap: 14px; margin-top: 28px; padding-top: 12px; border-top: 2px solid var(--ink); min-width: 0; }
 .ev-sec h2 { font-family: var(--display); font-weight: 800; font-size: 24px; line-height: 1.15; margin: 0; }
 .ev-sec h3 { font-weight: 700; font-size: 16px; margin: 0; }
@@ -698,6 +701,8 @@ addEventListener("resize", () => { if (innerWidth === lastW || !A) return; lastW
 
 (async () => {
   [A, B] = await Promise.all([loadPlayer(MATCH.a), loadPlayer(MATCH.b)]);
+  // Before anything is drawn: the charts measure the page.
+  document.body.classList.add("ready", "settled");
   PLAYED = findPlayed();
   if (!PLAYED && FMTS.includes(location.hash.slice(1))) fmt = location.hash.slice(1);
   const last = PLAYED ? [PLAYED, ...PLAYED.tb].pop().end : null;

@@ -406,6 +406,12 @@ tr.detail > td { padding: 2px 12px 16px; text-align: left; white-space: normal; 
 
 /* Player page (/player/<FIDE id>): the lists' sections are hidden and #player shown. */
 body.pview .lists-only, body:not(.pview) .pview-only { display: none !important; }
+/* Nothing is shown that a later render would push down the page. The parts the script fills
+   stay out until it fills them (body.ready); the method and the footer, which follow them,
+   until the last of them has its content (body.settled). The period tabs are above all of
+   these and show at once, so an older year says which it is while its lists are fetched. */
+body:not(.ready) :is(.formats, .list, .career, .pdetail),
+body:not(.settled) :is(.method, .foot) { display: none !important; }
 #player { display: grid; gap: 36px; min-width: 0; }
 .back { justify-self: start; font-weight: 600; font-size: 14px; color: var(--muted); text-decoration: none; }
 /* 40px tall to tap; the negative margin keeps the spacing as it was. */
@@ -530,6 +536,7 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 @media (max-width: 560px) { .pstats .in-fide { display: inline; } }
 </style>
 
+<body>
 <!-- Hatch patterns for the drawings: the printed diagram's dark square. -->
 <svg class="defs" aria-hidden="true"><defs>
   <!-- The mark: three games as the site draws them. A win stands tall in green,
@@ -749,14 +756,14 @@ const buttons = () => PHONE.matches ? 2 : 6;
 const MONTH_FULL = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const longPeriod = (p) => `${MONTH_FULL[+p.slice(5, 7) - 1]} ${p.slice(0, 4)}`;
 
-// ---- What search engines and link previews read. One file serves the lists and every
-// player page, so the address, title and summary of the view shown are set here. The tags
-// in the markup are the main page's; there is no canonical link there, since it would
-// name the main page on every player's.
+// ---- What search engines and link previews read. The build writes each page's title,
+// summary and address in its markup (perfrating/web.py). Moving between the lists and a
+// player changes the view in place, so they are set again here for the view shown. The
+// main page's markup has no canonical link: it also answers for a FIDE id with no page.
 const SITE = "https://chesstpr.com";
 const headTag = (sel) => document.head.querySelector(sel);
-const HOME = { desc: headTag('meta[name="description"]').content, ogTitle: headTag('meta[property="og:title"]').content,
-  ogDesc: headTag('meta[property="og:description"]').content };
+// The main page's own summary and card, and a player's, as the build writes them in the markup.
+const HOME = DATA.head;
 function setHead({ title, path, desc = HOME.desc, ogTitle = HOME.ogTitle, ogDesc = HOME.ogDesc, index = true }) {
   document.title = `${title} · Chess Performance Ratings`;
   const tag = (sel, name, attrs) => headTag(sel) || document.head.appendChild(Object.assign(document.createElement(name), attrs));
@@ -1011,7 +1018,12 @@ function renderBody() {
   }).join("");
 }
 
+// See the rule for body.ready in the styles. Set before a render, never after: the charts
+// measure the page, and can't while their part of it is out.
+const reveal = (cls, on = true) => document.body.classList.toggle(cls, on);
+
 function render() {
+  reveal("ready"); reveal("settled");
   $("formats").classList.remove("loading");
   renderModes(); renderFormats(); renderRace(); renderHead(); renderBody(); renderMethod();
 }
@@ -1041,7 +1053,7 @@ function go(mode, fmt, push) {
   fetch(want.src)
     .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
     .then((d) => { want.lists = d.lists; prepare(want); if (M === want) render(); })
-    .catch(() => { if (M === want) $("body").innerHTML = `<tr><td colspan="${COLS.length}" class="empty">Couldn't load ${esc(want.label)}. Check your connection and try again.</td></tr>`; });
+    .catch(() => { if (M === want) { reveal("ready"); reveal("settled"); $("body").innerHTML = `<tr><td colspan="${COLS.length}" class="empty">Couldn't load ${esc(want.label)}. Check your connection and try again.</td></tr>`; } });
 }
 
 // "#y2026-blitz" -> ["y2026", "blitz"]; "#rapid" -> ["", "rapid"].
@@ -1059,7 +1071,8 @@ function fromHash() {
 }
 
 // ---- Player page: /player/<FIDE id>#<mode>-<format> ----
-// The same page serves it (Firebase rewrites /player/** here). The player's
+// Each player's page is the main page with its own head and heading (perfrating/web.py),
+// and the same script runs both, so going from one to the other needs no load. The player's
 // numbers come from /data/p/<id>.json; the events and games of a period from
 // /data/p/<id>/<file>, fetched when that period is first opened.
 const playerId = () => { const m = location.pathname.match(/^\/player\/(\d+)\/?$/); return m ? +m[1] : null; };
@@ -1102,6 +1115,8 @@ function showPlayer(id) {
   const known = PEOPLE.get(id);
   setPlayerHead(known ? known.name : null, known ? known.fed : null, id);
   if (!ps.d) {
+    // Only the heading until the player's numbers arrive.
+    reveal("ready", false); reveal("settled", false);
     $("p-career").hidden = true;
     $("p-detail").innerHTML = `<p class="empty">Loading…</p>`;
   }
@@ -1118,6 +1133,7 @@ function showPlayer(id) {
     if (ps.id !== id) return;
     // No file for this id: not a page. A failed connection says nothing either way.
     if (err.message === "404") setHead({ title: `Player ${id}`, path: `/player/${id}`, index: false });
+    reveal("ready"); reveal("settled");
     $("p-career").hidden = true;
     $("p-detail").innerHTML = `<p class="empty">${known ? "Couldn't load this player. Check your connection and try again." :
       `No player with FIDE ID ${id} is on these lists. Players come from FIDE's open top-100 lists.`}</p>`;
@@ -1128,7 +1144,7 @@ function setPlayerHead(name, fed, id) {
   $("p-name").textContent = name ? fullName(name) : `FIDE ID ${id}`;
   $("p-eyebrow").textContent = name ? [fed, `FIDE ID ${id}`].filter(Boolean).join(" · ") : "Player";
   const who = name ? fullName(name) : `Player ${id}`;
-  const desc = name ? `${who}'s performance rating in classical, rapid and blitz, year by year. Every FIDE rated event and game behind it.` : undefined;
+  const desc = name ? HOME.player.replace("{name}", who) : undefined;
   setHead({ title: who, path: `/player/${id}`, desc, ogTitle: name ? who : undefined, ogDesc: desc });
   $("p-links").innerHTML = `<a href="https://ratings.fide.com/profile/${id}" target="_blank" rel="noopener">FIDE profile</a>`;
 }
@@ -1287,19 +1303,23 @@ function renderPlayerDetail(animate = false) {
   const m = DATA.modes.find((x) => x.id === ps.mode), e = pentry();
   const title = `${LABEL[ps.fmt]} · ${esc(m.label)}`;
   if (!e) {
+    reveal("settled");
     $("p-detail").innerHTML = `<h2>${title}</h2><p class="mode-note">No rated ${LABEL[ps.fmt].toLowerCase()} games in this period.</p>`;
     renderPlayerMethod(m, null);
     return;
   }
   if (!e.ev) {
+    // The method and the footer come back with the period's games, below them.
+    reveal("settled", false);
     $("p-detail").innerHTML = `<h2>${title}</h2><p class="empty">Loading…</p>`;
     $("p-method").innerHTML = "";
     const d = ps.d, mode = ps.mode, still = () => ps.d === d && ps.mode === mode;
     loadPeriod(d, mode).then(() => { if (still()) renderPlayerDetail(animate); }).catch(() => {
-      if (still()) $("p-detail").innerHTML = `<h2>${title}</h2><p class="empty">Couldn't load this period. Check your connection and try again.</p>`;
+      if (still()) { reveal("settled"); $("p-detail").innerHTML = `<h2>${title}</h2><p class="empty">Couldn't load this period. Check your connection and try again.</p>`; }
     });
     return;
   }
+  reveal("settled");
   const delta = e.tpr != null && e.rating ? e.tpr - e.rating : null;
   const dTxt = delta == null ? "—" : signed(delta);
   const rank = e.rank ? `#${e.rank} <small>of ${e.of}</small>` : `— <small>not ranked</small>`;
@@ -1603,6 +1623,7 @@ function gamesRow(games) {
 
 function renderPlayer() {
   const d = ps.d;
+  reveal("ready");
   setPlayerHead(d.name, d.fed, d.id);
   $("p-back").href = `/#${viewHash(ps.mode, ps.fmt)}`;
   renderCareer(true); renderPlayerDetail(true);

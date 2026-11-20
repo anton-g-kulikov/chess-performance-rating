@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Alexander Grischuk · Chess Performance Ratings</title>
+<meta name="description" content="Alexander Grischuk&#x27;s performance rating in classical, rapid and blitz, year by year. Every FIDE rated event and game behind it.">
+<link rel="canonical" href="https://chesstpr.com/player/4126025">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Chess Performance Ratings">
+<meta property="og:title" content="Alexander Grischuk">
+<meta property="og:description" content="Alexander Grischuk&#x27;s performance rating in classical, rapid and blitz, year by year. Every FIDE rated event and game behind it.">
+<meta property="og:url" content="https://chesstpr.com/player/4126025">
+<meta property="og:image" content="https://chesstpr.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Chess Performance Ratings","alternateName":"chesstpr.com","url":"https://chesstpr.com/"}</script>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,800&family=Hanken+Grotesk:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="/app.css">
+
+<body class="pview">
+<!-- Hatch patterns for the drawings: the printed diagram's dark square. -->
+<svg class="defs" aria-hidden="true"><defs>
+  <!-- The mark: three games as the site draws them. A win stands tall in green,
+       a draw half as tall and hatched, a loss points down from the same line. -->
+  <pattern id="hxm" class="hxm" width="1.5" height="1.5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="1.5"/></pattern>
+  <symbol id="mark" viewBox="0 0 30 30">
+    <rect class="s-win" x="2" y="1" width="6" height="16"/>
+    <rect class="s-hxm" x="12.25" y="9.25" width="5.5" height="7.5"/>
+    <rect class="s-ink" x="22" y="17" width="6" height="12"/>
+  </symbol>
+  <pattern id="hx" class="hx" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="4"/></pattern>
+  <pattern id="hxs" class="hxs" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5"/></pattern>
+</defs></svg>
+
+<main class="wrap">
+  <a class="brand" href="/" data-home><svg width="22" height="22" aria-hidden="true"><use href="#mark"/></svg>Chess Performance Ratings</a>
+
+  <section id="player" class="pview-only" aria-labelledby="p-name">
+    <a class="back" id="p-back" href="/" data-home>← All rankings</a>
+    <header>
+      <div class="eyebrow" id="p-eyebrow">RUS · FIDE ID 4126025</div>
+      <h1 id="p-name">Alexander Grischuk</h1>
+      <p class="lede">Every rated game this site has for the player, year by year. Pick a format and a year to see the events and games.</p>
+      <div class="plinks" id="p-links"><a href="https://ratings.fide.com/profile/4126025" target="_blank" rel="noopener">FIDE profile</a></div>
+    </header>
+    <div class="career" id="p-career">
+      <div class="modes ptabs" role="tablist" aria-label="Format" id="p-fmts"></div>
+      <div class="pchart">
+        <div class="pchart-head"><h3 id="p-car-title">TPR by year</h3><div class="legend" id="p-car-legend"></div></div>
+        <div class="plot" id="p-car"></div>
+      </div>
+      <div class="pchips" id="p-chips" role="group" aria-label="Period"></div>
+    </div>
+    <div class="pdetail" id="p-detail" aria-live="polite"></div>
+  </section>
+
+  <header class="lists-only">
+    <div class="eyebrow" id="eyebrow">FIDE rated games</div>
+    <h1 id="headline">Who is playing best last 12 months</h1>
+    <p class="lede" id="lede">A FIDE rating carries results forward for years. This ranking counts only recent games, in classical, rapid and blitz. <strong>No recent games, no ranking.</strong></p>
+  </header>
+
+  <div class="modebar lists-only">
+    <div class="modes" role="tablist" aria-label="Period" id="modes"></div>
+    <p class="mode-note" id="mode-note"></p>
+    <!-- The World Championship match of the period picked above, if it has one. -->
+    <a class="evline" id="evline" hidden></a>
+  </div>
+
+  <nav class="formats lists-only" role="tablist" aria-label="Format" id="formats"></nav>
+
+  <section class="race lists-only" id="race" aria-labelledby="race-title" hidden>
+    <div class="race-head">
+      <div>
+        <h2 id="race-title">How the race unfolded</h2>
+        <div class="race-sub" id="race-sub"></div>
+        <div class="race-key" aria-hidden="true"><span><i class="sq"></i>FIDE rating</span><span><i class="sq solid"></i>TPR</span></div>
+      </div>
+      <div class="race-month" id="race-month" aria-hidden="true"></div>
+    </div>
+    <div class="race-ctl">
+      <button type="button" class="race-play" id="race-play">Play</button>
+      <div class="race-track">
+        <input type="range" id="race-seek" min="0" max="0" value="0" aria-label="Month">
+        <div class="race-ticks" id="race-ticks" aria-hidden="true"></div>
+      </div>
+    </div>
+    <div class="race-plot" id="race-plot"><span class="race-unit" aria-hidden="true">Rating</span><div class="race-axis" id="race-axis"></div><p class="race-empty" id="race-empty" hidden>No one has enough games yet.</p><div class="tip" id="race-tip" hidden></div></div>
+  </section>
+
+  <section class="list lists-only" aria-labelledby="list-title">
+    <h2 id="list-title">Ranking</h2>
+    <div class="toolbar">
+      <div class="finders" id="finders" role="search">
+        <label for="q">Find a player</label>
+        <span class="chips" id="chips"></span>
+        <span class="qf"><input id="q" type="search" placeholder="Name or federation" autocomplete="off"><button type="button" class="addq" id="addq" disabled aria-label="Keep in the table and search for another player" title="Keep in the table and search for another player">+</button></span>
+      </div>
+      <span class="note" id="count"></span>
+    </div>
+    <div class="table-box">
+      <table>
+        <thead><tr id="head"></tr></thead>
+        <tbody id="body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="method lists-only" aria-labelledby="how">
+    <h2 id="how">How it works</h2>
+
+    <div class="mblock">
+      <h3>Two ways to count a year</h3>
+      <dl class="modes-explained">
+        <dt>Last 12 months</dt>
+        <dd id="explain-rolling"></dd>
+        <dt id="race-term">Calendar-year race</dt>
+        <dd id="explain-race"></dd>
+      </dl>
+      <p>Either way, a player's events in one format are treated as a single long tournament. Players with too few games are left out.</p>
+    </div>
+
+    <div class="mblock">
+      <h3>TPR: Tournament Performance Rating</h3>
+      <p>TPR is the rating a player would need to make the same score against the same opponents. FIDE works it out in two steps.</p>
+      <ol>
+        <li>Take the <strong>average rating of the opponents</strong>.</li>
+        <li>Add the value from <strong>FIDE's conversion table</strong> for the percentage score. Scores below 50% subtract the same amounts.</li>
+      </ol>
+      <div class="dp-box">
+        <table class="dp" aria-label="FIDE conversion table, selected values">
+          <tr><th scope="row">Score</th><td>50%</td><td>55%</td><td>60%</td><td>65%</td><td>70%</td><td>75%</td><td>80%</td><td>90%</td><td>100%</td></tr>
+          <tr><th scope="row">Add</th><td>0</td><td>+36</td><td>+72</td><td>+110</td><td>+149</td><td>+193</td><td>+240</td><td>+366</td><td>+800</td></tr>
+        </table>
+      </div>
+      <p class="example" id="tpr-example"></p>
+    </div>
+
+    <div class="mblock">
+      <h3>The other columns</h3>
+      <dl class="cols-explained">
+        <dt>FIDE</dt><dd id="fide-col">The player's current FIDE rating in that format.</dd>
+        <dt>Δ</dt><dd>TPR minus FIDE rating. A plus means the player did better than their rating.</dd>
+        <dt>Score</dt><dd>The bar shows the share of <span class="sq win"></span> wins, <span class="sq hatch"></span> draws and <span class="sq solid"></span> losses. The figures beside it say the same as +wins =draws −losses. A win counts 1, a draw ½ and a loss 0.</dd>
+        <dt>Avg opp</dt><dd>Average rating of the opponents. FIDE's 400-point rule applies: an opponent rated more than 400 below the player is counted as exactly 400 below.</dd>
+        <dt>Games</dt><dd>Rated games counted.</dd>
+      </dl>
+      <p>Opening a row shows the player's events and one more number.</p>
+      <dl class="cols-explained">
+        <dt>True</dt><dd>A stricter version of TPR, worked out against each opponent's rating instead of their average. The two differ most when the opponents' ratings vary widely. A 0% or 100% score has no True value.</dd>
+      </dl>
+    </div>
+
+    <div class="mblock">
+      <h3>Who is included</h3>
+      <p id="pool-note"></p>
+    </div>
+  </section>
+
+  <!-- Filled by renderPlayerMethod() for the period and format picked above. -->
+  <section class="method pview-only" id="p-method" aria-labelledby="p-how"></section>
+</main>
+
+<footer class="foot">
+  <div class="foot-in">
+    <span class="foot-name"><svg width="16" height="16" aria-hidden="true"><use href="#mark"/></svg>Chess Performance Ratings</span>
+    <span>Source: game-by-game rating calculations on <a href="https://ratings.fide.com" target="_blank" rel="noopener">ratings.fide.com</a></span>
+    <span>Code: <a href="https://github.com/anton-g-kulikov/chess-performance-rating" target="_blank" rel="noopener">chess-performance-rating</a></span>
+    <span>Contact: <a href="mailto:hello@chesstpr.com">hello@chesstpr.com</a></span>
+  </div>
+</footer>
+
+<script src="/app.js"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "abcadbe5c7f44541a4cd897c6dc7136d"}'></script>
