@@ -31,6 +31,7 @@ function monthName(f) { return `${MONTH_FULL[f.m - 1]} ${f.y ?? M.year}`; }
 function showFrame(i, animate = true) {
   const f = race.frames[i], fmtName = LABEL[state.fmt].toLowerCase();
   race.i = i;
+  $("race-tip").hidden = true;
   $("race-seek").value = i;
   $("race-seek").style.setProperty("--p", race.frames.length > 1 ? i / (race.frames.length - 1) : 1);
   $("race-seek").setAttribute("aria-valuetext", M.year ? `Through ${monthName(f)}` : `12 lists to ${monthName(f)}`);
@@ -88,9 +89,9 @@ function showFrame(i, animate = true) {
       if (anim) el.getBoundingClientRect();
     }
     el.classList.toggle("lead", rank === 0);
+    Object.assign(el.dataset, { rank: rank + 1, tpr, games, rating: rating ?? "" });
     el.querySelector(".rk").textContent = rank + 1;
     el.querySelector(".vl").innerHTML = `${tpr} <small>${games} ${games === 1 ? "game" : "games"}</small>`;
-    el.querySelector(".vl").title = `TPR ${tpr} over ${games} games` + (rating ? `, FIDE rating ${rating}` : "");
     place(el, tpr, rating, pct);
     el.style.transform = `translateY(calc(var(--row) * ${rank}))`;
     el.style.opacity = 1;
@@ -138,3 +139,20 @@ $("race-ticks").addEventListener("click", (e) => {
   if (b) { stopRace(); showFrame(+b.dataset.i); }
 });
 $("race-seek").addEventListener("input", (e) => { stopRace(); showFrame(+e.target.value); });
+// Pointing at a row spells out what its marks show.
+$("race-plot").addEventListener("pointermove", (e) => {
+  const row = e.target.closest(".race-row"), tip = $("race-tip");
+  if (!row) { tip.hidden = true; return; }
+  const { rank, tpr, games, rating } = row.dataset;
+  tip.innerHTML = `<b>${rank}. ${esc(row.querySelector(".nm .f").textContent)}</b>` +
+    `<div class="row2"><span>TPR</span><span class="num"><strong>${tpr}</strong> · ${games} ${games === "1" ? "game" : "games"}</span></div>` +
+    (rating ? `<div class="row2"><span>FIDE rating</span><span class="num">${rating}</span></div>` +
+      `<div class="row2"><span>Δ</span><span class="num">${signed(tpr - rating)}</span></div>` : "");
+  tip.hidden = false;
+  const box = $("race-plot").getBoundingClientRect(), dot = row.querySelector(".dt").getBoundingClientRect(), r = row.getBoundingClientRect();
+  let left = dot.right - box.left + 12;
+  if (left + tip.offsetWidth > box.width) left = dot.left - box.left - tip.offsetWidth - 12;
+  tip.style.left = `${Math.max(0, left)}px`;
+  tip.style.top = `${r.top - box.top + r.height / 2 - tip.offsetHeight / 2}px`;
+});
+$("race-plot").addEventListener("pointerleave", () => { $("race-tip").hidden = true; });
