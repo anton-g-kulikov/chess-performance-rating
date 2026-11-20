@@ -77,7 +77,7 @@ a:hover { color: var(--accent); text-decoration-color: currentColor; }
 .hxs line { stroke: var(--muted); stroke-width: 1; opacity: .45; }
 
 /* The three fills as small squares: legends, results, the format switch. */
-.sq { display: inline-block; width: 9px; height: 9px; border: 1.5px solid var(--ink); flex: none; }
+.sq { display: inline-block; width: 9px; height: 9px; border: 1.5px solid var(--ink); flex: none; vertical-align: 1px; }
 .sq.solid { background: var(--ink); }
 .sq.hatch { background: var(--hatch); }
 .sq.win { background: var(--accent); border-color: var(--accent); }
@@ -92,7 +92,7 @@ a:hover { color: var(--accent); text-decoration-color: currentColor; }
 .brand:hover { color: var(--ink); text-decoration: underline; text-decoration-color: var(--muted); }
 .brand svg { flex: none; }
 header { display: grid; gap: 10px; }
-.eyebrow { font-weight: 600; font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.eyebrow { font-weight: 600; font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
 h1 {
   font-family: var(--display); font-weight: 800;
   font-size: clamp(29px, 5.2vw, 48px); line-height: 1.06; margin: 0;
@@ -103,10 +103,11 @@ h1 {
 
 /* Period switcher */
 .modebar { display: grid; gap: 10px; }
-.modes { display: inline-flex; justify-self: start; max-width: 100%; border: 1.5px solid var(--ink); border-radius: var(--r); overflow-x: auto; }
+/* Every control is 40px tall with a 1px border: tabs, search, chips, buttons. */
+.modes { display: inline-flex; justify-self: start; max-width: 100%; height: 40px; border: 1px solid var(--ink); border-radius: var(--r); overflow-x: auto; }
 .mode, .more select {
   appearance: none; border: 0; border-radius: 0; cursor: pointer; color: var(--ink); background: transparent;
-  padding: 10px 14px; font: 600 15px/1.5 var(--body); white-space: nowrap;
+  padding: 0 14px; font: 600 15px/1 var(--body); white-space: nowrap;
 }
 .mode + .mode, .more { border-left: 1px solid var(--line); }
 .mode:hover, .more select:hover { background: var(--accent-soft); }
@@ -124,7 +125,7 @@ h1 {
 /* Format switcher: the three top tens on one TPR axis. Each row is a tab. */
 .formats { position: relative; display: grid; border-top: 2px solid var(--ink); --idw: 210px; }
 .fx { display: grid; grid-template-columns: var(--idw) minmax(0, 1fr); height: 28px; }
-.fx-unit { align-self: end; padding: 0 12px 4px 4px; font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.fx-unit { align-self: end; padding: 0 12px 4px 0; font-size: 12px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
 .fx-ticks, .fmt-track { position: relative; margin-right: 14px; }
 .fx-ticks span { position: absolute; bottom: 3px; transform: translateX(-50%); font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .fmt {
@@ -133,11 +134,14 @@ h1 {
   display: grid; grid-template-columns: var(--idw) minmax(0, 1fr); align-items: stretch; min-height: 64px;
 }
 .fmt:hover { background: var(--accent-soft); }
-.fmt-id { display: grid; grid-template-columns: auto 1fr; gap: 0 10px; align-content: center; align-items: center; padding: 8px 12px 8px 4px; min-width: 0; }
-.fmt-id .sq { grid-row: span 2; width: 12px; height: 12px; }
+.fmt-id { display: grid; grid-template-columns: auto 1fr; gap: 0 10px; align-content: center; align-items: center; padding: 8px 12px 8px 0; min-width: 0; }
+/* The square stands on the name's baseline and is as tall as its capitals. */
+.fmt-id .sq { grid-row: 1; align-self: baseline; width: 13px; height: 13px; }
+.fmt-name { align-self: baseline; }
+.fmt-count { grid-column: 2; }
 .fmt[aria-selected="true"] .fmt-id .sq { background: var(--accent); border-color: var(--accent); }
 .fmt-name { font-family: var(--display); font-weight: 800; font-size: 20px; line-height: 1.2; }
-.fmt-count { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.fmt-count { font-size: 13px; color: var(--muted); white-space: nowrap; }
 .fmt-lead-sm { display: none; }
 /* No gridlines: the scale is its numbers, and each mark names itself on hover. */
 .fmt-track .m { position: absolute; top: 66%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border: 1.4px solid var(--ink); background: var(--bg); }
@@ -146,11 +150,11 @@ h1 {
 /* The mark being named by the hover tip. */
 .fmt .fmt-track .m.on { background: var(--accent); border-color: var(--accent); z-index: 1; }
 .tip.fmt-tip { min-width: 0; max-width: none; white-space: nowrap; }
-.fmt-lead { position: absolute; top: 7px; transform: translateX(-100%); margin-left: 6px; padding-left: 4px; white-space: nowrap; font-size: 13.5px; font-weight: 600; line-height: 1.3; background: var(--bg); }
+.fmt-lead { position: absolute; top: 7px; transform: translateX(-100%); margin-left: 6px; padding-left: 4px; white-space: nowrap; font-size: 13px; font-weight: 600; line-height: 1.3; background: var(--bg); }
 .fmt-lead.start { transform: none; margin-left: -6px; padding: 0 4px 0 0; }
 .fmt:hover .fmt-lead, .fmt:hover .m:not(.lead) { background: var(--accent-soft); }
 .fmt-lead b, .fmt-lead-sm b { font-family: var(--display); font-weight: 800; font-size: 15px; margin-left: 3px; }
-.fmt-none { position: absolute; top: 50%; transform: translateY(-50%); left: 8px; font-size: 13.5px; color: var(--muted); background: var(--bg); padding: 0 6px; }
+.fmt-none { position: absolute; top: 50%; transform: translateY(-50%); left: 8px; font-size: 13px; color: var(--muted); background: var(--bg); padding: 0 6px; }
 
 /* Toolbar */
 .list { display: grid; gap: 18px; min-width: 0; }
@@ -160,28 +164,41 @@ h1 {
 .qf { display: inline-flex; gap: 6px; }
 .finders input {
   font: inherit; font-size: 15px; color: var(--ink); background: var(--bg);
-  border: 1px solid var(--muted); border-radius: var(--r); padding: 8px 12px; width: min(280px, 60vw);
+  border: 1px solid var(--muted); border-radius: var(--r); height: 40px; padding: 0 12px; width: min(280px, 60vw);
 }
+/* The field's own clear button, drawn to match the chips' ×. */
+.finders input::-webkit-search-cancel-button {
+  -webkit-appearance: none; width: 12px; height: 12px; margin-left: 8px; cursor: pointer; background: var(--muted);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 2l8 8M10 2l-8 8' stroke='black' stroke-width='1.6'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 2l8 8M10 2l-8 8' stroke='black' stroke-width='1.6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+/* Focus is shown in the field's own terms, a heavier ink edge, not the browser's ring. */
+.finders input:focus, .finders input:focus-visible { outline: none; border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
 .finders input.nomatch { border-color: var(--ink); border-style: dashed; }
 .addq {
-  appearance: none; font: inherit; font-size: 20px; font-weight: 600; line-height: 1; cursor: pointer;
-  width: 40px; border-radius: var(--r); border: 1px solid var(--ink); background: var(--ink); color: var(--bg);
+  appearance: none; font: inherit; font-size: 0; cursor: pointer; position: relative; padding: 0;
+  width: 40px; height: 40px; border-radius: var(--r); border: 1px solid var(--ink); background: var(--ink); color: var(--bg);
 }
-.addq:disabled { cursor: default; background: transparent; border-color: var(--line); color: var(--muted); }
+.addq:disabled { cursor: default; background: transparent; border-color: var(--muted); color: var(--muted); }
+/* The + and × marks are drawn, not typed, and pinned to the middle of their buttons,
+   so their position does not depend on the font. */
+.addq::before, .keep::before, .chip button::before { content: ""; position: absolute; inset: 0; margin: auto; width: 12px; height: 12px; background: currentColor; }
+.addq::before, .keep::before { -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M6 1v10M1 6h10' stroke='black' stroke-width='1.6'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M6 1v10M1 6h10' stroke='black' stroke-width='1.6'/%3E%3C/svg%3E") center / contain no-repeat; }
+.keep::before, .chip button::before { width: 10px; height: 10px; }
+.chip button::before { -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 2l8 8M10 2l-8 8' stroke='black' stroke-width='1.6'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 2l8 8M10 2l-8 8' stroke='black' stroke-width='1.6'/%3E%3C/svg%3E") center / contain no-repeat; }
 .chips { display: contents; }
 .chip {
-  display: inline-flex; align-items: center; gap: 2px; padding: 3px 3px 3px 10px; border-radius: var(--r);
+  display: inline-flex; align-items: center; gap: 2px; min-height: 40px; padding: 0 6px 0 12px; border-radius: var(--r);
   background: var(--accent-soft); border: 1px solid var(--ink); color: var(--ink); font-weight: 600;
 }
 .chip .fed { margin-left: 4px; }
-.chip.out { border-color: var(--line); border-style: dashed; background: transparent; color: var(--muted); }
+.chip.out { border-color: var(--muted); border-style: dashed; background: transparent; color: var(--muted); }
 .chip button {
-  appearance: none; border: 0; background: transparent; cursor: pointer; color: var(--muted);
-  width: 26px; height: 26px; border-radius: var(--r); font-size: 17px; line-height: 1;
+  appearance: none; border: 0; background: transparent; cursor: pointer; color: var(--muted); position: relative; padding: 0;
+  width: 26px; height: 26px; border-radius: var(--r); font-size: 0;
 }
 .chip button:hover { color: var(--ink); background: var(--bg); }
 .keep {
-  appearance: none; font: inherit; font-size: 16px; font-weight: 600; line-height: 1; cursor: pointer; flex: none;
+  appearance: none; font: inherit; font-size: 0; cursor: pointer; flex: none; position: relative; padding: 0;
   width: 26px; height: 26px; margin-left: 4px; align-self: center; border-radius: var(--r);
   border: 1px solid var(--ink); background: transparent; color: var(--ink);
 }
@@ -192,10 +209,10 @@ h1 {
 .table-box { overflow-x: auto; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--line); }
 table { width: 100%; border-collapse: collapse; font-size: 15px; }
 th, td { padding: 9px 10px; text-align: right; white-space: nowrap; }
-th:first-child, td:first-child { padding-left: 4px; }
-th:last-child, td:last-child { padding-right: 4px; }
+th:first-child, td:first-child { padding-left: 0; }
+th:last-child, td:last-child { padding-right: 0; }
 thead th {
-  font-weight: 600; font-size: 11.5px; letter-spacing: .07em;
+  font-weight: 600; font-size: 12px; letter-spacing: .07em;
   text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--ink); background: var(--bg);
 }
 th button { all: unset; cursor: pointer; display: inline-flex; gap: 4px; align-items: center; }
@@ -207,20 +224,30 @@ th[aria-sort="ascending"] button::after { content: "▴"; }
 tbody tr.row { cursor: pointer; border-top: 1px solid var(--line); }
 tbody tr.row:first-child { border-top: 0; }
 tbody tr.row:hover { background: var(--accent-soft); }
-.rank { color: var(--muted); font-weight: 600; width: 44px; }
+/* The rank column is as wide as its longest number, so "100." starts at the left edge. */
+.rank { color: var(--muted); font-weight: 600; width: 1%; }
+/* The heading sits over the names, past the row's chevron. */
+.c-name button { margin-left: 18px; }
+/* Numbers of different sizes in a row share one baseline. */
+tbody tr.row td { vertical-align: baseline; }
 .player { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .player .nm { font-weight: 700; color: var(--ink); text-decoration: none; }
 .player .nm:hover { color: var(--accent); text-decoration: underline; }
-.player .sub { font-size: 13.5px; color: var(--muted); }
+.player .sub { font-size: 13px; color: var(--muted); }
 .fed { font-size: 12px; font-weight: 700; letter-spacing: .05em; color: var(--muted); }
-td.tpr { font-family: var(--display); font-weight: 800; font-size: 19px; }
+td.tpr { font-family: var(--display); font-weight: 800; font-size: 20px; }
 /* A drawing with its number beside it. */
-.wdl { display: inline-flex; align-items: center; gap: 8px; vertical-align: middle; }
+.wdl { display: inline-flex; align-items: center; gap: 8px; vertical-align: baseline; }
 .wdl svg, .form svg { display: block; flex: none; }
-.wn { font-size: 13.5px; color: var(--muted); font-variant-numeric: normal; }
+.wn { font-size: 13px; color: var(--muted); font-variant-numeric: normal; }
 .up, .down { color: inherit; } .flat { color: var(--muted); }
 .muted { color: var(--muted); }
-.chev { display: inline-block; width: 1em; color: var(--muted); transition: transform .15s; }
+/* The chevron is drawn, so it turns about its own center when a row opens. */
+.chev {
+  display: inline-block; flex: none; width: 10px; height: 10px; font-size: 0; background: var(--muted); transition: transform .15s;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M3.4 1.6 6.8 5 3.4 8.4' fill='none' stroke='black' stroke-width='1.5'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M3.4 1.6 6.8 5 3.4 8.4' fill='none' stroke='black' stroke-width='1.5'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.player .chev { align-self: center; }
 tr.open .chev { transform: rotate(90deg); }
 
 tr.detail > td { padding: 2px 12px 16px; text-align: left; white-space: normal; background: var(--accent-soft); }
@@ -231,7 +258,7 @@ tr.detail > td { padding: 2px 12px 16px; text-align: left; white-space: normal; 
 .ev th, .ev td { padding: 6px 10px; }
 .ev th:first-child, .ev td:first-child { padding-left: 10px; }
 .ev th:last-child, .ev td:last-child { padding-right: 10px; }
-.ev thead th { font-size: 11px; }
+.ev thead th { font-size: 12px; }
 .ev tbody tr { border-top: 1px solid var(--line); }
 .ev td.name { white-space: normal; min-width: 160px; }
 .ev-box { overflow-x: auto; }
@@ -241,7 +268,7 @@ tr.detail > td { padding: 2px 12px 16px; text-align: left; white-space: normal; 
    text fills the rest, so there is one reading order and no gaps. */
 .method { display: grid; gap: 30px; font-size: 15px; color: var(--muted); padding-top: 12px; border-top: 2px solid var(--ink); }
 .method > h2 { font-family: var(--display); font-weight: 800; font-size: 24px; color: var(--ink); margin: 12px 0 0; }
-.method h3 { font-weight: 700; font-size: 17px; color: var(--ink); margin: 0; }
+.method h3 { font-weight: 700; font-size: 16px; color: var(--ink); margin: 0; }
 .mblock { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 8px 32px; min-width: 0; }
 .mblock > * { grid-column: 2; min-width: 0; }
 .mblock > h3 { grid-column: 1; grid-row: 1; }
@@ -270,21 +297,21 @@ tr.detail > td { padding: 2px 12px 16px; text-align: left; white-space: normal; 
   .brand { margin-bottom: -4px; }
   .formats, .race, .list, .method { margin-top: 12px; }
   .fx { height: auto; }
-  .fx-unit { padding: 8px 4px 0; }
+  .fx-unit { padding: 8px 0 0; }
   .fx-ticks { height: 22px; }
   .lede { font-size: 15px; }
-  .mode { padding: 10px; font-size: 14px; }
+  .mode { padding: 0 10px; font-size: 14px; }
   /* The full account of each period is under "How it works". */
   .note-more { display: none; }
   .formats { --idw: 0px; }
   .fx { grid-template-columns: minmax(0, 1fr); }
   .fx-ticks, .fmt-track { margin-inline: 12px; }
   .fmt { grid-template-columns: minmax(0, 1fr); min-height: 0; padding: 8px 0 2px; }
-  .fmt-id { display: flex; align-items: baseline; gap: 8px; padding: 0 4px; }
-  .fmt-id .sq { align-self: center; width: 11px; height: 11px; }
+  .fmt-id { display: flex; align-items: baseline; gap: 8px; padding: 0; }
+  .fmt-id .sq { width: 12px; height: 12px; }
   .fmt-name { font-size: 18px; }
   .fmt-count, .fmt-lead { display: none; }
-  .fmt-lead-sm { display: inline; margin-left: auto; font-size: 13.5px; font-weight: 600; white-space: nowrap; }
+  .fmt-lead-sm { display: inline; margin-left: auto; font-size: 13px; font-weight: 600; white-space: nowrap; }
   .fmt-track { height: 28px; }
   .fmt-track .m { top: 50%; }
   .finders { flex: 1 1 100%; }
@@ -301,9 +328,9 @@ tr.detail > td { padding: 2px 12px 16px; text-align: left; white-space: normal; 
   .player .nm { overflow-wrap: anywhere; }
   .player .sub { font-size: 13px; }
   .player .keep { justify-self: start; margin: 4px 0 0; }
-  tbody tr.row td { padding-block: 8px; }
+  tbody tr.row td { padding-block: 8px; vertical-align: middle; }
   td.tpr { font-size: 18px; }
-  .rank { width: 30px; }
+  .c-name button { margin-left: 0; }
   tr.detail > td { padding: 0 8px 12px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -330,7 +357,7 @@ tr.detail > td { padding: 2px 12px 16px; text-align: left; white-space: normal; 
 /* Player page (/player/<FIDE id>): the lists' sections are hidden and #player shown. */
 body.pview .lists-only, body:not(.pview) .pview-only { display: none !important; }
 #player { display: grid; gap: 36px; min-width: 0; }
-.back { justify-self: start; font-weight: 600; font-size: 14.5px; color: var(--muted); text-decoration: none; }
+.back { justify-self: start; font-weight: 600; font-size: 14px; color: var(--muted); text-decoration: none; }
 .back:hover { color: var(--ink); }
 .plinks { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 15px; }
 /* Career: format tabs, the TPR of every period on one chart, and the periods as chips.
@@ -357,7 +384,7 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
   appearance: none; cursor: pointer; font: 600 14px/1.3 var(--body); color: var(--ink); background: transparent;
   border: 1px solid var(--line); border-radius: var(--r); padding: 6px 10px; display: inline-flex; align-items: baseline; gap: 6px;
 }
-.pchip small { font-weight: 400; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.pchip small { font-weight: 400; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .pchip:hover { border-color: var(--ink); }
 .pchip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
 .pchip[aria-pressed="true"] small { color: var(--bg); opacity: .8; }
@@ -365,20 +392,22 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 .pchip:disabled:hover { border-color: var(--line); }
 .pdetail { display: grid; gap: 28px; min-width: 0; }
 .pdetail > h2 + .mode-note { margin-top: -18px; }
-.pdetail h2 { font-family: var(--display); font-weight: 800; font-size: 25px; line-height: 1.15; margin: 0; }
+.pdetail h2 { font-family: var(--display); font-weight: 800; font-size: 24px; line-height: 1.15; margin: 0; }
 .pstats {
   margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 12px 16px;
   border-top: 2px solid var(--ink); padding: 18px 0 0;
 }
 .pstats div { display: grid; gap: 2px; min-width: 0; align-content: start; }
-.pstats dt { font-weight: 600; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
-.pstats dd { margin: 0; font-family: var(--display); font-weight: 800; font-size: 21px; line-height: 1.2; }
+.pstats dt { font-weight: 600; font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.pstats dd { margin: 0; font-family: var(--display); font-weight: 800; font-size: 20px; line-height: 1.2; }
 .pstats dd small { font-family: var(--body); font-weight: 400; font-size: 13px; color: var(--muted); }
 .pstats .main dd { font-size: 30px; line-height: 1.1; }
 .unranked { margin: 0; padding: 10px 14px; border-radius: var(--r); background: var(--accent-soft); font-size: 15px; }
 .pev td.name { white-space: normal; min-width: 200px; text-align: left; }
-.pev td.name .dates { font-size: 12.5px; color: var(--muted); }
-.pev .evname { display: flex; gap: 6px; align-items: baseline; }
+.pev td.name .dates { font-size: 13px; color: var(--muted); }
+.pev .evname { display: flex; gap: 8px; align-items: baseline; }
+.pev .evname .chev { align-self: flex-start; margin-top: 6px; }
+.pev thead th:first-child { padding-left: 18px; }
 .pev tr.open .chev { transform: rotate(90deg); }
 .games td.opp { white-space: normal; text-align: left; }
 .games td.res { font-weight: 700; }
@@ -399,7 +428,7 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 .race { display: grid; gap: 18px; border-top: 2px solid var(--ink); padding: 18px 0 0; min-width: 0; }
 .race[hidden] { display: none; }
 .race-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
-.race h2 { margin: 0; font-family: var(--display); font-weight: 800; font-size: 20px; line-height: 1.2; }
+.race h2 { margin: 0; font-family: var(--display); font-weight: 800; font-size: 24px; line-height: 1.2; }
 .race-month { font-family: var(--display); font-weight: 800; font-size: 24px; line-height: 1; }
 .race-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
 .race-key { display: flex; flex-wrap: wrap; gap: 2px 14px; margin-top: 8px; font-size: 13px; color: var(--muted); }
@@ -426,28 +455,20 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
   font: inherit; font-size: 11px; line-height: 1; color: var(--muted); cursor: pointer; font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 .race-ticks button::before { content: ""; position: absolute; top: 0; left: 50%; height: 4px; border-left: 1px solid var(--line); }
-/* The end labels grow inward from their tick, so they stay inside the track.
-   (On a phone the labels are single letters and stay centered.) */
-@media (min-width: 721px) {
-  .race-ticks button:first-child { transform: translateX(-2px); }
-  .race-ticks button:first-child::before { left: 2px; }
-  .race-ticks button:last-child { transform: translateX(calc(-100% + 2px)); }
-  .race-ticks button:last-child::before { left: calc(100% - 2px); }
-}
 .race-ticks button:hover { color: var(--ink); }
 .race-ticks button.on { color: var(--ink); font-weight: 700; }
 .race-ticks .s { display: none; }
 .race-play {
   appearance: none; cursor: pointer; font: inherit; font-weight: 600; font-size: 14px; flex: none;
-  border: 1.5px solid var(--ink); background: var(--ink); color: var(--bg); border-radius: var(--r); padding: 8px 14px; min-width: 84px;
+  border: 1px solid var(--ink); background: var(--ink); color: var(--bg); border-radius: var(--r); height: 40px; padding: 0 14px; min-width: 84px;
 }
-.race-plot { --row: 30px; --rank: 26px; --name: 190px; --val: 110px; --gap: 10px; position: relative; height: calc(var(--row) * 10 + 22px); }
+.race-plot { --row: 30px; --rank: 16px; --name: 190px; --val: 110px; --gap: 10px; position: relative; height: calc(var(--row) * 10 + 22px); }
 .race-axis { position: absolute; top: 0; bottom: 0; left: calc(var(--rank) + var(--name) + 2 * var(--gap)); right: calc(var(--val) + var(--gap)); }
 /* The axis is only its numbers: no gridlines. A tick element holds one label and slides
    with the scale; the steps too close to label are not shown. */
 .race-axis .t { position: absolute; top: 18px; width: 0; transition: left .8s ease, opacity .4s; }
 /* The axis carries both marks, the FIDE rating and the TPR: its unit sits over the names. */
-.race-unit { position: absolute; top: 0; left: calc(var(--rank) + var(--gap)); font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; line-height: 1; color: var(--muted); }
+.race-unit { position: absolute; top: 0; left: calc(var(--rank) + var(--gap)); font-size: 12px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; line-height: 1; color: var(--muted); }
 .race-axis .t.nolab { display: none; }
 .race-empty { position: absolute; inset: 22px 0 0; display: grid; place-items: center; margin: 0; color: var(--muted); font-size: 14px; }
 .race-empty[hidden] { display: none; }
@@ -473,12 +494,11 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
   /* On a phone the replay is one line until it is asked for, so the ranking stays close. */
   .race:not(.open) { grid-template-columns: minmax(0, 1fr) auto; align-items: center; padding: 12px 0 0; }
   .race-ctl { gap: 14px; }
-  .race:not(.open) h2 { font-size: 17px; }
+  .race:not(.open) h2 { font-size: 18px; }
   .race:not(.open) .race-sub, .race:not(.open) .race-key, .race:not(.open) .race-month,
   .race:not(.open) .race-track, .race:not(.open) .race-plot { display: none; }
-  .race-plot { --row: 28px; --rank: 20px; --name: 88px; --val: 100px; --gap: 6px; }
-  .race-row .vl small { font-size: 11.5px; }
-  .race-row .nm { font-size: 13.5px; }
+  .race-plot { --row: 28px; --rank: 16px; --name: 88px; --val: 104px; --gap: 6px; }
+  .race-row .nm { font-size: 13px; }
   .race-row .nm .f { display: none; }
   .race-row .nm .s { display: inline; }
   .race-ticks .f { display: none; }
@@ -591,7 +611,7 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
         <div class="race-ticks" id="race-ticks" aria-hidden="true"></div>
       </div>
     </div>
-    <div class="race-plot" id="race-plot"><span class="race-unit" aria-hidden="true">Rating</span><div class="race-axis" id="race-axis"></div><p class="race-empty" id="race-empty" hidden>No one has enough games yet.</p></div>
+    <div class="race-plot" id="race-plot"><span class="race-unit" aria-hidden="true">Rating</span><div class="race-axis" id="race-axis"></div><p class="race-empty" id="race-empty" hidden>No one has enough games yet.</p><div class="tip" id="race-tip" hidden></div></div>
   </section>
 
   <section class="list lists-only" aria-labelledby="list-title">
@@ -683,14 +703,14 @@ const LABEL = { classical: "Classical", rapid: "Rapid", blitz: "Blitz" };
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 const COLS = [
-  { key: "rank", label: "#", cls: "rank num", dir: 1 },
-  { key: "name", label: "Player", cls: "l", dir: 1 },
-  { key: "tpr", label: "TPR", cls: "tpr num", dir: -1 },
-  { key: "rating", label: "FIDE", cls: "num hide-sm", dir: -1 },
-  { key: "delta", label: "Δ", cls: "num", dir: -1 },
-  { key: "pct", label: "Score", cls: "c-wdl hide-sm", dir: -1 },
-  { key: "avg_opp", label: "Avg opp", cls: "num hide-sm", dir: -1 },
-  { key: "games", label: "Games", cls: "num hide-sm", dir: -1 },
+  { key: "rank", label: "#", cls: "rank num", dir: 1, tip: "Rank by TPR" },
+  { key: "name", label: "Player", cls: "l c-name", dir: 1, tip: "Sort by name" },
+  { key: "tpr", label: "TPR", cls: "tpr num", dir: -1, tip: "Tournament performance rating over all games in the period" },
+  { key: "rating", label: "FIDE", cls: "num hide-sm", dir: -1, tip: "FIDE rating in this format" },
+  { key: "delta", label: "Δ", cls: "num", dir: -1, tip: "TPR minus the FIDE rating" },
+  { key: "pct", label: "Score", cls: "c-wdl hide-sm", dir: -1, tip: "Wins, draws and losses; sorts by percentage" },
+  { key: "avg_opp", label: "Avg opp", cls: "num hide-sm", dir: -1, tip: "Average rating of the opponents" },
+  { key: "games", label: "Games", cls: "num hide-sm", dir: -1, tip: "Rated games counted" },
 ];
 
 const state = { mode: DATA.modes[0].id, fmt: "classical", sort: "rank", dir: 1, q: "", picks: [], open: new Set() };
@@ -858,7 +878,7 @@ function renderHead() {
   $("head").innerHTML = COLS.map((c) => {
     const sorted = state.sort === c.key;
     const aria = sorted ? ` aria-sort="${state.dir === 1 ? "ascending" : "descending"}"` : "";
-    return `<th class="${c.cls}"${aria} scope="col"><button type="button" data-k="${c.key}">${c.label}</button></th>`;
+    return `<th class="${c.cls}"${aria} scope="col"><button type="button" data-k="${c.key}" title="${esc(c.tip)}">${c.label}</button></th>`;
   }).join("");
 }
 
@@ -922,7 +942,7 @@ function renderChips() {
 function detailRow(r) {
   const ev = r.ev.map((e) => {
     const [p, name, start, end, n, s, avg, tpr] = e;
-    return `<tr><td class="l name">${esc(name)}<div class="muted" style="font-size:12.5px">${esc(dateSpan(start, end))}</div></td>
+    return `<tr><td class="l name">${esc(name)}<div class="muted" style="font-size:13px">${esc(dateSpan(start, end))}</div></td>
       <td class="l hide-sm">${period(p + "-01")}</td><td class="num">${score(s)}/${n}</td>
       <td class="num hide-sm">${avg ?? "—"}</td><td class="num">${tpr ?? "—"}</td></tr>`;
   }).join("");
@@ -960,7 +980,7 @@ function renderBody() {
       <td class="tpr num">${r.tpr}</td>
       <td class="num hide-sm">${r.rating ?? "—"}</td>
       <td class="num">${r.delta == null ? `<span class="muted">—</span>` : signed(r.delta)}</td>
-      <td class="c-wdl hide-sm">${r.wdl ? `<span class="wdl" role="img" aria-label="${wdlLabel(r.wdl)}">${wdlBar(r.wdl)}<span class="wn num">${wdlText(r.wdl)}</span></span>` : `<span class="num">${score(r.score)}/${r.games}</span>`}</td>
+      <td class="c-wdl hide-sm">${r.wdl ? `<span class="wdl" role="img" aria-label="${wdlLabel(r.wdl)}" title="${wdlLabel(r.wdl)}">${wdlBar(r.wdl)}<span class="wn num">${wdlText(r.wdl)}</span></span>` : `<span class="num">${score(r.score)}/${r.games}</span>`}</td>
       <td class="num hide-sm">${r.avg_opp}</td>
       <td class="num hide-sm">${r.games}</td>
     </tr>${open ? detailRow(r) : ""}`;
@@ -1553,6 +1573,7 @@ function monthName(f) { return `${MONTH_FULL[f.m - 1]} ${f.y ?? M.year}`; }
 function showFrame(i, animate = true) {
   const f = race.frames[i], fmtName = LABEL[state.fmt].toLowerCase();
   race.i = i;
+  $("race-tip").hidden = true;
   $("race-seek").value = i;
   $("race-seek").style.setProperty("--p", race.frames.length > 1 ? i / (race.frames.length - 1) : 1);
   $("race-seek").setAttribute("aria-valuetext", M.year ? `Through ${monthName(f)}` : `12 lists to ${monthName(f)}`);
@@ -1610,9 +1631,9 @@ function showFrame(i, animate = true) {
       if (anim) el.getBoundingClientRect();
     }
     el.classList.toggle("lead", rank === 0);
+    Object.assign(el.dataset, { rank: rank + 1, tpr, games, rating: rating ?? "" });
     el.querySelector(".rk").textContent = rank + 1;
     el.querySelector(".vl").innerHTML = `${tpr} <small>${games} ${games === 1 ? "game" : "games"}</small>`;
-    el.querySelector(".vl").title = `TPR ${tpr} over ${games} games` + (rating ? `, FIDE rating ${rating}` : "");
     place(el, tpr, rating, pct);
     el.style.transform = `translateY(calc(var(--row) * ${rank}))`;
     el.style.opacity = 1;
@@ -1660,6 +1681,23 @@ $("race-ticks").addEventListener("click", (e) => {
   if (b) { stopRace(); showFrame(+b.dataset.i); }
 });
 $("race-seek").addEventListener("input", (e) => { stopRace(); showFrame(+e.target.value); });
+// Pointing at a row spells out what its marks show.
+$("race-plot").addEventListener("pointermove", (e) => {
+  const row = e.target.closest(".race-row"), tip = $("race-tip");
+  if (!row) { tip.hidden = true; return; }
+  const { rank, tpr, games, rating } = row.dataset;
+  tip.innerHTML = `<b>${rank}. ${esc(row.querySelector(".nm .f").textContent)}</b>` +
+    `<div class="row2"><span>TPR</span><span class="num"><strong>${tpr}</strong> · ${games} ${games === "1" ? "game" : "games"}</span></div>` +
+    (rating ? `<div class="row2"><span>FIDE rating</span><span class="num">${rating}</span></div>` +
+      `<div class="row2"><span>Δ</span><span class="num">${signed(tpr - rating)}</span></div>` : "");
+  tip.hidden = false;
+  const box = $("race-plot").getBoundingClientRect(), dot = row.querySelector(".dt").getBoundingClientRect(), r = row.getBoundingClientRect();
+  let left = dot.right - box.left + 12;
+  if (left + tip.offsetWidth > box.width) left = dot.left - box.left - tip.offsetWidth - 12;
+  tip.style.left = `${Math.max(0, left)}px`;
+  tip.style.top = `${r.top - box.top + r.height / 2 - tip.offsetHeight / 2}px`;
+});
+$("race-plot").addEventListener("pointerleave", () => { $("race-tip").hidden = true; });
 
 function gamesRow(games) {
   const rows = games.map(([opp, r, res, capped, oid], i) => {
