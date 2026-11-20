@@ -109,7 +109,9 @@ function headline(m) {
 
 function renderModes() {
   $("headline").textContent = headline(M);
-  setHead({ title: headline(M), path: "/" });
+  // The tabs are redrawn behind a player's page too (the width crossing the phone
+  // breakpoint), and the head is that page's then.
+  if (!playerId()) setHead({ title: headline(M), path: "/" });
   const older = DATA.modes.slice(buttons()), inOlder = older.some((m) => m.id === state.mode);
   $("modes").innerHTML = DATA.modes.slice(0, buttons()).map((m) =>
     `<button class="mode" role="tab" aria-selected="${m.id === state.mode}" data-m="${m.id}">${esc(m.label).replace(/^Last /, '<span class="lw">Last </span>')}</button>`).join("") +
