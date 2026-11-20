@@ -1,0 +1,9 @@
+rank,name,fed,fide_id,tpr,true_perf,games,score,pct,avg_opp,rating,events
+1,"Ghaem Maghami, Ehsan",IRI,12500739,2916,2971,41,40.0,98.0,2327,2700,5
+2,"Svane, Rasmus",GER,4657101,2656,2698,47,37.0,79.0,2426,2579,2
+3,"Korobov, Anton",UKR,14105730,2647,2737,132,115.0,87.0,2325,2657,12
+4,"Meier, Georg",GER,4675789,2637,2657,42,33.0,79.0,2407,2627,2
+5,"Shirov, Alexei",ESP,2209390,2614,2788,55,53.0,96.0,2113,2654,5
+6,"Sarana, Alexey",RUS,24133795,2591,2617,42,29.0,69.0,2450,2686,3
+7,"Donchenko, Alexander",GER,24603295,2547,2574,42,29.5,70.0,2398,2530,2
+8,"Savchenko, Boris",RUS,4147332,2490,2530,45,29.0,64.0,2388,2648,4
