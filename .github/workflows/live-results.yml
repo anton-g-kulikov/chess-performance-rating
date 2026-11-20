@@ -1,0 +1,77 @@
+name: World Championship results
+
+# While a World Championship match is on, fetch its results from Lichess's
+# broadcast once a day (perfrating/live.py), rebuild the site, commit and
+# deploy. A run with no new result changes nothing.
+#
+# Games start at 15:00 in Geneva (14:00 UTC) and a classical game can last
+# six hours or more, so the run is at midnight Geneva time, 23:00 UTC.
+# Matches are played in November and December; outside them the fetch skips
+# every match (not started yet, or already over) and the run is a no-op.
+
+on:
+  schedule:
+    - cron: '0 23 * 11,12 *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: live-results
+  cancel-in-progress: false
+
+jobs:
+  fetch_build_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Fetch match results
+        run: python -m perfrating.live
+
+      - name: Anything new?
+        id: changed
+        run: |
+          if [ -n "$(git status --porcelain -- data/)" ]; then
+            git status --short -- data/
+            echo "yes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No new results."
+          fi
+
+      - name: Run tests
+        if: steps.changed.outputs.yes == 'true'
+        run: python -m unittest discover -s tests -t .
+
+      - name: Rebuild the site
+        if: steps.changed.outputs.yes == 'true'
+        run: python -m perfrating.web
+
+      # A push made with this workflow's token does not start deploy.yml, so
+      # this workflow deploys what it commits itself.
+      - name: Commit and push
+        if: steps.changed.outputs.yes == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/ site/
+          git commit -m "World Championship results from the Lichess broadcast"
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      - name: Deploy to Firebase Hosting
+        if: steps.changed.outputs.yes == 'true'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+          channelId: live
+          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}

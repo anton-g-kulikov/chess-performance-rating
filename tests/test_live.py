@@ -2,9 +2,10 @@
 broadcast (perfrating/live.py) until FIDE's own data holds the match."""
 
 import unittest
+from datetime import date
 from pathlib import Path
 
-from perfrating.live import games, headers, time_format
+from perfrating.live import due, games, headers, time_format
 from perfrating.matches import MATCHES, from_live, match_lines, match_pages
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -93,6 +94,14 @@ class LiveTest(unittest.TestCase):
         m = page(fide)                                    # FIDE's own data, once it is there
         self.assertNotIn("live", m["played"])
         self.assertEqual((m["played"]["a"], m["played"]["win"]), (8, "a"))
+
+    def test_the_daily_run_only_fetches_while_a_match_is_on(self):
+        spec = {**SPEC, "lichess": "x", "first_game": "2024-11-25"}
+        self.assertFalse(due(spec, None, date(2024, 11, 20)))                     # not started
+        self.assertTrue(due(spec, None, date(2024, 11, 25)))
+        self.assertTrue(due(spec, {"games": broadcast_2024()[:5]}, date(2024, 11, 30)))
+        self.assertFalse(due(spec, {"games": broadcast_2024(), "over": True}, date(2024, 12, 13)))   # over
+        self.assertFalse(due(SPEC, None, date(2024, 11, 25)))                     # no broadcast
 
 
 if __name__ == "__main__":

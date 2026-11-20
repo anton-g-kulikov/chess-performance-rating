@@ -8,7 +8,9 @@ result.  No moves.
 
     python -m perfrating.live          # refresh data/live-world-championship-YYYY.json
 
-Run it after each game, then rebuild the site (``python -m perfrating.web``).
+A scheduled GitHub Action (.github/workflows/live-results.yml) runs it once a
+day during a match, rebuilds the site, commits and deploys; run it by hand
+for an earlier update, then ``python -m perfrating.web``.
 The file it writes is small and can be edited by hand if Lichess is down.  Once
 FIDE's own data holds the match, the build uses that and ignores the file.
 
@@ -24,10 +26,11 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from .matches import MATCHES, slug
+from .matches import MATCHES, from_live, slug
 
 API = "https://lichess.org/api/broadcast"
 AGENT = "https://chesstpr.com/ (match results for the World Championship pages)"
@@ -141,13 +144,24 @@ def fetch(spec: dict) -> dict:
     return {"source": "Lichess broadcast", "url": first["tour"]["url"], "over": bool(found) and all(done), "games": found}
 
 
+def due(spec: dict, old: Optional[dict], today: date) -> bool:
+    """Whether to fetch a match today: it has a broadcast, its first game has
+    come, and the results so far don't already finish it.  The daily run
+    (.github/workflows/live-results.yml) does nothing outside a match."""
+    if not spec.get("lichess") or (spec.get("first_game") and today.isoformat() < spec["first_game"]):
+        return False
+    done = old and from_live(spec, old)
+    return not (done and done["live"]["over"])
+
+
 def main(argv=None) -> int:
+    today = datetime.now(timezone.utc).date()
     for spec in MATCHES:
-        if not spec.get("lichess"):
+        old = load(spec["year"])
+        if not due(spec, old, today):
             continue
         out = fetch(spec)
         p = path(spec["year"])
-        old = load(spec["year"])
         if old and old.get("over") and not out["over"]:
             out["over"] = True          # set by hand: keep it
         p.write_text(json.dumps(out, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
