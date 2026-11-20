@@ -568,9 +568,16 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 .tape { display: grid; }
 .tr { display: grid; grid-template-columns: minmax(0, 1fr) 84px minmax(0, 1fr); column-gap: 14px; align-items: baseline; padding: 7px 0; border-top: 1px solid var(--line); }
 .tr > :first-child { text-align: right; justify-self: end; }
+/* A long name ("Ian Nepomniachtchi") wraps, even mid-word, rather than widen the page. */
+.tr > *, .sh-row > * { min-width: 0; overflow-wrap: anywhere; }
 .tr > .lab { text-align: center; font-weight: 600; font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
 .tr.who { border-top: 0; padding-top: 0; align-items: end; }
 .tr.who a { font-weight: 700; font-size: 18px; line-height: 1.25; text-decoration: none; }
+/* On a phone the labels' column narrows and the names step down, so "Nepomniachtchi" fits whole. */
+@media (max-width: 560px) {
+  .tr { grid-template-columns: minmax(0, 1fr) 60px minmax(0, 1fr); column-gap: 10px; }
+  .tr.who a { font-size: 15px; }
+}
 .tr.who a:hover { text-decoration: underline; }
 .tr.who .sub { display: block; font-size: 13px; color: var(--muted); }
 .tr.who .lab { font-weight: 400; font-size: 13px; letter-spacing: 0; text-transform: none; }
@@ -625,7 +632,13 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 .sh-row.top b { font-weight: 700; }
 .sh-row.top .sh-o { font-size: 13px; color: var(--muted); }
 /* On a phone the squares alone carry each line; the totals stay in the top line. */
-@media (max-width: 560px) { .sh-row:not(.top) .sc { display: none; } .sh-row { grid-template-columns: minmax(0, 1fr) minmax(120px, 44%) minmax(0, 1fr); } }
+@media (max-width: 560px) {
+  .sh-row:not(.top) .sc { display: none; }
+  .sh-row { grid-template-columns: minmax(0, 1fr) minmax(120px, 44%) minmax(0, 1fr); }
+  /* The totals line splits in two halves, without its "opponent" label, so a long name fits. */
+  .sh-row.top { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .sh-row.top .sh-o { display: none; }
+}
 
 /* Head to head: a short table. */
 .hh { display: grid; }
@@ -648,26 +661,39 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 .foot-note { font-size: 13px; color: var(--muted); margin: 0; }
 .w-trk .m-t.played { background: var(--accent); }
 
-/* A played match: its games, a line per player. The marks are the site's own: a win stands
-   tall in green, a draw half as tall and hatched, a loss points down in black. */
+/* A played match: its games on ONE strip for both players. The rule between the two players'
+   lines is the strip's baseline: a win is a tall tick on the side of the player who won it
+   (standing up into the first player's line, hanging down into the second's), a draw a
+   hatched mark half as tall split across the rule. A loss needs no mark of its own. Each
+   player's wins are in the colour of their score: green for the match winner, black for
+   the other (black for both when no one won). */
 .result { --who: 200px; --v1: 76px; --v2: 56px; display: grid; margin-top: 28px; border-top: 2px solid var(--ink); }
 .result[hidden], .duel[hidden] { display: none; }
-.rs-axis, .rs-row { display: grid; grid-template-columns: var(--who) minmax(0, 1fr) var(--v1) var(--v2); column-gap: 14px; align-items: center; }
+.rs-axis, .rs-uni { display: grid; grid-template-columns: var(--who) minmax(0, 1fr) var(--v1) var(--v2); column-gap: 14px; align-items: center; }
 .rs-axis { height: 34px; font-weight: 600; font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
 .rs-axis .r, .rs-score, .rs-tpr { text-align: right; }
-.rs-row { padding: 10px 0; border-top: 1px solid var(--line); }
+.rs-uni { position: relative; grid-template-rows: 54px 54px; border-top: 1px solid var(--line); }
+.rs-uni::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid var(--line); }
+.rs-uni .a { grid-row: 1; } .rs-uni .b { grid-row: 2; }
+.rs-uni .rs-who { grid-column: 1; } .rs-uni .rs-score { grid-column: 3; } .rs-uni .rs-tpr { grid-column: 4; }
+.rs-who { min-width: 0; overflow-wrap: anywhere; }
 .rs-who a { font-weight: 700; font-size: 16px; text-decoration: none; }
 .rs-who a:hover { text-decoration: underline; }
 .rs-who .sub { display: block; font-size: 13px; color: var(--muted); }
 .rs-games { display: flex; min-width: 0; }
-.gm { position: relative; flex: 0 1 46px; min-width: 0; height: 44px; }
+.gm { position: relative; flex: 0 1 46px; min-width: 0; }
 .gm.tb { margin-left: 22px; }
-.gm i { position: absolute; left: 22%; right: 22%; }
-.gm.w i { top: 2px; height: 22px; background: var(--accent); }
-.gm.d i { top: 13px; height: 11px; background: var(--hatch); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 50%, transparent); }
-.gm.l i { top: 24px; height: 18px; background: var(--ink); }
-.rs-nums .gm { height: auto; text-align: center; font-weight: 400; font-size: 11px; letter-spacing: 0; text-transform: none; color: var(--muted); font-variant-numeric: tabular-nums; }
-.rs-nums.foot { display: none; padding: 0 0 8px; }
+.rs-uni .strip { grid-row: 1 / 3; grid-column: 2; align-self: stretch; position: relative; z-index: 1; }
+.strip .gm i { position: absolute; left: 22%; right: 22%; height: 24px; }
+.strip .gm.wa i, .strip .gm.wb i { height: 48px; background: var(--ink); }
+.strip .gm.wa i { bottom: 50%; }
+.strip .gm.wb i { top: calc(50% + 1px); }
+.rs-uni.win-a .gm.wa i, .rs-uni.win-b .gm.wb i { background: var(--accent); }
+/* While the match is on, a game still to be played: an empty square on the rule. */
+.strip .gm.o i { left: 50%; right: auto; width: 10px; height: 10px; margin-left: -5px; top: calc(50% - 5px); background: var(--bg); box-shadow: inset 0 0 0 1.5px var(--muted); }
+.strip .gm.dd i { top: calc(50% - 11.5px); background: var(--hatch), var(--bg); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 50%, transparent); }
+.rs-nums .gm { text-align: center; font-weight: 400; font-size: 11px; letter-spacing: 0; text-transform: none; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rs-uni .rs-nums { display: none; }
 .rs-score { font-family: var(--display); font-weight: 800; font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .rs-score.win { color: var(--accent); }
 .rs-score small { font-family: var(--body); font-weight: 400; font-size: 13px; color: var(--muted); }
@@ -675,12 +701,18 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 .result .legend { padding: 10px 0 0; border-top: 1px solid var(--line); }
 @media (max-width: 640px) {
   .result { --v1: 64px; --v2: 48px; }
-  .rs-axis, .rs-row { grid-template-columns: minmax(0, 1fr) var(--v1) var(--v2); column-gap: 10px; }
+  .rs-axis { grid-template-columns: minmax(0, 1fr) var(--v1) var(--v2); column-gap: 10px; }
   .rs-axis .rs-unit, .rs-axis .rs-nums { display: none; }
   .rs-axis .r { grid-row: 1; } .rs-axis .r:nth-of-type(2) { grid-column: 2; } .rs-axis .r:nth-of-type(3) { grid-column: 3; }
-  .rs-row { row-gap: 4px; }
-  .rs-row .rs-games { grid-column: 1 / -1; grid-row: 2; }
-  .rs-nums.foot { display: flex; }
+  /* On a phone: the first player's line, the game numbers, the strip, the second player's line. */
+  .rs-uni { grid-template-columns: minmax(0, 1fr) var(--v1) var(--v2); grid-template-rows: auto auto 106px auto; column-gap: 10px; row-gap: 2px; padding: 10px 0; }
+  .rs-uni::after { display: none; }
+  .rs-uni .strip::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid var(--line); }
+  .rs-uni .strip .gm i { z-index: 1; }
+  .rs-uni .rs-who { grid-column: 1; } .rs-uni .rs-score { grid-column: 2; } .rs-uni .rs-tpr { grid-column: 3; }
+  .rs-uni .a { grid-row: 1; } .rs-uni .b { grid-row: 4; }
+  .rs-uni .rs-nums { display: flex; grid-row: 2; grid-column: 1 / -1; }
+  .rs-uni .strip { grid-row: 3; grid-column: 1 / -1; }
   .gm.tb { margin-left: 12px; }
 }
 </style>
@@ -719,7 +751,6 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
   <section class="result" id="result" aria-label="The match, game by game" hidden>
     <div class="rs-axis" aria-hidden="true"><span class="rs-unit">Game</span><div class="rs-games rs-nums" id="rs-nums"></div><span class="r">Score</span><span class="r">TPR</span></div>
     <div id="rs-rows"></div>
-    <div class="rs-games rs-nums foot" id="rs-nums-foot" aria-hidden="true"></div>
     <div class="legend" id="rs-legend"></div>
   </section>
 
@@ -783,7 +814,7 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 // been played. Played, it carries the games, the tiebreaks and how the two stood over
 // the 12 months before; still to come, the page reads the rolling lists from the
 // players' own files.
-const MATCH = {"year":2026,"place":"Geneva","games":14,"first_game":"2026-11-24","a":{"id":46616543,"role":"World champion","full":"Gukesh D","short":"Gukesh"},"b":{"id":14205483,"role":"Challenger","full":"Javokhir Sindarov","short":"Sindarov"},"slug":"world-championship-2026","lists":"Dec 2025 – Nov 2026","played":null,"pver":"3aa32c2b99","names":{"Praggnanandhaa R":["Praggnanandhaa R","Praggnanandhaa","R","Praggnanandhaa R"],"Wei, Yi":["Wei Yi","Wei","Yi","Wei Yi"],"Erigaisi Arjun":["Arjun Erigaisi","Erigaisi","Arjun","Arjun Erigaisi"],"Le, Quang Liem":["Le Quang Liem","Le","Quang Liem","Le Quang Liem"],"Ding, Liren":["Ding Liren","Ding","Liren","Ding Liren"],"Nihal Sarin":["Nihal Sarin","Sarin","Nihal","Nihal Sarin"],"Gukesh D":["Gukesh D","Gukesh","D","Gukesh D"],"Yu, Yangyi":["Yu Yangyi","Yu","Yangyi","Yu Yangyi"],"Wang, Hao":["Wang Hao","Wang","Hao","Wang Hao"],"Vidit, Santosh Gujrathi":["Vidit Gujrathi","Vidit","Santosh Gujrathi","Vidit Gujrathi"],"Pranesh M":["Pranesh M","Pranesh","M","Pranesh M"],"Aravindh, Chithambaram VR.":["Aravindh Chithambaram","Aravindh","Chithambaram VR.","Aravindh Chithambaram"],"Bu, Xiangzhi":["Bu Xiangzhi","Bu","Xiangzhi","Bu Xiangzhi"],"Aryan Chopra":["Aryan Chopra","Chopra","Aryan","Aryan Chopra"],"Lu, Shanglei":["Lu Shanglei","Lu","Shanglei","Lu Shanglei"],"Xu, Xiangyu":["Xu Xiangyu","Xu","Xiangyu","Xu Xiangyu"],"Wang, Yue":["Wang Yue","Wang","Yue","Wang Yue"],"Narayanan S L":["Narayanan S L","Narayanan","S L","Narayanan S L"],"Le, Tuan Minh":["Le Tuan Minh","Le","Tuan Minh","Le Tuan Minh"],"Nguyen, Thai Dai Van":["Nguyen Thai Dai Van","Nguyen","Thai Dai Van","Nguyen Thai Dai Van"],"Ma, Qun":["Ma Qun","Ma","Qun","Ma Qun"],"Ni, Hua":["Ni Hua","Ni","Hua","Ni Hua"],"Li, Chao b":["Li Chao","Li","Chao","Li Chao"],"Lai, Hing Ting":["Lai Hing Ting","Lai","Hing Ting","Lai Hing Ting"],"Hou, Yifan":["Hou Yifan","Hou","Yifan","Hou Yifan"],"Nguyen, Ngoc Truong Son":["Nguyen Ngoc Truong Son","Nguyen","Ngoc Truong Son","Nguyen Ngoc Truong Son"]}};
+const MATCH = {"year":2026,"place":"Geneva","games":14,"first_game":"2026-11-24","lichess":"qfkdt8mn","a":{"id":46616543,"role":"World champion","full":"Gukesh D","short":"Gukesh"},"b":{"id":14205483,"role":"Challenger","full":"Javokhir Sindarov","short":"Sindarov"},"slug":"world-championship-2026","lists":"Dec 2025 – Nov 2026","played":null,"pver":"3aa32c2b99","names":{"Praggnanandhaa R":["Praggnanandhaa R","Praggnanandhaa","R","Praggnanandhaa R"],"Wei, Yi":["Wei Yi","Wei","Yi","Wei Yi"],"Erigaisi Arjun":["Arjun Erigaisi","Erigaisi","Arjun","Arjun Erigaisi"],"Le, Quang Liem":["Le Quang Liem","Le","Quang Liem","Le Quang Liem"],"Ding, Liren":["Ding Liren","Ding","Liren","Ding Liren"],"Nihal Sarin":["Nihal Sarin","Sarin","Nihal","Nihal Sarin"],"Gukesh D":["Gukesh D","Gukesh","D","Gukesh D"],"Yu, Yangyi":["Yu Yangyi","Yu","Yangyi","Yu Yangyi"],"Wang, Hao":["Wang Hao","Wang","Hao","Wang Hao"],"Vidit, Santosh Gujrathi":["Vidit Gujrathi","Vidit","Santosh Gujrathi","Vidit Gujrathi"],"Pranesh M":["Pranesh M","Pranesh","M","Pranesh M"],"Aravindh, Chithambaram VR.":["Aravindh Chithambaram","Aravindh","Chithambaram VR.","Aravindh Chithambaram"],"Bu, Xiangzhi":["Bu Xiangzhi","Bu","Xiangzhi","Bu Xiangzhi"],"Aryan Chopra":["Aryan Chopra","Chopra","Aryan","Aryan Chopra"],"Lu, Shanglei":["Lu Shanglei","Lu","Shanglei","Lu Shanglei"],"Xu, Xiangyu":["Xu Xiangyu","Xu","Xiangyu","Xu Xiangyu"],"Wang, Yue":["Wang Yue","Wang","Yue","Wang Yue"],"Narayanan S L":["Narayanan S L","Narayanan","S L","Narayanan S L"],"Le, Tuan Minh":["Le Tuan Minh","Le","Tuan Minh","Le Tuan Minh"],"Nguyen, Thai Dai Van":["Nguyen Thai Dai Van","Nguyen","Thai Dai Van","Nguyen Thai Dai Van"],"Ma, Qun":["Ma Qun","Ma","Qun","Ma Qun"],"Ni, Hua":["Ni Hua","Ni","Hua","Ni Hua"],"Li, Chao b":["Li Chao","Li","Chao","Li Chao"],"Lai, Hing Ting":["Lai Hing Ting","Lai","Hing Ting","Lai Hing Ting"],"Hou, Yifan":["Hou Yifan","Hou","Yifan","Hou Yifan"],"Nguyen, Ngoc Truong Son":["Nguyen Ngoc Truong Son","Nguyen","Ngoc Truong Son","Nguyen Ngoc Truong Son"]}};
 const YEAR = MATCH.year;
 const LISTS = MATCH.lists;   // the 12 lists behind "last 12 months"
 const FMTS = ["classical", "rapid", "blitz"], LABEL = { classical: "Classical", rapid: "Rapid", blitz: "Blitz" };
@@ -924,27 +955,39 @@ $("duel-rows").addEventListener("pointermove", (e) => {
 });
 $("duel-rows").addEventListener("pointerleave", () => { $("duel-tip").hidden = true; });
 
-// ---- Opening chart, match played: the games as the site draws games, a line per player ----
+// ---- Opening chart, match played: one strip for both players, the rule between their
+// lines as its baseline (see the styles for how each result is drawn) ----
+// While the match is on, the classical games still to be played are drawn as empty slots.
+const LIVE = () => !!(PLAYED?.live && !PLAYED.live.over);
 function renderResult() {
-  const tb = PLAYED.tb.flatMap((t) => t.res), all = [...PLAYED.res.map((r, i) => [r, i + 1, ""]), ...tb.map((r, i) => [r, i + 1, i ? "" : " tb"])];
+  const tb = PLAYED.tb.flatMap((t) => t.res), left = LIVE() && !tb.length ? Math.max(0, MATCH.games - PLAYED.res.length) : 0;
+  const all = [...PLAYED.res.map((r, i) => [r, i + 1, "", "Game"]), ...Array.from({ length: left }, (_, i) => [null, PLAYED.res.length + i + 1, "", "Game"]),
+    ...tb.map((r, i) => [r, i + 1, i ? "" : " tb", "Tiebreak game"])];
   const nums = all.map(([, n, cls]) => `<span class="gm${cls}">${n}</span>`).join("");
-  $("rs-nums").innerHTML = nums; $("rs-nums-foot").innerHTML = nums;
-  $("rs-rows").innerHTML = both().map((p) => {
-    const mine = (r) => (p === A ? r : 1 - r), other = p === A ? B : A;
-    const cells = all.map(([r, n, cls]) => {
-      const v = mine(r), what = v === 1 ? `${p.short} won` : v === 0.5 ? "drawn" : `${other.short} won`;
-      return `<span class="gm ${v === 1 ? "w" : v === 0.5 ? "d" : "l"}${cls}" title="${cls || tb.length && n > PLAYED.res.length ? "Tiebreak game" : "Game"} ${n}: ${esc(what)}"><i></i></span>`;
-    }).join("");
-    const score = p === A ? PLAYED.a : PLAYED.b, tbs = p === A ? PLAYED.tsa : PLAYED.tsb;
-    // The match as one more event: the player's TPR in it.
-    const mt = PLAYED.tpr[p === A ? "a" : "b"] ?? "";
-    return `<div class="rs-row"><span class="rs-who"><a href="/player/${p.id}#classical">${esc(p.full)}</a><span class="sub">${p.role} · <span class="fed">${esc(p.fed)}</span></span></span>` +
-      `<span class="rs-games" role="img" aria-label="${esc(p.full)}: ${wdlText(wdlOf(PLAYED.res.map(mine)))}">${cells}</span>` +
-      `<span class="rs-score${PLAYED.win === p ? " win" : ""}">${half(score)}${tb.length ? ` <small>${half(tbs)}</small>` : ""}</span><span class="rs-tpr">${mt}</span></div>`;
-  }).join("");
-  $("rs-legend").innerHTML = `<span><i class="sq win"></i>Win</span><span><i class="sq hatch"></i>Draw</span><span><i class="sq solid"></i>Loss</span>` +
+  $("rs-nums").innerHTML = nums;
+  const cells = all.map(([r, n, cls, what]) => `<span class="gm ${r === null ? "o" : r === 1 ? "wa" : r === 0.5 ? "dd" : "wb"}${cls}" ` +
+    `title="${what} ${n}: ${r === null ? "still to be played" : r === 1 ? `${esc(A.short)} won` : r === 0.5 ? "drawn" : `${esc(B.short)} won`}"><i></i></span>`).join("");
+  const side = (p, k) => {
+    const score = k === "a" ? PLAYED.a : PLAYED.b, tbs = k === "a" ? PLAYED.tsa : PLAYED.tsb;
+    return `<span class="rs-who ${k}"><a href="/player/${p.id}#classical">${esc(p.full)}</a><span class="sub">${p.role} · <span class="fed">${esc(p.fed)}</span></span></span>` +
+      `<span class="rs-score ${k}${PLAYED.win === p ? " win" : ""}">${half(score)}${tb.length ? ` <small>${half(tbs)}</small>` : ""}</span>` +
+      // The match as one more event: the player's TPR in it.
+      `<span class="rs-tpr ${k}">${PLAYED.tpr?.[k] ?? ""}</span>`;
+  };
+  const label = `${A.full} above the line, ${B.full} below: ` +
+    all.filter(([r]) => r !== null).map(([r, n, , what]) => `${what.toLowerCase()} ${n} ${r === 1 ? A.short : r === 0.5 ? "drawn" : B.short}`).join(", ") +
+    (left ? `; ${left} still to be played` : "");
+  const winner = PLAYED.win, loser = winner === A ? B : winner === B ? A : null;
+  $("rs-rows").innerHTML = `<div class="rs-uni${winner ? ` win-${winner === A ? "a" : "b"}` : ""}">${side(A, "a")}` +
+    `<span class="rs-games rs-nums" aria-hidden="true">${nums}</span>` +
+    `<span class="rs-games strip" role="img" aria-label="${esc(label)}">${cells}</span>${side(B, "b")}</div>`;
+  $("rs-legend").innerHTML =
+    (winner ? `<span><i class="sq win"></i>${esc(winner.short)} won the game</span><span><i class="sq solid"></i>${esc(loser.short)} won the game</span>`
+      : `<span><i class="sq solid"></i>Win, on the winner's side of the line</span>`) +
+    `<span><i class="sq hatch"></i>Draw, half to each</span>` +
     (tb.length ? `<span>After the gap: the ${PLAYED.tb[0].f} tiebreak, its score in small figures</span>` : "") +
-    `<span>TPR: the player's performance in the ${PLAYED.res.length} classical games</span>`;
+    (left ? `<span><i class="sq out"></i>Still to be played</span>` : "") +
+    `<span>TPR: the player's performance in the ${PLAYED.res.length} classical ${PLAYED.res.length === 1 ? "game" : "games"}${LIVE() ? " so far" : ""}</span>`;
 }
 
 // ---- The numbers, side by side ----
@@ -970,10 +1013,19 @@ function renderTape() {
 }
 
 // ---- TPR by year ----
+// How wide a line of chart text is, in the site's face: the end labels need room for the
+// longer names ("2701 Nepomniachtchi").
+const ctx2d = document.createElement("canvas").getContext("2d");
+function textWidth(s, weight = 400, size = 13) {
+  ctx2d.font = `${weight} ${size}px ${getComputedStyle(document.documentElement).getPropertyValue("--body")}`;
+  return ctx2d.measureText(s).width;
+}
 let yearSlots = [];
 function renderYears() {
   $("years-title").textContent = `${LABEL[fmt]} TPR by year`;
-  const box = $("years"), W = Math.max(280, box.clientWidth), H = 268, mL = 36, mR = 96, mT = 16, mB = 24;
+  // The right margin holds each line's end label: its 12px offset, the TPR and the name.
+  const label = Math.max(...both().map((p) => textWidth("0000 ", 700) + textWidth(p.short)));
+  const box = $("years"), W = Math.max(280, box.clientWidth), H = 268, mL = 36, mR = Math.ceil(12 + label + 4), mT = 16, mB = 24;
   const modes = [...new Set(both().flatMap((p) => Object.keys(p.modes)))].filter(Boolean).sort();
   // A match to come ends on the last 12 months; a played one is a line of years with its own year marked.
   const slots = PLAYED ? modes : [...modes, ""], n = slots.length, lead = leader();
@@ -983,7 +1035,8 @@ function renderYears() {
   const sw = (W - mL - mR - gapCur) / n;
   const x = (i) => mL + (i + .5) * sw + (!PLAYED && i === n - 1 ? gapCur : 0), y = (v) => mT + (1 - (v - sc.lo) / (sc.hi - sc.lo)) * (H - mT - mB);
   yearSlots = slots.map((m, i) => ({ m, x: x(i), w: sw }));
-  const mark = PLAYED ? slots.indexOf(`y${YEAR}`) : -1;
+  // The match's year is marked once FIDE has rated the match into it.
+  const mark = PLAYED && !PLAYED.live ? slots.indexOf(`y${YEAR}`) : -1;
   let out = `<rect class="hov" id="years-hov" y="${mT - 6}" height="${H - mT - mB + 12}" width="${sw}" visibility="hidden"/>`;
   out += sc.ticks.map((v) => `<text class="tick" x="${mL - 8}" y="${y(v) + 4}" text-anchor="end">${v}</text>`).join("");
   out += slots.map((m, i) => `<text class="xl${!m || i === mark ? " cur" : ""}" x="${x(i)}" y="${H - 6}" text-anchor="middle">${m ? `’${m.slice(3)}` : "12 mo"}</text>`).join("");
@@ -1005,7 +1058,7 @@ function renderYears() {
   out += ends.map((e) => `<text class="endl" x="${e.x + 12}" y="${e.y + 4.5}">${e.v} <tspan>${esc(e.p.short)}</tspan></text>`).join("");
   box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="${LABEL[fmt]} TPR by year for ${esc(A.full)} and ${esc(B.full)}">${out}</svg><div class="tip" id="years-tip" hidden></div>`;
   const hatched = both().some((p) => slots.some((m) => at(p, m) && !at(p, m).rank));
-  $("years-note").innerHTML = `Each point pools the ${fmt} games of that year${PLAYED ? `, the match included in ${YEAR}` : ""}; 2026 is the year so far.` + (hatched ? ` <i class="sq hatch"></i> A hatched point wasn't ranked: too few games that year.` : "");
+  $("years-note").innerHTML = `Each point pools the ${fmt} games of that year${PLAYED && !PLAYED.live ? `, the match included in ${YEAR}` : ""}; 2026 is the year so far${PLAYED?.live ? ", without the match until FIDE rates it" : ""}.` + (hatched ? ` <i class="sq hatch"></i> A hatched point wasn't ranked: too few games that year.` : "");
 }
 $("years").addEventListener("pointermove", (e) => {
   const svg = $("years").querySelector("svg"), tip = $("years-tip"); if (!svg) return;
@@ -1165,15 +1218,25 @@ addEventListener("resize", () => { if (innerWidth === lastW || !A) return; lastW
   document.title = `${A.short} vs ${B.short} · Chess Performance Ratings`;
   $("ev-title").textContent = `${A.short} vs ${B.short}`;
   const upcoming = `${MATCH.games} classical games${MATCH.first_game ? ` from ${dateSpan(MATCH.first_game)}` : ""}`;
-  $("ev-eyebrow").textContent = `FIDE World Championship Match ${YEAR} · ${MATCH.place} · ${PLAYED ? dateSpan(PLAYED.start, last) : upcoming}`;
+  // While the match is on: how far it has gone instead of its dates.
+  const sofar = () => PLAYED.tb.length ? `${PLAYED.tb[0].f} tiebreak` : `game ${PLAYED.res.length} of ${MATCH.games}`;
+  $("ev-eyebrow").textContent = `FIDE World Championship Match ${YEAR} · ${MATCH.place} · ${!PLAYED ? upcoming : LIVE() ? `from ${dateSpan(PLAYED.start)} · ${sofar()}` : dateSpan(PLAYED.start, last)}`;
   $("duel").hidden = !!PLAYED; $("result").hidden = !PLAYED;
   if (PLAYED) {
     const w = PLAYED.win, hi = Math.max(PLAYED.a, PLAYED.b), lo = Math.min(PLAYED.a, PLAYED.b);
-    const won = !w ? `The match ended ${half(PLAYED.a)}–${half(PLAYED.b)}.`
+    const score = `${half(PLAYED.a)}–${half(PLAYED.b)}`, n = PLAYED.res.length, lead = PLAYED.a > PLAYED.b ? A : PLAYED.b > PLAYED.a ? B : null;
+    const won = LIVE()
+      ? (n >= MATCH.games && !lead ? `Level at ${score} after the ${n} classical games: a tiebreak decides the title.`
+        : lead ? `${esc(lead.full)} leads ${half(hi)}–${half(lo)} after ${n} of ${MATCH.games} games.`
+        : `Level at ${score} after ${n} of ${MATCH.games} games.`)
+      : !w ? `The match ended ${score}.`
       : PLAYED.a !== PLAYED.b ? `${esc(w.full)} won ${half(hi)}–${half(lo)}.`
       : `${esc(w.full)} won the ${PLAYED.tb[0].f} tiebreak ${half(Math.max(PLAYED.tsa, PLAYED.tsb))}–${half(Math.min(PLAYED.tsa, PLAYED.tsb))}, after ${half(PLAYED.a)}–${half(PLAYED.b)} in the classical games.`;
-    $("ev-lede").innerHTML = `<strong>${won}</strong> The match game by game, then what the 12 months before it said about the two players, measured the way this site ranks everyone.`;
-    $("how-page").innerHTML = `${esc(A.full)} and ${esc(B.full)} played for the title in ${MATCH.place}, ${dateSpan(PLAYED.start, last)}. The first chart is the match itself. Everything under it describes the 12 months before the first game: the classical games of every event that ended in that time, pooled as on <a href="/">the rankings</a>. The match is not counted in them, and TPR, Δ and the other columns mean what they mean there.`;
+    $("ev-lede").innerHTML = `<strong>${won}</strong> The match game by game${LIVE() ? " so far" : ""}, then what the 12 months before it said about the two players, measured the way this site ranks everyone.`;
+    // Until FIDE rates the match its games come from the broadcast (perfrating/live.py).
+    const src = PLAYED.live ? ` Until FIDE rates the match, its results come from ${PLAYED.live.url ? `<a href="${esc(PLAYED.live.url)}">Lichess's official broadcast</a>` : "Lichess's official broadcast"}, and each player's TPR in it uses the FIDE ratings they had going in.` : "";
+    $("how-page").innerHTML = (LIVE() ? `${esc(A.full)} and ${esc(B.full)} are playing for the title in ${MATCH.place}, from ${dateSpan(PLAYED.start)}.`
+      : `${esc(A.full)} and ${esc(B.full)} played for the title in ${MATCH.place}, ${dateSpan(PLAYED.start, last)}.`) + `${src} The first chart is the match itself. Everything under it describes the 12 months before the first game: the classical games of every event that ended in that time, pooled as on <a href="/">the rankings</a>. The match is not counted in them, and TPR, Δ and the other columns mean what they mean there.`;
     $("how-worth").textContent = `FIDE's expected score for one game depends only on the difference between two ratings. It is applied twice, to the two FIDE ratings going into the match and to the two TPRs of the 12 months before it, and multiplied by the ${PLAYED.res.length} classical games played. The third mark is the result. The first two say what each gap was worth, and were never a prediction: they know nothing about preparation, colours or match play.`;
   } else {
     $("ev-lede").innerHTML = `The world champion and the challenger, compared the way this site ranks everyone: by <strong>how they played over the last 12 months</strong>, not by the rating those results were added to.`;

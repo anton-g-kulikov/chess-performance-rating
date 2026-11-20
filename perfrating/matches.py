@@ -24,9 +24,10 @@ from .performance import performance
 # The champion (or, with the title vacant, the Candidates winner) first.  Names
 # come from FIDE's, shown as perfrating/names.py shows them everywhere.  A match
 # still to come can carry the date of its first game; a played one has its dates
-# in the data.
+# in the data.  ``lichess`` is the id of Lichess's official broadcast of a match,
+# read by perfrating/live.py while the match is on (see ``from_live``).
 MATCHES = [
-    {"year": 2026, "place": "Geneva", "games": 14, "first_game": "2026-11-24",
+    {"year": 2026, "place": "Geneva", "games": 14, "first_game": "2026-11-24", "lichess": "qfkdt8mn",
      "a": {"id": 46616543, "role": "World champion"}, "b": {"id": 14205483, "role": "Challenger"}},
     {"year": 2024, "place": "Singapore", "games": 14,
      "a": {"id": 8603677, "role": "World champion"}, "b": {"id": 46616543, "role": "Challenger"}},
@@ -110,6 +111,45 @@ def played(saved: dict, a: int, b: int, ids: dict):
             "rating": {"a": ra, "b": rb}, "tpr": {"a": ta, "b": tb_}}
 
 
+def from_live(spec: dict, live: dict):
+    """The match so far from the broadcast's results (perfrating/live.py), in
+    the shape ``played`` gives plus ``live``, or None before a classical game
+    has finished.
+
+    It is over once a player has more than half the classical games, or, after
+    a level match, once the broadcast is over (or the file says so by hand)."""
+    a, b = spec["a"]["id"], spec["b"]["id"]
+    games = [g for g in live.get("games", []) if {g["white"], g["black"]} == {a, b} and g["result"] in RESULT]
+    cls = [g for g in games if g["f"] == "classical"]
+    if not cls:
+        return None
+    mine = lambda g: RESULT[g["result"]] if g["white"] == a else 1 - RESULT[g["result"]]
+    rating = lambda g, fid: g["white_rating"] if g["white"] == fid else g["black_rating"]
+    res = [mine(g) for g in cls]
+    tb = []
+    for g in (g for g in games if g["f"] != "classical"):
+        if not tb or tb[-1]["f"] != g["f"]:
+            tb.append({"f": g["f"], "start": g["date"], "end": g["date"], "res": []})
+        tb[-1]["end"] = g["date"]
+        tb[-1]["res"].append(mine(g))
+    sa, tsa = sum(res), sum(r for t in tb for r in t["res"])
+    sb, tsb = len(res) - sa, sum(len(t["res"]) for t in tb) - tsa
+    half = spec["games"] / 2
+    win = "a" if sa > half else "b" if sb > half else None
+    over = win is not None or (bool(live.get("over")) and len(res) >= spec["games"])
+    if over and not win:
+        win = ("a" if tsa > tsb else "b") if tsa != tsb else None
+    ra, rb = rating(cls[0], a), rating(cls[0], b)
+    tpr = lambda opp, rs: (p.tpr if opp and (p := performance((opp, r) for r in rs)) else None)
+    return {"start": cls[0]["date"], "end": games[-1]["date"], "res": res,
+            "tb": tb, "a": sa, "b": sb, "tsa": tsa, "tsb": tsb, "win": win,
+            "rating": {"a": ra, "b": rb}, "tpr": {"a": tpr(rb, res), "b": tpr(ra, [1 - r for r in res])},
+            "live": {"over": over, "url": live.get("url"), "source": live.get("source", "Lichess broadcast")}}
+
+
+RESULT = {"1-0": 1.0, "0-1": 0.0, "1/2-1/2": 0.5}
+
+
 def window_start(first_game: str) -> str:
     d = date.fromisoformat(first_game)
     try:
@@ -135,11 +175,16 @@ def before(saveds: list, fid: int, start: str, fmt: str = "classical"):
             "avg_opp": round(perf.avg_opp)}
 
 
-def match_pages(builds: list, ids: dict, people: dict) -> list:
+def match_pages(builds: list, ids: dict, people: dict, live=None) -> list:
     """Everything each match page needs beyond the players' own files.
 
     ``builds`` is web.py's list of ``(mode, saved, full)``: the rolling lists
-    first, then the years; ``people`` is ``FIDE id -> (name, federation)``."""
+    first, then the years; ``people`` is ``FIDE id -> (name, federation)``;
+    ``live`` is ``year -> broadcast results`` (perfrating/live.py), read from
+    data/ when not given.  FIDE's own data, once it holds a match, wins."""
+    if live is None:
+        from .live import load
+        live = {spec["year"]: r for spec in MATCHES if (r := load(spec["year"]))}
     by_year = {m["year"]: saved for m, saved, _ in builds if m["year"]}
     saveds = [saved for _, saved, _ in builds]
     rolling = builds[0][0]["periods"]
@@ -153,6 +198,8 @@ def match_pages(builds: list, ids: dict, people: dict) -> list:
                               "short": parts(*people[spec[side]["id"]])[1]}
         m = {**spec, "slug": slug(year), "lists": lists, "a": named("a"), "b": named("b"),
              "played": played(by_year[year], a, b, ids) if year in by_year else None}
+        if not m["played"] and live.get(year):
+            m["played"] = from_live(spec, live[year])
         if m["played"]:
             p = m["played"]
             m["window"] = {"from": window_start(p["start"]), "to": p["start"]}
@@ -182,14 +229,17 @@ def match_lines(modes: list, matches: list, pages: dict) -> dict:
         m = by_year.get(mode["year"]) if mode["year"] else newest
         if not m:
             continue
-        on = f"y{m['year']}" if m["played"] else ""
+        # A match being played is still compared on the rolling lists: its year's
+        # numbers don't hold it until FIDE rates it.
+        done = m["played"] and not m["played"].get("live")
+        on = f"y{m['year']}" if done else ""
         tpr = lambda side: (pages.get(m[side]["id"], {}).get("modes", {}).get(on, {})
                             .get("classical", {}).get("tpr"))
         out[mode["id"]] = {
             "href": href(m["year"]),
-            "label": f"{m['year']} World Championship match" if m["played"] else "World Championship match",
+            "label": f"{m['year']} World Championship match" if done else "World Championship match",
             "a": [m["a"]["short"], tpr("a")], "b": [m["b"]["short"], tpr("b")],
-            "note": f"classical TPR, {m['year']}" if m["played"] else "classical TPR, last 12 months",
+            "note": f"classical TPR, {m['year']}" if done else "classical TPR, last 12 months",
         }
     return out
 
