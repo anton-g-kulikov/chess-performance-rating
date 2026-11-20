@@ -17,7 +17,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Besley:wght@800&family=Public+Sans:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,800&family=Hanken+Grotesk:wght@400;600;700&display=swap">
 <style>
 /* Layout: one paper ground with rules instead of boxes. Three fills carry the data, the way a
    printed chess diagram does: solid = performance, hatch = a draw or provisional, outline =
@@ -32,8 +32,8 @@
   --accent: #1d6a47;
   --accent-soft: #edf3ee;
   --focus: #2b7fd4;
-  --display: "Besley", "Clarendon", "Rockwell", Georgia, serif;
-  --body: "Public Sans", "Franklin Gothic Medium", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --display: "Newsreader", "Iowan Old Style", Georgia, "Times New Roman", serif;
+  --body: "Hanken Grotesk", "Helvetica Neue", "Segoe UI", system-ui, -apple-system, sans-serif;
   --hatch: repeating-linear-gradient(45deg, var(--ink) 0 1px, transparent 1px 4px);
   --r: 2px;
 }
@@ -68,9 +68,6 @@ body {
 .formats, .race, .list, .method { margin-top: 28px; }
 /* Running text uses the same width as the charts and the table. */
 .num { font-variant-numeric: tabular-nums; }
-/* Besley's tabular zero is drawn at the wrong weight, and its default figures are
-   close to one width already, so the display numerals keep the default set. */
-td.tpr, .fmt-lead b, .fmt-lead-sm b, .pstats dd.num { font-variant-numeric: normal; }
 a { color: var(--ink); text-decoration-color: var(--muted); text-underline-offset: 2px; }
 a:hover { color: var(--accent); text-decoration-color: currentColor; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
@@ -403,7 +400,7 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 .race[hidden] { display: none; }
 .race-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
 .race h2 { margin: 0; font-family: var(--display); font-weight: 800; font-size: 20px; line-height: 1.2; }
-.race-month { font-family: var(--display); font-weight: 800; font-size: 24px; line-height: 1; font-variant-numeric: normal; }
+.race-month { font-family: var(--display); font-weight: 800; font-size: 24px; line-height: 1; }
 .race-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
 .race-key { display: flex; flex-wrap: wrap; gap: 2px 14px; margin-top: 8px; font-size: 13px; color: var(--muted); }
 .race-key span { display: inline-flex; align-items: center; gap: 6px; }
