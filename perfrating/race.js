@@ -38,6 +38,7 @@ function showFrame(i, animate = true) {
   $("race-ticks").querySelectorAll("button").forEach((b) => b.classList.toggle("on", +b.dataset.i === i));
   $("race-month").textContent = `${MON[f.m - 1]} ${f.y ?? M.year}`;
   const lastFrame = i === race.frames.length - 1;
+  $("race-seek").classList.toggle("end", lastFrame);
   const when = !lastFrame ? "" : M.year && (M.fraction ?? 1) >= 1 ? " (final)" : " (now)";
   // A year counts everything since January; the rolling list, the 12 lists up
   // to this one, among the players in today's pool.

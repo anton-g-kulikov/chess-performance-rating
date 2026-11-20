@@ -419,8 +419,11 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 .form h3 { margin: 0; font-weight: 700; font-size: 16px; }
 .form-plot { position: relative; min-width: 0; }
 .form svg { max-width: 100%; cursor: crosshair; }
-.form svg:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; border-radius: var(--r); }
-.form rect.on { fill: var(--accent); stroke: var(--accent); stroke-opacity: 1; }
+/* No focus box: the picked point and its tip show where the keys are. */
+.form svg:focus, .form svg:focus-visible { outline: none; }
+/* Results in the colours of the score bar. The picked game stays as it is and the rest fade. */
+.form rect { transition: opacity .15s; }
+.form svg:has(rect.on) rect:not(.on) { opacity: .3; }
 .form-foot { font-size: 13px; }
 /* Replay: the top 10 at the end of each month. Each row draws the player's FIDE rating
    (outline square) and TPR (solid square) on an axis that rescales with the month.
@@ -435,18 +438,21 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 .race-key span { display: inline-flex; align-items: center; gap: 6px; }
 .race-ctl { display: flex; align-items: flex-start; gap: 20px; }
 .race-track { flex: 1; min-width: 0; display: grid; gap: 2px; padding-top: 8px; }
-/* The slider is drawn here, not by the browser: a flat rule filled up to a triangle that
-   points the way the replay runs. --p is the position as a fraction, set by showFrame().
-   The rule is left clear behind the triangle, so its tip stays sharp. */
+/* The slider is drawn here, not by the browser: a flat rule filled up to a round marker,
+   an open ring on the months along the way and solid on the last one (.end).
+   --p is the position as a fraction, set by showFrame(). The rule is left clear
+   behind the marker, so the ring stays empty. */
 .race-track input { appearance: none; -webkit-appearance: none; width: 100%; height: 16px; margin: 0; background: transparent; cursor: pointer; --x: calc((100% - 16px) * var(--p, 1)); }
 .race-track input::-webkit-slider-runnable-track {
   height: 4px; border-radius: 0;
   background: linear-gradient(to right, var(--ink) var(--x), transparent var(--x), transparent calc(var(--x) + 16px), var(--line) calc(var(--x) + 16px));
 }
-.race-track input::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -6px; border: 0; border-radius: 0; background: var(--ink); clip-path: polygon(0 0, 100% 50%, 0 100%); }
+.race-track input::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -6px; box-sizing: border-box; border: 2px solid var(--ink); border-radius: 50%; background: var(--bg); }
+.race-track input.end::-webkit-slider-thumb { background: var(--ink); }
 .race-track input::-moz-range-track { height: 4px; border-radius: 0; background: var(--line); }
 .race-track input::-moz-range-progress { height: 4px; border-radius: 0; background: var(--ink); }
-.race-track input::-moz-range-thumb { width: 16px; height: 16px; border: 0; border-radius: 0; background: var(--ink); clip-path: polygon(0 0, 100% 50%, 0 100%); }
+.race-track input::-moz-range-thumb { width: 16px; height: 16px; box-sizing: border-box; border: 2px solid var(--ink); border-radius: 50%; background: var(--bg); }
+.race-track input.end::-moz-range-thumb { background: var(--ink); }
 /* Month ticks under the slider. The side padding is half the thumb, so each
    tick sits under the thumb's position for that month. */
 .race-ticks { position: relative; height: 22px; margin: 0 8px; }
@@ -516,7 +522,8 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 .legend .sq.soft { border-color: var(--muted); background: repeating-linear-gradient(45deg, var(--muted) 0 1px, transparent 1px 4px); }
 .plot { position: relative; min-width: 0; }
 .plot svg { display: block; width: 100%; overflow: visible; }
-.plot svg:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; border-radius: var(--r); }
+/* No focus box: the picked point and its tip show where the keys are. */
+.plot svg:focus, .plot svg:focus-visible { outline: none; }
 .plot .grid line { stroke: var(--line); stroke-width: 1; }
 .plot .tick { font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
 .plot .prov { fill: url(#hxs); }
@@ -1278,7 +1285,6 @@ function renderPlayerDetail(animate = false) {
   // The page lists the top 100 of each list; the full list is in the repository.
   const shown = e.rank && e.rank <= (m.lists ? m.lists[ps.fmt].rows.length : 100);
   const csv = `https://github.com/anton-g-kulikov/chess-performance-rating/blob/main/results/${m.year ? m.year + "/" : ""}${ps.fmt}.csv`;
-  const inList = shown && PEOPLE.has(ps.d.id) ? `<a href="/#${viewHash(m.id, ps.fmt)}/${ps.d.id}" data-home>Show in the ${esc(m.label.toLowerCase())} ${LABEL[ps.fmt].toLowerCase()} list</a>` : "";
   const outside = e.rank && !shown ? ` This page lists the top 100, so they're only in the <a href="${csv}" target="_blank" rel="noopener">full list</a>.` : "";
   const evs = e.ev.map((x, i) => {
     const [p, name, start, end, n, s, avg, tpr, games] = x;
@@ -1298,7 +1304,6 @@ function renderPlayerDetail(animate = false) {
     </dl>
     ${chartBlock(e, m)}
     ${formBlock(e)}
-    ${inList ? `<div class="plinks">${inList}</div>` : ""}
     <div class="table-box"><table class="pev">
       <thead><tr><th class="l">Event</th><th class="l hide-sm">FIDE list</th><th>Score</th><th class="hide-sm">Avg opp</th><th>TPR</th><th class="hide-sm" title="TPR over all games up to and including this event">To date</th></tr></thead>
       <tbody>${evs}</tbody></table></div>`;
@@ -1336,7 +1341,7 @@ function formBlock(e) {
   const wdl = wdlOf(formState.map((g) => g.res));
   return `<div class="form"><div class="form-head"><h3>Game by game</h3><span class="wn num" role="img" aria-label="${wdlLabel(wdl)}">${wdlText(wdl)}</span></div>
     <div class="form-plot" id="p-form"></div>
-    <div class="form-foot muted">Oldest to newest, a gap between events. A tall tick is a win, a hatched half tick a draw, a tick pointing down a loss.</div></div>`;
+    <div class="form-foot muted">Oldest to newest, a gap between events. A green tick up is a win, a hatched half tick a draw, a tick pointing down a loss.</div></div>`;
 }
 function drawForm() {
   const box = $("p-form"); if (!box || !formState.length) return;
@@ -1345,7 +1350,7 @@ function drawForm() {
   const k = Math.min(6, Math.max(1, box.clientWidth) / units), W = units * k, w = 3 * k;
   const ticks = formState.map((g, i) => {
     const x = (g.x * k).toFixed(1);
-    return g.res === 1 ? `<rect class="s-ink" data-i="${i}" x="${x}" y="0" width="${w.toFixed(1)}" height="${base}"/>`
+    return g.res === 1 ? `<rect class="s-win" data-i="${i}" x="${x}" y="0" width="${w.toFixed(1)}" height="${base}"/>`
       : g.res === 0 ? `<rect class="s-ink" data-i="${i}" x="${x}" y="${base}" width="${w.toFixed(1)}" height="${H - base}"/>`
       : `<rect class="s-hx" data-i="${i}" x="${(g.x * k + .5).toFixed(1)}" y="${base - 7.5}" width="${Math.max(1, w - 1).toFixed(1)}" height="7"/>`;
   }).join("");
@@ -1580,6 +1585,7 @@ function showFrame(i, animate = true) {
   $("race-ticks").querySelectorAll("button").forEach((b) => b.classList.toggle("on", +b.dataset.i === i));
   $("race-month").textContent = `${MON[f.m - 1]} ${f.y ?? M.year}`;
   const lastFrame = i === race.frames.length - 1;
+  $("race-seek").classList.toggle("end", lastFrame);
   const when = !lastFrame ? "" : M.year && (M.fraction ?? 1) >= 1 ? " (final)" : " (now)";
   // A year counts everything since January; the rolling list, the 12 lists up
   // to this one, among the players in today's pool.

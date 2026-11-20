@@ -11,18 +11,21 @@
 .race-key span { display: inline-flex; align-items: center; gap: 6px; }
 .race-ctl { display: flex; align-items: flex-start; gap: 20px; }
 .race-track { flex: 1; min-width: 0; display: grid; gap: 2px; padding-top: 8px; }
-/* The slider is drawn here, not by the browser: a flat rule filled up to a triangle that
-   points the way the replay runs. --p is the position as a fraction, set by showFrame().
-   The rule is left clear behind the triangle, so its tip stays sharp. */
+/* The slider is drawn here, not by the browser: a flat rule filled up to a round marker,
+   an open ring on the months along the way and solid on the last one (.end).
+   --p is the position as a fraction, set by showFrame(). The rule is left clear
+   behind the marker, so the ring stays empty. */
 .race-track input { appearance: none; -webkit-appearance: none; width: 100%; height: 16px; margin: 0; background: transparent; cursor: pointer; --x: calc((100% - 16px) * var(--p, 1)); }
 .race-track input::-webkit-slider-runnable-track {
   height: 4px; border-radius: 0;
   background: linear-gradient(to right, var(--ink) var(--x), transparent var(--x), transparent calc(var(--x) + 16px), var(--line) calc(var(--x) + 16px));
 }
-.race-track input::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -6px; border: 0; border-radius: 0; background: var(--ink); clip-path: polygon(0 0, 100% 50%, 0 100%); }
+.race-track input::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -6px; box-sizing: border-box; border: 2px solid var(--ink); border-radius: 50%; background: var(--bg); }
+.race-track input.end::-webkit-slider-thumb { background: var(--ink); }
 .race-track input::-moz-range-track { height: 4px; border-radius: 0; background: var(--line); }
 .race-track input::-moz-range-progress { height: 4px; border-radius: 0; background: var(--ink); }
-.race-track input::-moz-range-thumb { width: 16px; height: 16px; border: 0; border-radius: 0; background: var(--ink); clip-path: polygon(0 0, 100% 50%, 0 100%); }
+.race-track input::-moz-range-thumb { width: 16px; height: 16px; box-sizing: border-box; border: 2px solid var(--ink); border-radius: 50%; background: var(--bg); }
+.race-track input.end::-moz-range-thumb { background: var(--ink); }
 /* Month ticks under the slider. The side padding is half the thumb, so each
    tick sits under the thumb's position for that month. */
 .race-ticks { position: relative; height: 22px; margin: 0 8px; }

@@ -419,8 +419,11 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 .form h3 { margin: 0; font-weight: 700; font-size: 16px; }
 .form-plot { position: relative; min-width: 0; }
 .form svg { max-width: 100%; cursor: crosshair; }
-.form svg:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; border-radius: var(--r); }
-.form rect.on { fill: var(--accent); stroke: var(--accent); stroke-opacity: 1; }
+/* No focus box: the picked point and its tip show where the keys are. */
+.form svg:focus, .form svg:focus-visible { outline: none; }
+/* Results in the colours of the score bar. The picked game stays as it is and the rest fade. */
+.form rect { transition: opacity .15s; }
+.form svg:has(rect.on) rect:not(.on) { opacity: .3; }
 .form-foot { font-size: 13px; }
 /*RACE_CSS*/
 
@@ -434,7 +437,8 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
 .legend .sq.soft { border-color: var(--muted); background: repeating-linear-gradient(45deg, var(--muted) 0 1px, transparent 1px 4px); }
 .plot { position: relative; min-width: 0; }
 .plot svg { display: block; width: 100%; overflow: visible; }
-.plot svg:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; border-radius: var(--r); }
+/* No focus box: the picked point and its tip show where the keys are. */
+.plot svg:focus, .plot svg:focus-visible { outline: none; }
 .plot .grid line { stroke: var(--line); stroke-width: 1; }
 .plot .tick { font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
 .plot .prov { fill: url(#hxs); }
@@ -1179,7 +1183,6 @@ function renderPlayerDetail(animate = false) {
   // The page lists the top 100 of each list; the full list is in the repository.
   const shown = e.rank && e.rank <= (m.lists ? m.lists[ps.fmt].rows.length : 100);
   const csv = `https://github.com/anton-g-kulikov/chess-performance-rating/blob/main/results/${m.year ? m.year + "/" : ""}${ps.fmt}.csv`;
-  const inList = shown && PEOPLE.has(ps.d.id) ? `<a href="/#${viewHash(m.id, ps.fmt)}/${ps.d.id}" data-home>Show in the ${esc(m.label.toLowerCase())} ${LABEL[ps.fmt].toLowerCase()} list</a>` : "";
   const outside = e.rank && !shown ? ` This page lists the top 100, so they're only in the <a href="${csv}" target="_blank" rel="noopener">full list</a>.` : "";
   const evs = e.ev.map((x, i) => {
     const [p, name, start, end, n, s, avg, tpr, games] = x;
@@ -1199,7 +1202,6 @@ function renderPlayerDetail(animate = false) {
     </dl>
     ${chartBlock(e, m)}
     ${formBlock(e)}
-    ${inList ? `<div class="plinks">${inList}</div>` : ""}
     <div class="table-box"><table class="pev">
       <thead><tr><th class="l">Event</th><th class="l hide-sm">FIDE list</th><th>Score</th><th class="hide-sm">Avg opp</th><th>TPR</th><th class="hide-sm" title="TPR over all games up to and including this event">To date</th></tr></thead>
       <tbody>${evs}</tbody></table></div>`;
@@ -1237,7 +1239,7 @@ function formBlock(e) {
   const wdl = wdlOf(formState.map((g) => g.res));
   return `<div class="form"><div class="form-head"><h3>Game by game</h3><span class="wn num" role="img" aria-label="${wdlLabel(wdl)}">${wdlText(wdl)}</span></div>
     <div class="form-plot" id="p-form"></div>
-    <div class="form-foot muted">Oldest to newest, a gap between events. A tall tick is a win, a hatched half tick a draw, a tick pointing down a loss.</div></div>`;
+    <div class="form-foot muted">Oldest to newest, a gap between events. A green tick up is a win, a hatched half tick a draw, a tick pointing down a loss.</div></div>`;
 }
 function drawForm() {
   const box = $("p-form"); if (!box || !formState.length) return;
@@ -1246,7 +1248,7 @@ function drawForm() {
   const k = Math.min(6, Math.max(1, box.clientWidth) / units), W = units * k, w = 3 * k;
   const ticks = formState.map((g, i) => {
     const x = (g.x * k).toFixed(1);
-    return g.res === 1 ? `<rect class="s-ink" data-i="${i}" x="${x}" y="0" width="${w.toFixed(1)}" height="${base}"/>`
+    return g.res === 1 ? `<rect class="s-win" data-i="${i}" x="${x}" y="0" width="${w.toFixed(1)}" height="${base}"/>`
       : g.res === 0 ? `<rect class="s-ink" data-i="${i}" x="${x}" y="${base}" width="${w.toFixed(1)}" height="${H - base}"/>`
       : `<rect class="s-hx" data-i="${i}" x="${(g.x * k + .5).toFixed(1)}" y="${base - 7.5}" width="${Math.max(1, w - 1).toFixed(1)}" height="7"/>`;
   }).join("");
