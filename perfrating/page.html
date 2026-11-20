@@ -216,6 +216,9 @@ thead th {
   text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--ink); background: var(--bg);
 }
 th button { all: unset; cursor: pointer; display: inline-flex; gap: 4px; align-items: center; }
+/* The whole cell is the target, not just the word: a cover stretched over it. */
+th:has(> button) { position: relative; }
+th button::before { content: ""; position: absolute; inset: 0; }
 th button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 th[aria-sort] { color: var(--ink); }
 th[aria-sort] button::after { content: "▾"; font-size: 11px; }
@@ -291,6 +294,29 @@ tr.detail > td { padding: 2px 12px 16px; text-align: left; white-space: normal; 
 .dp tr + tr th { border-top: 1px solid var(--line); }
 .example { background: var(--accent-soft); border-radius: var(--r); padding: 10px 14px; color: var(--ink); }
 @media (max-width: 520px) { .method dl { grid-template-columns: 1fr; gap: 2px; } .method dd { margin-bottom: 8px; } }
+
+/* Phones. iOS zooms in on a field under 16px when it is focused, and doesn't zoom back. */
+@media (max-width: 560px) {
+  .finders input, .modes .mode, .more select { font-size: 16px; }
+  /* The conversion table turns on its side: Score and Add as two columns. */
+  .dp { display: grid; grid-template-columns: max-content max-content; grid-template-rows: repeat(10, auto); grid-auto-flow: column; }
+  .dp tbody, .dp tr { display: contents; }
+  .dp th, .dp td { padding: 6px 24px 6px 0; border-top: 1px solid var(--line); }
+  .dp th { border-top: 0; }
+  /* Small links get a 40px-tall target without moving the text around them. */
+  .brand, .foot a, .detail-head a { padding-block: 10px; margin-block: -10px; }
+  .brand { margin-bottom: -14px; }
+  .foot a, .detail-head a { display: inline-block; }
+  .mode-note .how-link { display: inline-block; padding-block: 10px; margin-block: -10px; }
+}
+.how-link { display: none; }
+/* The narrowest phones: "12 months" (the headline says "last") and tighter tabs. */
+@media (max-width: 360px) {
+  .modes .mode { font-size: 15px; padding: 0 9px; }
+  .modes .lw { display: none; }
+  .more select { padding: 0 24px 0 9px; }
+  .more::after { right: 8px; }
+}
 
 @media (max-width: 720px) {
   .wrap { padding-block: 18px 48px; gap: 22px; }
@@ -667,7 +693,10 @@ function prepare(m) {
 }
 DATA.modes.forEach(prepare);
 // The rolling year and the five most recent years get buttons; older years go in the select.
-const BUTTONS = 6;
+// A phone has room for two buttons, the rolling year and this year's race, so every
+// finished year goes in the select there.
+const PHONE = matchMedia("(max-width: 560px)");
+const buttons = () => PHONE.matches ? 2 : 6;
 
 const MONTH_FULL = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const longPeriod = (p) => `${MONTH_FULL[+p.slice(5, 7) - 1]} ${p.slice(0, 4)}`;
@@ -680,9 +709,9 @@ function headline(m) {
 function renderModes() {
   $("headline").textContent = headline(M);
   document.title = `${headline(M)} · Chess Performance Ratings`;
-  const older = DATA.modes.slice(BUTTONS), inOlder = older.some((m) => m.id === state.mode);
-  $("modes").innerHTML = DATA.modes.slice(0, BUTTONS).map((m) =>
-    `<button class="mode" role="tab" aria-selected="${m.id === state.mode}" data-m="${m.id}">${esc(m.label)}</button>`).join("") +
+  const older = DATA.modes.slice(buttons()), inOlder = older.some((m) => m.id === state.mode);
+  $("modes").innerHTML = DATA.modes.slice(0, buttons()).map((m) =>
+    `<button class="mode" role="tab" aria-selected="${m.id === state.mode}" data-m="${m.id}">${esc(m.label).replace(/^Last /, '<span class="lw">Last </span>')}</button>`).join("") +
     (older.length ? `<span class="more${inOlder ? " on" : ""}"><select id="older" aria-label="Earlier years">` +
       `<option value=""${inOlder ? "" : " selected"} disabled>Earlier</option>` +
       older.map((m) => `<option value="${m.id}"${m.id === state.mode ? " selected" : ""}>${esc(m.label)}</option>`).join("") +
@@ -700,6 +729,8 @@ function renderModes() {
     $("eyebrow").textContent = `FIDE rated games · ${longPeriod(first)} – ${longPeriod(last)} lists`;
     $("mode-note").innerHTML = `<strong>A rolling year.</strong> <span class="note-more">Counts every game rated in the last ${M.periods.length} FIDE lists, ${longPeriod(first)} – ${longPeriod(last)}. Each month the oldest list drops out and the newest comes in. </span>To qualify, a player needs ${mins} games.`;
   }
+  // On a phone the full account is cut from the note; this jumps to it, past the list.
+  $("mode-note").insertAdjacentHTML("beforeend", ` <a class="how-link" href="#how" data-jump="how">How it works</a>`);
 }
 
 function renderMethod() {
@@ -1552,6 +1583,12 @@ document.addEventListener("click", (e) => {
 });
 
 $("modes").addEventListener("click", (e) => { const b = e.target.closest(".mode"); if (b) go(b.dataset.m, state.fmt, true); });
+PHONE.addEventListener("change", () => renderModes());
+// A jump within the page; the hash stays the view's, so it is not followed as a link.
+$("mode-note").addEventListener("click", (e) => {
+  const a = e.target.closest("a[data-jump]"); if (!a) return;
+  e.preventDefault(); $(a.dataset.jump).scrollIntoView({ behavior: reduced() ? "auto" : "smooth" });
+});
 $("modes").addEventListener("change", (e) => { if (e.target.id === "older" && e.target.value) go(e.target.value, state.fmt, true); });
 $("formats").addEventListener("click", (e) => { const b = e.target.closest(".fmt"); if (b) go(state.mode, b.dataset.f, true); });
 $("formats").addEventListener("pointermove", (e) => {

@@ -76,11 +76,16 @@
   .race:not(.open) h2 { font-size: 18px; }
   .race:not(.open) .race-sub, .race:not(.open) .race-key, .race:not(.open) .race-month,
   .race:not(.open) .race-track, .race:not(.open) .race-plot { display: none; }
-  .race-plot { --row: 28px; --rank: 16px; --name: 88px; --val: 104px; --gap: 6px; }
+  /* The games count is in the list and the row tip, so the track takes its room. */
+  .race-plot { --row: 28px; --rank: 16px; --name: 104px; --val: 40px; --gap: 6px; }
+  .race-row .vl small { display: none; }
   .race-row .nm { font-size: 13px; }
   .race-row .nm .f { display: none; }
   .race-row .nm .s { display: inline; }
   .race-ticks .f { display: none; }
   .race-ticks .s { display: inline; }
+  /* Each month letter is a tap target as wide as its share of the track. */
+  .race-ticks { height: 32px; }
+  .race-ticks button { width: calc(100% / var(--last, 11)); height: 32px; padding-top: 9px; }
 }
 @media (prefers-reduced-motion: reduce) { .race-row, .race-row .dt, .race-row .rt, .race-row .cn, .race-axis .t { transition: none; } }

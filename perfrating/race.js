@@ -19,6 +19,7 @@ function renderRace() {
   // One tick per month in the race so far; the slider's own keys and value
   // text cover screen readers, so these are mouse and touch shortcuts.
   const last = Math.max(1, frames.length - 1);
+  $("race-ticks").style.setProperty("--last", last);
   $("race-ticks").innerHTML = frames.map((f, i) =>
     `<button type="button" tabindex="-1" data-i="${i}" style="left:${(i / last) * 100}%">` +
     `<span class="f">${MON[f.m - 1]}${!M.year && (i === 0 || f.m === 1) ? ` ’${String(f.y).slice(2)}` : ""}</span>` +
@@ -140,8 +141,9 @@ $("race-ticks").addEventListener("click", (e) => {
   if (b) { stopRace(); showFrame(+b.dataset.i); }
 });
 $("race-seek").addEventListener("input", (e) => { stopRace(); showFrame(+e.target.value); });
-// Pointing at a row spells out what its marks show.
-$("race-plot").addEventListener("pointermove", (e) => {
+// Pointing at a row spells out what its marks show; on a touch screen, tapping it does,
+// and the tip stays until the next tap elsewhere.
+function raceTip(e) {
   const row = e.target.closest(".race-row"), tip = $("race-tip");
   if (!row) { tip.hidden = true; return; }
   const { rank, tpr, games, rating } = row.dataset;
@@ -155,5 +157,8 @@ $("race-plot").addEventListener("pointermove", (e) => {
   if (left + tip.offsetWidth > box.width) left = dot.left - box.left - tip.offsetWidth - 12;
   tip.style.left = `${Math.max(0, left)}px`;
   tip.style.top = `${r.top - box.top + r.height / 2 - tip.offsetHeight / 2}px`;
-});
-$("race-plot").addEventListener("pointerleave", () => { $("race-tip").hidden = true; });
+}
+$("race-plot").addEventListener("pointermove", raceTip);
+$("race-plot").addEventListener("pointerdown", raceTip);
+$("race-plot").addEventListener("pointerleave", (e) => { if (e.pointerType !== "touch") $("race-tip").hidden = true; });
+document.addEventListener("pointerdown", (e) => { if (!e.target.closest("#race-plot")) $("race-tip").hidden = true; });
