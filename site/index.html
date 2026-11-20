@@ -177,7 +177,9 @@ h1 {
 .fmt-none { position: absolute; top: 50%; transform: translateY(-50%); left: 8px; font-size: 13px; color: var(--muted); background: var(--bg); padding: 0 6px; }
 
 /* Toolbar */
-.list { display: grid; gap: 18px; min-width: 0; }
+/* The ranking: a section like the replay above it, ruled on top with a heading in the display face. */
+.list { display: grid; gap: 18px; min-width: 0; border-top: 2px solid var(--ink); padding-top: 18px; }
+.list h2 { margin: 0; font-family: var(--display); font-weight: 800; font-size: 24px; line-height: 1.2; }
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 /* Search: "+" keeps the current search as a chip, so several players share the table. */
 .finders { font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
@@ -688,6 +690,7 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
   </section>
 
   <section class="list lists-only" aria-labelledby="list-title">
+    <h2 id="list-title">Ranking</h2>
     <div class="toolbar">
       <div class="finders" id="finders" role="search">
         <label for="q">Find a player</label>
@@ -696,7 +699,6 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
       </div>
       <span class="note" id="count"></span>
     </div>
-    <h2 id="list-title" hidden>Ranking</h2>
     <div class="table-box">
       <table>
         <thead><tr id="head"></tr></thead>
@@ -1065,6 +1067,7 @@ function renderBody() {
   const rows = sortedRows();
   const L = M.lists[state.fmt];
   const searching = !!liveQ() || state.picks.length > 0;
+  $("list-title").textContent = `${LABEL[state.fmt]} ranking`;
   $("count").textContent = searching ? `${rows.length} of ${L.rows.length} shown` :
     `Showing ${L.rows.length} of ${L.qualified} qualifying players`;
   const q = state.q.trim().toLowerCase();
