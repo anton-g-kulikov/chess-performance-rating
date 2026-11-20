@@ -305,6 +305,7 @@ tr.detail > td { padding: 2px 12px 16px; text-align: left; white-space: normal; 
 .method dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
 .method dt { color: var(--ink); font-weight: 600; }
 .method dd { margin: 0; }
+.method dd p + p { margin-top: 6px; }
 .method dd .sq { margin: 0 3px 0 1px; }
 .dp-box { overflow-x: auto; }
 .dp { border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--line); }
@@ -548,7 +549,7 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
     <header>
       <div class="eyebrow" id="p-eyebrow">Player</div>
       <h1 id="p-name">&nbsp;</h1>
-      <p class="lede">Every rated game on this site, year by year, ranked or not. Pick a format, then a year on the chart or below it, to see the events and games behind it.</p>
+      <p class="lede">Every rated game this site has for the player, year by year. Pick a format and a year to see the events and games.</p>
       <div class="plinks" id="p-links"></div>
     </header>
     <div class="career" id="p-career">
@@ -565,7 +566,7 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
   <header class="lists-only">
     <div class="eyebrow" id="eyebrow">FIDE rated games</div>
     <h1 id="headline">Who is playing best last 12 months</h1>
-    <p class="lede" id="lede">An alternative to the FIDE rating, which carries results forward for years. Here players are ranked only by recent performance, in classical, rapid and blitz. <strong>No recent games, no ranking.</strong></p>
+    <p class="lede" id="lede">A FIDE rating carries results forward for years. This ranking counts only recent games, in classical, rapid and blitz. <strong>No recent games, no ranking.</strong></p>
   </header>
 
   <div class="modebar lists-only">
@@ -608,12 +609,12 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
         <dt id="race-term">Calendar-year race</dt>
         <dd id="explain-race"></dd>
       </dl>
-      <p>In both modes all of a player's events in a format are pooled, as if they were one long tournament, and a player without enough games isn't ranked.</p>
+      <p>Either way, a player's events in one format are treated as a single long tournament. Players with too few games are left out.</p>
     </div>
 
     <div class="mblock">
       <h3>TPR: Tournament Performance Rating</h3>
-      <p>TPR is the rating a player's results were worth: the rating someone would need to score exactly what they scored against the same opponents. It is calculated the way FIDE does it, in two steps.</p>
+      <p>TPR is the rating a player would need to make the same score against the same opponents. FIDE works it out in two steps.</p>
       <ol>
         <li>Take the <strong>average rating of the opponents</strong>.</li>
         <li>Add the value from <strong>FIDE's conversion table</strong> for the percentage score. Scores below 50% subtract the same amounts.</li>
@@ -631,14 +632,14 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
       <h3>The other columns</h3>
       <dl class="cols-explained">
         <dt>FIDE</dt><dd id="fide-col">The player's current FIDE rating in that format.</dd>
-        <dt>Δ</dt><dd>The TPR minus that rating: positive is playing above the rating, negative below it.</dd>
-        <dt>Score</dt><dd>How the score was made, as shares of the games: <span class="sq win"></span> wins, <span class="sq hatch"></span> draws, <span class="sq solid"></span> losses. Beside it the same in chess notation, +wins =draws −losses. Win 1, draw ½, loss 0.</dd>
-        <dt>Avg opp</dt><dd>Average rating of the opponents faced. As in FIDE's own calculations, an opponent rated more than 400 points below the player counts as the player's rating minus 400.</dd>
+        <dt>Δ</dt><dd>TPR minus FIDE rating. A plus means the player did better than their rating.</dd>
+        <dt>Score</dt><dd>The bar shows the share of <span class="sq win"></span> wins, <span class="sq hatch"></span> draws and <span class="sq solid"></span> losses. The figures beside it say the same as +wins =draws −losses. A win counts 1, a draw ½ and a loss 0.</dd>
+        <dt>Avg opp</dt><dd>Average rating of the opponents. FIDE's 400-point rule applies: an opponent rated more than 400 below the player is counted as exactly 400 below.</dd>
         <dt>Games</dt><dd>Rated games counted.</dd>
       </dl>
-      <p>Open a row for the player's events and one more number:</p>
+      <p>Opening a row shows the player's events and one more number.</p>
       <dl class="cols-explained">
-        <dt>True</dt><dd>The rating at which the expected score against each actual opponent adds up to the actual score. It is the more precise measure when opponents' ratings are spread out, and it doesn't exist for 0% or 100%.</dd>
+        <dt>True</dt><dd>A stricter version of TPR, worked out against each opponent's rating instead of their average. The two differ most when the opponents' ratings vary widely. A 0% or 100% score has no True value.</dd>
       </dl>
     </div>
 
@@ -764,14 +765,15 @@ function renderModes() {
   const mins = `${M.min.classical} classical, ${M.min.rapid} rapid or ${M.min.blitz} blitz`;
   if (M.year) {
     const months = Math.round((M.fraction ?? 1) * 12);
-    const sofar = months >= 12 ? `the whole of ${M.year}` : `events that ended January – ${MONTH_FULL[months - 1]} ${M.year} so far`;
+    const counts = months >= 12 ? `It counts every event that ended in ${M.year}.`
+      : months === 1 ? `So far it counts events that ended in January ${M.year}.`
+      : `So far it counts events that ended between January and ${MONTH_FULL[months - 1]} ${M.year}.`;
     $("eyebrow").textContent = `FIDE rated games · ${M.year} calendar year`;
-    $("mode-note").innerHTML = `<strong>Everyone starts again on January 1.</strong> <span class="note-more">Counts games from ${sofar}. </span>` +
-      (months >= 12 ? `To qualify, a player needs ${mins} games.` :
-       `The minimum number of games grows with the year: ${mins} games now, after ${months} of 12 months.`);
+    $("mode-note").innerHTML = `<strong>Everyone starts again on January 1.</strong> <span class="note-more">${counts} </span>` +
+      (months >= 12 ? `A player needs ${mins} games to be ranked.` : `The minimum grows through the year and is now ${mins} games.`);
   } else {
     $("eyebrow").textContent = `FIDE rated games · ${longPeriod(first)} – ${longPeriod(last)} lists`;
-    $("mode-note").innerHTML = `<strong>A rolling year.</strong> <span class="note-more">Counts every game rated in the last ${M.periods.length} FIDE lists, ${longPeriod(first)} – ${longPeriod(last)}. Each month the oldest list drops out and the newest comes in. </span>To qualify, a player needs ${mins} games.`;
+    $("mode-note").innerHTML = `<strong>A rolling year.</strong> <span class="note-more">It counts every game rated in the last ${M.periods.length} FIDE lists, ${longPeriod(first)} – ${longPeriod(last)}, and moves forward one list each month. </span>A player needs ${mins} games to be ranked.`;
   }
   // On a phone the full account is cut from the note; this jumps to it, past the list.
   $("mode-note").insertAdjacentHTML("beforeend", ` <a class="how-link" href="#how" data-jump="how">How it works</a>`);
@@ -793,22 +795,30 @@ function renderMethod() {
   const minsOf = (m) => `${m.min.classical} classical, ${m.min.rapid} rapid or ${m.min.blitz} blitz`;
   if (R) {
     const first = R.periods[0], last = R.periods[R.periods.length - 1];
-    $("explain-rolling").textContent = `A rolling year with no reset. It counts every game rated in the last ${R.periods.length} monthly FIDE lists, currently ${longPeriod(first)} – ${longPeriod(last)}. Each month the oldest list drops out and the newest comes in, so a strong result counts for exactly one year. Minimum: ${minsOf(R)} games.`;
+    $("explain-rolling").textContent = `The last ${R.periods.length} monthly FIDE lists, currently ${longPeriod(first)} – ${longPeriod(last)}. Every month the window moves forward one list, so each result counts for exactly a year. A player needs ${minsOf(R)} games to be ranked.`;
   }
   if (race) {
     const months = Math.round((race.fraction ?? 1) * 12);
     $("race-term").textContent = `${race.year} race`;
-    $("explain-race").textContent = `Everyone starts again on January 1. It counts games from events that ended in ${race.year}` +
+    const para = [`Everyone starts again on January 1. The race counts events that ended in ${race.year}` +
       (months >= 12 ? ". " : `, so far through ${MONTH_FULL[months - 1]}. `) +
-      `An event belongs to the year it ended in, even when FIDE rates it a month or two later. The minimum number of games grows through the year, in proportion to the months played` +
-      (months >= 12 ? `: ${minsOf(race)} games.` : `: after ${months} of 12 months it is ${minsOf(race)} games, rising to the full-year minimum by December.`);
+      `An event belongs to the year it ended in, even if FIDE rates it a month or two later. ` +
+      (months >= 12 ? `The minimum is ${minsOf(race)} games.`
+        : `The minimum number of games grows with the months played. After ${months} of 12 months it is ${minsOf(race)}, and by December it reaches the full-year minimum.`)];
     const years = DATA.modes.filter((m) => m.year && (m.fraction ?? 1) >= 1);
-    if (years.length) $("explain-race").textContent += ` Finished years go back to ${years[years.length - 1].year}, the first year covered by FIDE's archive of monthly rating lists. For those, the players are everyone in an open top 100 during the year, and the FIDE column is their rating at its start.`;
+    // FIDE's archive of monthly lists starts in 2013; until the build reaches it, the
+    // earliest year here is only as far back as has been built so far.
+    if (years.length) {
+      const oldest = years[years.length - 1].year;
+      para.push(`Finished years go back to ${oldest}` + (oldest <= 2013 ? `, which is as far as FIDE's archive of monthly lists reaches. ` : ". ") +
+        `A finished year ranks everyone who was in an open top 100 during it, and its FIDE column shows each player's rating at the start of that year.`);
+    }
+    $("explain-race").innerHTML = para.map((t) => `<p>${esc(t)}</p>`).join("");
   } else {
     $("race-term").hidden = true; $("explain-race").hidden = true;
   }
   const poolNote = M.pool_note.charAt(0).toUpperCase() + M.pool_note.slice(1);
-  $("pool-note").textContent = `${poolNote}. Every one of them is ranked in all three formats if they have enough games. Each list on this page shows its top ${M.lists.classical.rows.length}.`;
+  $("pool-note").textContent = `${poolNote}. Each of them is ranked in every format in which they have enough games. The lists here show the top ${M.lists.classical.rows.length}.`;
   $("fide-col").textContent = `The player's ${M.rating_note} in that format.`;
 
   const top = M.lists[state.fmt].rows[0];
@@ -1267,7 +1277,7 @@ function renderPlayerDetail(animate = false) {
   // The page lists the top 100 of each list; the full list is in the repository.
   const shown = e.rank && e.rank <= (m.lists ? m.lists[ps.fmt].rows.length : 100);
   const csv = `https://github.com/anton-g-kulikov/chess-performance-rating/blob/main/results/${m.year ? m.year + "/" : ""}${ps.fmt}.csv`;
-  const outside = e.rank && !shown ? ` This page lists the top 100, so they're only in the <a href="${csv}" target="_blank" rel="noopener">full list</a>.` : "";
+  const outside = e.rank && !shown ? ` They are outside the top 100 shown on the main page, but appear in the <a href="${csv}" target="_blank" rel="noopener">full list</a>.` : "";
   const evs = e.ev.map((x, i) => {
     const [p, name, start, end, n, s, avg, tpr, games] = x;
     const dates = dateSpan(start, end);
@@ -1278,8 +1288,8 @@ function renderPlayerDetail(animate = false) {
       <td class="num hide-sm">${avg ?? "—"}</td><td class="num">${tpr ?? "—"}</td><td class="num hide-sm">${x[10] ?? "—"}</td></tr>` + (open ? gamesRow(games) : "");
   }).join("");
   $("p-detail").innerHTML = `<h2>${title}</h2>
-    <p class="mode-note">${windowNote(m)}${e.rank ? ` Ranked ${e.rank} of the ${e.of} players with ${m.min[ps.fmt]} or more games.${outside}` : ""}</p>
-    ${e.rank ? "" : `<p class="unranked"><strong>Not ranked:</strong> ${e.games} rated ${LABEL[ps.fmt].toLowerCase()} game${e.games === 1 ? "" : "s"}, and the list needs ${m.min[ps.fmt]}. The numbers below are over the games played.</p>`}
+    <p class="mode-note">${windowNote(m)}${e.rank ? ` Ranked #${e.rank} of ${e.of} players with ${m.min[ps.fmt]} or more games.${outside}` : ""}</p>
+    ${e.rank ? "" : `<p class="unranked"><strong>Not ranked.</strong> ${e.games} rated ${LABEL[ps.fmt].toLowerCase()} game${e.games === 1 ? "" : "s"}, and the list needs ${m.min[ps.fmt]}. The numbers below cover the games played.</p>`}
     <dl class="pstats">
       ${stat("TPR", e.tpr ?? "—", "main")}${stat("Rank", rank)}${stat("Score", e.games ? `${score(e.score)}/${e.games} <small>${Math.round(e.pct)}%</small>` : "—")}
       ${stat("True", e.true_perf ?? "—")}${stat("Avg opp", e.avg_opp ?? "—")}${stat("FIDE", e.rating ? `${e.rating}<small class="in-fide"> Δ ${dTxt}</small>` : "—")}${stat("Δ", dTxt, "delta")}
@@ -1388,7 +1398,7 @@ function renderPlayerMethod(m, e) {
   const blocks = [];
   blocks.push(`<h2 id="p-how">How it works</h2>`);
   blocks.push(`<div class="mblock"><h3>This page</h3>
-    <p>The chart at the top shows ${esc(who)}'s TPR in each calendar year and over the last 12 months, in the format picked above it. Each point pools all their rated games in that period. A solid point is ranked: they had enough games to make that list. A hatched point isn't: too few games, so the TPR rests on less. The outlined points are their FIDE rating: at the start of each finished year, and their current rating for this year and the last 12 months. Each period counts only its own games. Unlike the FIDE rating, nothing carries over from one period to the next.</p></div>`);
+    <p>The chart at the top shows ${esc(who)}'s TPR for each calendar year and for the last 12 months, in the chosen format. Each point covers the rated games of that period and nothing else. Solid points are periods with enough games to be ranked. Hatched points are periods with too few. The outlined points show the FIDE rating at the start of each finished year, and the current rating for this year and the last 12 months.</p></div>`);
 
   if (e) {
     const games = e.ev.flatMap((x) => x[8]);
@@ -1396,35 +1406,39 @@ function renderPlayerMethod(m, e) {
     const { pct, dp } = dpOf(e.score, e.games);
     const exact = e.avg_opp + dp === e.tpr;
     const standing = e.rank
-      ? `With ${e.games} games they clear the minimum of ${min}, and rank ${e.rank} of the ${e.of} players who do.`
-      : `With ${e.games} game${e.games === 1 ? "" : "s"} they are short of the ${min} the list needs, so they aren't ranked. The numbers are still worked out the same way, over the games they played.`;
+      ? `That is enough for the list, which needs ${min} games, and puts them #${e.rank} of ${e.of}.`
+      : `That is short of the ${min} games the list needs, so they aren't ranked. The numbers below are calculated the same way from the games they did play.`;
     const steps = [
-      `<strong>Average rating of the opponents:</strong> ${e.avg_opp}.` + (capped ? ` ${capped} of the ${e.games} opponents were rated more than 400 points below ${esc(who)}. As FIDE does, each counts as exactly 400 below (marked * in the games).` : ""),
+      `<strong>Average rating of the opponents:</strong> ${e.avg_opp}.` + (capped === 1 ? ` 1 of the ${e.games} opponents was rated more than 400 points below ${esc(who)}. Under FIDE's rule that opponent counts as exactly 400 below, and is marked * in the games.`
+        : capped ? ` ${capped} of the ${e.games} opponents were rated more than 400 points below ${esc(who)}. Under FIDE's rule each counts as exactly 400 below, and is marked * in the games.` : ""),
       `<strong>Score:</strong> ${score(e.score)} out of ${e.games} is ${pct}%. FIDE's conversion table ${dp >= 0 ? "adds" : "subtracts"} ${Math.abs(dp)} for ${pct}%.`,
-      `<strong>TPR:</strong> ${e.avg_opp} ${dp >= 0 ? "+" : "−"} ${Math.abs(dp)} ${exact ? "=" : "≈"} <strong>${e.tpr}</strong>` + (exact ? "." : `, the small difference coming from rounding the average.`),
+      `<strong>TPR:</strong> ${e.avg_opp} ${dp >= 0 ? "+" : "−"} ${Math.abs(dp)} ${exact ? "=" : "≈"} <strong>${e.tpr}</strong>` + (exact ? "." : `. The small difference comes from rounding the average.`),
     ];
     const truePerf = e.true_perf != null
-      ? `<p><strong>True ${e.true_perf}.</strong> At a rating of ${e.true_perf}, the expected scores against each of the ${e.games} opponents add up to exactly ${score(e.score)}. Unlike TPR, it allows for how spread out the opponents' ratings were.</p>`
-      : `<p><strong>No true performance.</strong> It doesn't exist for a ${pct >= 100 ? "100%" : "0%"} score: no rating expects exactly that.</p>`;
+      ? `<p><strong>True ${e.true_perf}.</strong> A player rated ${e.true_perf} would be expected to score exactly ${score(e.score)} against these ${e.games} opponents. This version uses each opponent's rating, where TPR uses only their average.</p>`
+      : `<p><strong>No True value.</strong> No rating is expected to score exactly ${pct >= 100 ? "100%" : "0%"}, so it can't be calculated.</p>`;
     const delta = e.rating && e.tpr != null
-      ? `<p><strong>FIDE ${e.rating}</strong> is ${esc(who)}'s ${esc(m.rating_note || "FIDE rating")} in ${fmt}. <strong>Δ ${signed(e.tpr - e.rating)}</strong> is the TPR minus it: ${e.tpr > e.rating ? "they scored above their rating" : e.tpr < e.rating ? "they scored below their rating" : "they scored exactly their rating"}.</p>`
+      ? `<p><strong>FIDE ${e.rating}</strong> is ${esc(who)}'s ${esc(m.rating_note || "FIDE rating")} in ${fmt}. <strong>Δ ${signed(e.tpr - e.rating)}</strong> is the TPR minus that rating. They scored ${e.tpr > e.rating ? "above their rating" : e.tpr < e.rating ? "below their rating" : "exactly their rating"}.</p>`
       : "";
     blocks.push(`<div class="mblock"><h3>${esc(who)}'s ${fmt} TPR, ${esc(m.label.toLowerCase())}</h3>
-      <p>${windowNote(m)} All of their ${e.games} rated ${fmt} game${e.games === 1 ? "" : "s"} from ${e.ev.length} event${e.ev.length === 1 ? "" : "s"} are pooled, as if they were one long tournament. ${standing}</p>
-      <p>TPR is the rating someone would need to score what ${esc(who)} scored against the same opponents. It's worked out the way FIDE does it:</p>
+      <p>${windowNote(m)} ${e.games === 1
+        // One game is no tournament, and can't be ranked: every minimum is above 1.
+        ? `With 1 rated ${fmt} game they are short of the ${min} the list needs, so they aren't ranked. The numbers below are calculated the same way from that one game.`
+        : `Their ${e.games} rated ${fmt} games from ${e.ev.length} event${e.ev.length === 1 ? "" : "s"} are treated as one long tournament. ${standing}`}</p>
+      <p>TPR is the rating a player would need to make the same score against the same opponents. The calculation follows FIDE's method.</p>
       <ol>${steps.map((x) => `<li>${x}</li>`).join("")}</ol>
       ${truePerf}${delta}</div>`);
 
     const qualified = e.ev.some((x) => x[11] >= min);
     blocks.push(`<div class="mblock"><h3>The chart and the events</h3>
-      <p>The events table lists ${esc(who)}'s ${fmt} events in this period, newest first. Score, average opponent and TPR in each row are for that event alone. The FIDE list is the monthly rating list that rated it.${m.year ? ` An event counts in the year it ended, even when FIDE rated it a month or two later.` : ""}</p>
-      <p><strong>To date</strong> pools every game from the first event in the period up to and including that one. The chart draws the same number after each event, so its last point is the TPR above, ${e.tpr}. The step line is ${esc(who)}'s FIDE rating going into each event.${qualified ? ` The “Qualified” marker is the event where they reached the ${min} games the list needs. The hatched area before it is provisional: the line moves a lot there, because a few games decide it.` : ` The whole chart is hatched as provisional, because they haven't reached the ${min} games the list needs.`}</p>
-      <p><strong>Game by game</strong> draws every game in order: a win stands tall, a draw half as tall and hatched, and a loss points down.</p>
+      <p>The table lists ${esc(who)}'s ${fmt} events in this period, newest first. Each row's score, average opponent and TPR are for that event alone. “FIDE list” is the monthly list on which the event was rated.${m.year ? ` An event counts in the year it ended, even when FIDE rated it a month or two later.` : ""}</p>
+      <p><strong>To date</strong> is the TPR over every game from the start of the period up to and including that event. The chart plots it event by event, so it ends on the period's TPR, ${e.tpr}. The stepped line is ${esc(who)}'s FIDE rating going into each event.${qualified ? ` “Qualified” marks the event at which they reached the ${min} games the list needs. Before that the chart is hatched, because with so few games the line jumps around.` : ` The whole chart is hatched, because they haven't reached the ${min} games the list needs.`}</p>
+      <p><strong>Game by game</strong> shows every game in order. A win is a tall tick, a draw a hatched tick half as tall, and a loss a tick pointing down.</p>
       <p>Open an event to see its games. Opponents who have a page here are links.</p></div>`);
   }
 
   blocks.push(`<div class="mblock"><h3>Who is compared</h3>
-    <p>Rankings compare ${esc(who)} only with this period's player pool: ${esc(m.pool_note || "FIDE's open top-100 players")}.</p></div>`);
+    <p>${esc(who)} is ranked against the other players in this period's pool, ${esc(m.pool_note || "FIDE's open top-100 players")}.</p></div>`);
   $("p-method").innerHTML = blocks.join("");
 }
 
