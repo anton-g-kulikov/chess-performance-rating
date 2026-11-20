@@ -2,7 +2,18 @@
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ding vs Gukesh · Chess Performance Ratings</title>
+<title>Ding vs Gukesh, World Championship 2024 · Chess Performance Ratings</title>
+<meta name="description" content="FIDE World Championship Match 2024, Singapore. The match game by game, and how Ding Liren and Gukesh D had been playing in the year before it.">
+<link rel="canonical" href="https://chesstpr.com/event/world-championship-2024">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Chess Performance Ratings">
+<meta property="og:title" content="Ding vs Gukesh, World Championship 2024">
+<meta property="og:description" content="FIDE World Championship Match 2024, Singapore. The match game by game, and how Ding Liren and Gukesh D had been playing in the year before it.">
+<meta property="og:url" content="https://chesstpr.com/event/world-championship-2024">
+<meta property="og:image" content="https://chesstpr.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1220,7 +1231,6 @@ addEventListener("resize", () => { if (innerWidth === lastW || !A) return; lastW
   PLAYED = findPlayed();
   if (!PLAYED && FMTS.includes(location.hash.slice(1))) fmt = location.hash.slice(1);
   const last = PLAYED ? [PLAYED, ...PLAYED.tb].pop().end : null;
-  document.title = `${A.short} vs ${B.short} · Chess Performance Ratings`;
   $("ev-title").textContent = `${A.short} vs ${B.short}`;
   const upcoming = `${MATCH.games} classical games${MATCH.first_game ? ` from ${dateSpan(MATCH.first_game)}` : ""}`;
   // While the match is on: how far it has gone instead of its dates.
@@ -1259,3 +1269,4 @@ addEventListener("resize", () => { if (innerWidth === lastW || !A) return; lastW
   render(); renderH2H(); renderWorth();
 })();
 </script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "abcadbe5c7f44541a4cd897c6dc7136d"}'></script>

@@ -258,6 +258,26 @@ class PlayerPageTest(unittest.TestCase):
         self.assertEqual(list(b), ["blitz"])  # formats without games are left out
         self.assertEqual((b["blitz"]["rank"], b["blitz"]["games"], b["blitz"]["tpr"]), (None, 1, 1900))
 
+    def test_a_match_page_names_itself_for_search_engines(self):
+        from perfrating.web import match_head, sitemap
+        match = {"year": 2026, "place": "Geneva", "played": None,
+                 "a": {"full": "Gukesh D", "short": "Gukesh"}, "b": {"full": "Conor O'Brien", "short": "O'Brien"}}
+        title, tags = match_head(match)
+        self.assertEqual(title, "Gukesh vs O&#x27;Brien, World Championship 2026 · Chess Performance Ratings")
+        self.assertIn('<link rel="canonical" href="https://chesstpr.com/event/world-championship-2026">', tags)
+        self.assertIn("How Gukesh D and Conor O&#x27;Brien have played over the last 12 months", tags)
+        _, tags = match_head({**match, "played": {"res": [1.0]}})
+        self.assertIn("The match game by game", tags)
+        # The sitemap gives the same address the page gives for itself.
+        self.assertIn("<loc>https://chesstpr.com/event/world-championship-2026</loc>",
+                      sitemap(["/", "/event/world-championship-2026", "/player/1503014"]))
+
+    def test_pages_carry_the_analytics_script_only_with_a_token(self):
+        from perfrating.web import with_analytics
+        page = "</script>\n<!--ANALYTICS-->\n"
+        self.assertEqual(with_analytics(page, ""), "</script>\n")
+        self.assertIn("""data-cf-beacon='{"token": "abc123"}'""", with_analytics(page, "abc123"))
+
     def test_split_page_keeps_numbers_in_the_summary_and_events_by_period(self):
         page = {"id": 7, "name": "A", "fed": "X", "modes": {
             "": {"blitz": {"rank": 1, "tpr": 2800, "ev": [["2026-01", "Open"]]}},

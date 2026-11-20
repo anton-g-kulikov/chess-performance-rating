@@ -3,6 +3,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>/*TITLE*/</title>
+<!--HEAD-->
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -700,7 +701,6 @@ addEventListener("resize", () => { if (innerWidth === lastW || !A) return; lastW
   PLAYED = findPlayed();
   if (!PLAYED && FMTS.includes(location.hash.slice(1))) fmt = location.hash.slice(1);
   const last = PLAYED ? [PLAYED, ...PLAYED.tb].pop().end : null;
-  document.title = `${A.short} vs ${B.short} · Chess Performance Ratings`;
   $("ev-title").textContent = `${A.short} vs ${B.short}`;
   const upcoming = `${MATCH.games} classical games${MATCH.first_game ? ` from ${dateSpan(MATCH.first_game)}` : ""}`;
   // While the match is on: how far it has gone instead of its dates.
@@ -739,3 +739,4 @@ addEventListener("resize", () => { if (innerWidth === lastW || !A) return; lastW
   render(); renderH2H(); renderWorth();
 })();
 </script>
+<!--ANALYTICS-->

@@ -19,12 +19,21 @@ Each World Championship match in ``perfrating/matches.py`` gets a page at
 ``/event/world-championship-YYYY``, written to
 ``site/event/world-championship-YYYY/index.html`` from ``perfrating/match.html``
 with the main page's styles; the main page shows a line linking to it.
+
+For search engines, ``site/sitemap.xml`` lists the main page and every match
+and player page (``site/robots.txt``, kept by hand, points to it).  A match
+page carries its own title, summary and address in its markup; the main page
+and the player pages, being one file, set theirs in the page's script.
+
+Visits are counted by Cloudflare Web Analytics, which sets no cookies: every
+page ends with its script once ``CF_BEACON`` holds the site's token.
 """
 
 from __future__ import annotations
 
 import argparse
 import hashlib
+import html
 import json
 import re
 import shutil
@@ -34,13 +43,54 @@ from statistics import median
 
 from . import race
 from .build import FORMATS, rated_games
-from .matches import match_lines, match_pages
+from .matches import href, match_lines, match_pages
 from .names import exceptions
 from .performance import dp, performance, round_p
 from .race import race_frames, rolling_frames
 
 TEMPLATE = Path(__file__).with_name("page.html")
 MATCH_TEMPLATE = Path(__file__).with_name("match.html")
+SITE = "https://chesstpr.com"
+SITE_NAME = "Chess Performance Ratings"
+# The site's token in Cloudflare Web Analytics (public: it is in every page).
+# Empty, the pages carry no analytics.
+CF_BEACON = "abcadbe5c7f44541a4cd897c6dc7136d"
+
+
+def with_analytics(page: str, token: str = None) -> str:
+    """``page`` with the Cloudflare Web Analytics script where the template
+    marks it.  The script counts a move between the lists and a player page
+    as a visit too (it follows the address, not only page loads)."""
+    token = CF_BEACON if token is None else token
+    tag = ("<script type=\"module\" src=\"https://static.cloudflareinsights.com/beacon.min.js\" "
+           f"data-cf-beacon='{json.dumps({'token': token})}'></script>\n") if token else ""
+    return page.replace("<!--ANALYTICS-->\n", tag, 1)
+
+
+def match_head(match: dict) -> tuple:
+    """A match page's ``(title, tags)`` for search engines and link previews:
+    its summary, its address, and the card shown when the link is shared."""
+    a, b, year = match["a"], match["b"], match["year"]
+    name = f"{a['short']} vs {b['short']}, World Championship {year}"
+    where = f"FIDE World Championship Match {year}, {match['place']}."
+    if match.get("played"):
+        desc = f"{where} The match game by game, and how {a['full']} and {b['full']} had been playing in the year before it."
+    else:
+        desc = f"{where} How {a['full']} and {b['full']} have played over the last 12 months, in classical, rapid and blitz."
+    url = SITE + href(year)
+    e = lambda text: html.escape(text, quote=True)
+    tags = [f'<meta name="description" content="{e(desc)}">',
+            f'<link rel="canonical" href="{url}">',
+            '<meta property="og:type" content="website">',
+            f'<meta property="og:site_name" content="{SITE_NAME}">',
+            f'<meta property="og:title" content="{e(name)}">',
+            f'<meta property="og:description" content="{e(desc)}">',
+            f'<meta property="og:url" content="{url}">',
+            f'<meta property="og:image" content="{SITE}/og.png">',
+            '<meta property="og:image:width" content="1200">',
+            '<meta property="og:image:height" content="630">',
+            '<meta name="twitter:card" content="summary_large_image">']
+    return e(f"{name} · {SITE_NAME}"), "\n".join(tags)
 
 
 def match_html(match: dict) -> str:
@@ -49,9 +99,16 @@ def match_html(match: dict) -> str:
     css = re.search(r"<style>(.*?)</style>", page, re.S).group(1).replace("/*RACE_CSS*/", "")
     defs = re.search(r'<svg class="defs".*?</svg>', page, re.S).group(0)
     blob = json.dumps(match, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
-    title = f"{match['a']['short']} vs {match['b']['short']} · Chess Performance Ratings"
-    return (MATCH_TEMPLATE.read_text(encoding="utf-8").replace("/*TITLE*/", title, 1)
+    title, tags = match_head(match)
+    return (with_analytics(MATCH_TEMPLATE.read_text(encoding="utf-8")).replace("/*TITLE*/", title, 1).replace("<!--HEAD-->", tags, 1)
             .replace("/*SITE_CSS*/", css, 1).replace("<!--SITE_DEFS-->", defs, 1).replace("/*MATCH*/null", blob, 1))
+
+
+def sitemap(paths: list) -> str:
+    """sitemap.xml for the given paths.  No dates: the build has to come out
+    the same from the same results, whenever it is run."""
+    urls = "".join(f"  <url><loc>{SITE}{html.escape(path)}</loc></url>\n" for path in paths)
+    return f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n{urls}</urlset>\n'
 
 
 def event_summary(e: dict) -> list:
@@ -379,10 +436,12 @@ def main(argv=None) -> int:
         m["src"] = f"/data/{m['id']}.json?v={hashlib.sha1(body.encode()).hexdigest()[:10]}"
     blob = json.dumps({"modes": modes, "people": people, "names": names, "matches": lines, "pver": ver.hexdigest()[:10]}, ensure_ascii=False,
                       separators=(",", ":")).replace("</", "<\\/")
-    html = race.inline(TEMPLATE.read_text(encoding="utf-8")).replace("/*DATA*/null", blob)
-    out.write_text(html, encoding="utf-8")
+    page_html = with_analytics(race.inline(TEMPLATE.read_text(encoding="utf-8"))).replace("/*DATA*/null", blob)
+    out.write_text(page_html, encoding="utf-8")
+    (out.parent / "sitemap.xml").write_text(
+        sitemap(["/"] + [href(m["year"]) for m in matches] + [f"/player/{fid}" for fid in sorted(pages)]), encoding="utf-8")
     lazy = sum(f.stat().st_size for f in data_dir.glob("y*.json"))
-    print(f"wrote {out} ({len(html) // 1024} KB, modes: {', '.join(m['label'] for m in modes)})"
+    print(f"wrote {out} ({len(page_html) // 1024} KB, modes: {', '.join(m['label'] for m in modes)})"
           + (f"; {len(modes) - 2} more in {data_dir}/ ({lazy // 1024} KB)" if len(modes) > 2 else "")
           + f"; {len(pages)} player pages ({sum(f.stat().st_size for f in players_dir.glob('*.json')) // 1024} KB"
           + f" + {sum(f.stat().st_size for f in players_dir.glob('*/*.json')) // 1024} KB by period)"

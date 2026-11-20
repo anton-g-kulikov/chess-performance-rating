@@ -14,6 +14,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Chess Performance Ratings","alternateName":"chesstpr.com","url":"https://chesstpr.com/"}</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -748,6 +749,27 @@ const buttons = () => PHONE.matches ? 2 : 6;
 const MONTH_FULL = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const longPeriod = (p) => `${MONTH_FULL[+p.slice(5, 7) - 1]} ${p.slice(0, 4)}`;
 
+// ---- What search engines and link previews read. One file serves the lists and every
+// player page, so the address, title and summary of the view shown are set here. The tags
+// in the markup are the main page's; there is no canonical link there, since it would
+// name the main page on every player's.
+const SITE = "https://chesstpr.com";
+const headTag = (sel) => document.head.querySelector(sel);
+const HOME = { desc: headTag('meta[name="description"]').content, ogTitle: headTag('meta[property="og:title"]').content,
+  ogDesc: headTag('meta[property="og:description"]').content };
+function setHead({ title, path, desc = HOME.desc, ogTitle = HOME.ogTitle, ogDesc = HOME.ogDesc, index = true }) {
+  document.title = `${title} · Chess Performance Ratings`;
+  const tag = (sel, name, attrs) => headTag(sel) || document.head.appendChild(Object.assign(document.createElement(name), attrs));
+  tag('link[rel="canonical"]', "link", { rel: "canonical" }).href = SITE + path;
+  headTag('meta[name="description"]').content = desc;
+  headTag('meta[property="og:title"]').content = ogTitle;
+  headTag('meta[property="og:description"]').content = ogDesc;
+  headTag('meta[property="og:url"]').content = SITE + path;
+  // An address with no page behind it (a FIDE id outside the pool) stays out of search.
+  if (index) headTag('meta[name="robots"]')?.remove();
+  else tag('meta[name="robots"]', "meta", { name: "robots" }).content = "noindex";
+}
+
 function headline(m) {
   if (!m.year) return "Who is playing best last 12 months";
   return (m.fraction ?? 1) >= 1 ? `Who played best in ${m.year}` : `Who is leading the ${m.year} race`;
@@ -755,7 +777,7 @@ function headline(m) {
 
 function renderModes() {
   $("headline").textContent = headline(M);
-  document.title = `${headline(M)} · Chess Performance Ratings`;
+  setHead({ title: headline(M), path: "/" });
   const older = DATA.modes.slice(buttons()), inOlder = older.some((m) => m.id === state.mode);
   $("modes").innerHTML = DATA.modes.slice(0, buttons()).map((m) =>
     `<button class="mode" role="tab" aria-selected="${m.id === state.mode}" data-m="${m.id}">${esc(m.label).replace(/^Last /, '<span class="lw">Last </span>')}</button>`).join("") +
@@ -1092,8 +1114,10 @@ function showPlayer(id) {
     ps.mode = m;
     ps.fmt = d.modes[m]?.[fmt] ? fmt : bestFormat(d.modes[m] || {});
     renderPlayer();
-  }).catch(() => {
+  }).catch((err) => {
     if (ps.id !== id) return;
+    // No file for this id: not a page. A failed connection says nothing either way.
+    if (err.message === "404") setHead({ title: `Player ${id}`, path: `/player/${id}`, index: false });
     $("p-career").hidden = true;
     $("p-detail").innerHTML = `<p class="empty">${known ? "Couldn't load this player. Check your connection and try again." :
       `No player with FIDE ID ${id} is on these lists. Players come from FIDE's open top-100 lists.`}</p>`;
@@ -1103,7 +1127,9 @@ function showPlayer(id) {
 function setPlayerHead(name, fed, id) {
   $("p-name").textContent = name ? fullName(name) : `FIDE ID ${id}`;
   $("p-eyebrow").textContent = name ? [fed, `FIDE ID ${id}`].filter(Boolean).join(" · ") : "Player";
-  document.title = `${name ? fullName(name) : `Player ${id}`} · Chess Performance Ratings`;
+  const who = name ? fullName(name) : `Player ${id}`;
+  const desc = name ? `${who}'s performance rating in classical, rapid and blitz, year by year. Every FIDE rated event and game behind it.` : undefined;
+  setHead({ title: who, path: `/player/${id}`, desc, ogTitle: name ? who : undefined, ogDesc: desc });
   $("p-links").innerHTML = `<a href="https://ratings.fide.com/profile/${id}" target="_blank" rel="noopener">FIDE profile</a>`;
 }
 
@@ -1724,3 +1750,4 @@ route();
 // The method section shows on player pages too; fill it once if the lists never rendered.
 if (playerId()) renderMethod();
 </script>
+<!--ANALYTICS-->
