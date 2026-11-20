@@ -1,1 +1,1 @@
-{"id":4100018,"name":"Kasparov, Garry","fed":"RUS","modes":{"y2022":{}},"files":{"y2022":"y2022-bf21a9e8fb.json"}}
+{"id":4100018,"name":"Kasparov, Garry","fed":"RUS","modes":{"y2022":{},"y2021":{"blitz":{"rank":null,"of":75,"rating":2801,"games":18,"score":2.5,"pct":14.0,"avg_opp":2744,"tpr":2435,"true_perf":2419}}},"files":{"y2022":"y2022-bf21a9e8fb.json","y2021":"y2021-23b34df082.json"}}

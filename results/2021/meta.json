@@ -1,0 +1,31 @@
+{
+ "title": "2021 performance race",
+ "scope": "Games from events that ended in **2021** (the full year), read from the January 2021 – April 2022 FIDE lists. Everyone starts again on January 1.",
+ "periods": [
+  "2021-01-01",
+  "2021-02-01",
+  "2021-03-01",
+  "2021-04-01",
+  "2021-05-01",
+  "2021-06-01",
+  "2021-07-01",
+  "2021-08-01",
+  "2021-09-01",
+  "2021-10-01",
+  "2021-11-01",
+  "2021-12-01",
+  "2022-01-01",
+  "2022-02-01",
+  "2022-03-01",
+  "2022-04-01"
+ ],
+ "min_games": {
+  "classical": 20,
+  "rapid": 20,
+  "blitz": 40
+ },
+ "year": 2021,
+ "fraction": 1.0,
+ "pool_note": "the 214 players in FIDE's open top 100 for classical, rapid or blitz on the January, April, July or October 2021 list, or the January 2022 list",
+ "rating_note": "rating on the January 2021 list"
+}
