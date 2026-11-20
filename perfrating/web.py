@@ -14,6 +14,11 @@ ranked or not) and one ``site/data/p/<FIDE id>/<period>-<hash>.json`` per
 period with the events and games behind them, fetched when the period is
 opened.  A period file's name changes only when its content does, so a new
 year adds files without rewriting the old ones.
+
+Each World Championship match in ``perfrating/matches.py`` gets a page at
+``/event/world-championship-YYYY``, written to
+``site/event/world-championship-YYYY/index.html`` from ``perfrating/match.html``
+with the main page's styles; the main page shows a line linking to it.
 """
 
 from __future__ import annotations
@@ -21,6 +26,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import shutil
 from itertools import permutations
 from pathlib import Path
@@ -28,10 +34,24 @@ from statistics import median
 
 from . import race
 from .build import FORMATS, rated_games
+from .matches import match_lines, match_pages
+from .names import exceptions
 from .performance import dp, performance, round_p
 from .race import race_frames, rolling_frames
 
 TEMPLATE = Path(__file__).with_name("page.html")
+MATCH_TEMPLATE = Path(__file__).with_name("match.html")
+
+
+def match_html(match: dict) -> str:
+    """A match page: match.html dressed in the main page's stylesheet and SVG patterns."""
+    page = TEMPLATE.read_text(encoding="utf-8")
+    css = re.search(r"<style>(.*?)</style>", page, re.S).group(1).replace("/*RACE_CSS*/", "")
+    defs = re.search(r'<svg class="defs".*?</svg>', page, re.S).group(0)
+    blob = json.dumps(match, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+    title = f"{match['a']['short']} vs {match['b']['short']} · Chess Performance Ratings"
+    return (MATCH_TEMPLATE.read_text(encoding="utf-8").replace("/*TITLE*/", title, 1)
+            .replace("/*SITE_CSS*/", css, 1).replace("<!--SITE_DEFS-->", defs, 1).replace("/*MATCH*/null", blob, 1))
 
 
 def event_summary(e: dict) -> list:
@@ -76,6 +96,7 @@ def one_within_other(a: tuple, b: tuple) -> bool:
 
 def opponent_ids(saveds: list) -> tuple:
     """Who an opponent is, by name: ``(spelling key -> FIDE id, id -> listed name)``.
+    The first also holds ``(event id, spelling key)`` entries from event_pairings().
 
     FIDE spells the same player differently from event to event.  A spelling
     is a pool player's when it is their listed name (in any word order), or
@@ -110,7 +131,51 @@ def opponent_ids(saveds: list) -> tuple:
                 if player and player["ratings"].get(fmt)]
         if gaps and median(gaps) <= NAMESAKE_GAP:
             ids[key] = fits[0]
+    ids.update(event_pairings(saveds, ids))
     return ids, listed
+
+
+def event_pairings(saveds: list, ids: dict) -> dict:
+    """Misspellings no name rule can catch, from the other side of the board:
+    ``(event id, spelling key) -> FIDE id``, good for that event only.
+
+    When two pool players are in the same event, each side's games record
+    the other's rating.  A spelling in A's event is pool player B when none
+    of A's games there is already B's, B's copy of the event has exactly as
+    many games against A with the results the other way round, B's own
+    rating in it is the rating A's games give, and A's own rating is the one
+    B's games give.  So "Guskesh, D" in Ding's 2024 World Championship match
+    is Gukesh.  (In a big open, someone else can share B's rating: that is
+    why B must be missing from A's games.)"""
+    by_event = {}
+    for saved in saveds:
+        for fid, info in saved["players"].items():
+            for events in info["games"].values():
+                for e in events:
+                    if e.get("event_id") is not None:
+                        by_event.setdefault(e["event_id"], {})[int(fid)] = e
+    out = {}
+    for eid, sides in by_event.items():
+        for a, e in sides.items():
+            unknown, linked = {}, set()
+            for g in e["games"]:
+                key = name_key(g["opponent"])
+                if key in ids:
+                    linked.add(ids[key])
+                elif g["opponent_rating"]:
+                    unknown.setdefault(key, []).append(g)
+            for key, games in unknown.items():
+                fits = []
+                for b, f in sides.items():
+                    back = [h for h in f["games"] if ids.get(name_key(h["opponent"])) == a]
+                    if (b != a and b not in linked and len(back) == len(games)
+                            and {g["opponent_rating"] for g in games} == {f.get("ro")}
+                            and {h["opponent_rating"] for h in back} == {e.get("ro")}
+                            and sum(g["result"] for g in games) + sum(h["result"] for h in back) == len(games)):
+                        fits.append(b)
+                if len(fits) == 1:
+                    out[(eid, key)] = fits[0]
+    return out
 
 
 def event_games(e: dict, ids: dict, listed: dict) -> list:
@@ -120,7 +185,8 @@ def event_games(e: dict, ids: dict, listed: dict) -> list:
     out = []
     for g in e["games"]:
         if g["counted"] and g["opponent_rating"]:
-            oid = ids.get(name_key(g["opponent"]), 0)
+            key = name_key(g["opponent"])
+            oid = ids.get(key) or ids.get((e.get("event_id"), key), 0)
             out.append([listed.get(oid, g["opponent"]), g["opponent_rating"], g["result"],
                         int(bool(g.get("capped"))), oid])
     return out
@@ -285,6 +351,24 @@ def main(argv=None) -> int:
         for name, period in files.items():
             (players_dir / str(fid) / name).write_text(period, encoding="utf-8")
 
+    # Names the page can't turn round by itself (perfrating/names.py).
+    pool = {}
+    for _, saved, _ in builds:
+        for fid, info in saved["players"].items():
+            pool.setdefault(int(fid), (info["name"], info["fed"]))
+    names = exceptions(pool.values())
+
+    # World Championship matches: a page each, and a line on the main page.
+    matches = match_pages(builds, ids, pool)
+    lines = match_lines(modes, matches, pages)
+    events_dir = out.parent / "event"
+    shutil.rmtree(events_dir, ignore_errors=True)
+    for match in matches:
+        (events_dir / match["slug"]).mkdir(parents=True)
+        # pver: the players' summaries are cached for good, so their URL carries the build's version.
+        page = match_html({**match, "pver": ver.hexdigest()[:10], "names": names})
+        (events_dir / match["slug"] / "index.html").write_text(page, encoding="utf-8")
+
     # The rolling lists and the newest year go in the page; older years are
     # separate files, fetched on demand.
     # The file's hash goes in its URL, so browsers holding an older copy
@@ -293,7 +377,7 @@ def main(argv=None) -> int:
         body = json.dumps({"lists": m.pop("lists")}, ensure_ascii=False, separators=(",", ":"))
         (data_dir / f"{m['id']}.json").write_text(body, encoding="utf-8")
         m["src"] = f"/data/{m['id']}.json?v={hashlib.sha1(body.encode()).hexdigest()[:10]}"
-    blob = json.dumps({"modes": modes, "people": people, "pver": ver.hexdigest()[:10]}, ensure_ascii=False,
+    blob = json.dumps({"modes": modes, "people": people, "names": names, "matches": lines, "pver": ver.hexdigest()[:10]}, ensure_ascii=False,
                       separators=(",", ":")).replace("</", "<\\/")
     html = race.inline(TEMPLATE.read_text(encoding="utf-8")).replace("/*DATA*/null", blob)
     out.write_text(html, encoding="utf-8")
@@ -301,7 +385,8 @@ def main(argv=None) -> int:
     print(f"wrote {out} ({len(html) // 1024} KB, modes: {', '.join(m['label'] for m in modes)})"
           + (f"; {len(modes) - 2} more in {data_dir}/ ({lazy // 1024} KB)" if len(modes) > 2 else "")
           + f"; {len(pages)} player pages ({sum(f.stat().st_size for f in players_dir.glob('*.json')) // 1024} KB"
-          + f" + {sum(f.stat().st_size for f in players_dir.glob('*/*.json')) // 1024} KB by period)")
+          + f" + {sum(f.stat().st_size for f in players_dir.glob('*/*.json')) // 1024} KB by period)"
+          + f"; {len(matches)} match pages")
     return 0
 
 

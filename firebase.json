@@ -41,6 +41,15 @@
         ]
       },
       {
+        "source": "/event/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
         "source": "/data/**",
         "headers": [
           {

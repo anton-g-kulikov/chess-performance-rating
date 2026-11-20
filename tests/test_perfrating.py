@@ -165,6 +165,75 @@ class PlayerPageTest(unittest.TestCase):
         self.assertNotIn(name_key("Flores, D"), ids)  # initials fit, but a namesake 450 points away
         self.assertEqual(listed[1], "Praggnanandhaa R")
 
+    def test_a_misspelt_opponent_is_found_from_the_other_side_of_the_board(self):
+        def player(name, ro, games):
+            return {"name": name, "fed": "X", "ratings": {"classical": ro}, "games": {"classical": [
+                {"event_id": 7, "ro": ro, "games": [{"opponent": o, "opponent_rating": r, "result": w} for o, r, w in games]}]}}
+        saved = {"players": {
+            "1": player("Ding, Liren", 2728, [("Guskesh, D", 2783, 1), ("Guskesh, D", 2783, 0), ("Guskesh, D", 2783, .5),
+                                              ("Someone, Else", 2650, 1)]),
+            "2": player("Gukesh D", 2783, [("Ding, Liren", 2728, 0), ("Ding, Liren", 2728, 1), ("Ding, Liren", 2728, .5)]),
+            # Played Ding under the right name; "Someone, Else" only shares the rating.
+            "3": player("Rated, Same", 2650, [("Ding, Liren", 2728, 0)]),
+        }}
+        saved["players"]["1"]["games"]["classical"][0]["games"].append(
+            {"opponent": "Rated, Same", "opponent_rating": 2650, "result": 1})
+        ids, listed = opponent_ids([saved])
+        self.assertNotIn(name_key("Guskesh, D"), ids)        # no name rule fits
+        self.assertEqual(ids[(7, name_key("Guskesh, D"))], 2)  # but the match does
+        self.assertNotIn((7, name_key("Someone, Else")), ids)  # player 3 is already in Ding's games
+
+    def test_a_played_match_is_found_with_its_tiebreak_and_the_year_before_it(self):
+        from perfrating.matches import before, match_lines, played
+
+        def ev(eid, start, end, ro, games, fmt="classical"):
+            return fmt, {"event_id": eid, "name": f"E{eid}", "start": start, "end": end, "period": end, "ro": ro,
+                         "games": [{"opponent": o, "opponent_rating": r, "result": w, "counted": True} for o, r, w in games]}
+
+        def player(name, *events):
+            games = {}
+            for fmt, e in events:
+                games.setdefault(fmt, []).append(e)
+            return {"name": name, "fed": "X", "ratings": {}, "games": games}
+        saved = {"players": {
+            "1": player("Nepo, Ian",
+                        ev(1, "2022-03-01", "2022-03-10", 2770, [("Other, A", 2700, 1)]),        # 13 months before: out
+                        ev(2, "2022-12-01", "2022-12-10", 2790, [("Other, A", 2700, 1), ("Other, B", 2750, .5)]),
+                        ev(3, "2023-04-09", "2023-04-29", 2795, [("Ding, Liren", 2788, r) for r in (1, .5, 0, .5)]),
+                        ev(4, "2023-04-30", "2023-04-30", 2780, [("Ding, Liren", 2790, r) for r in (.5, 0)], "rapid")),
+            "2": player("Ding, Liren",
+                        ev(3, "2023-04-09", "2023-04-29", 2788, [("Nepo, Ian", 2795, r) for r in (0, .5, 1, .5)]),
+                        ev(4, "2023-04-30", "2023-04-30", 2790, [("Nepo, Ian", 2780, r) for r in (.5, 1)], "rapid")),
+        }}
+        from perfrating.web import opponent_ids
+        ids, _ = opponent_ids([saved])
+        m = played(saved, 1, 2, ids)
+        self.assertEqual((m["start"], m["res"], m["a"], m["b"]), ("2023-04-09", [1, .5, 0, .5], 2, 2))
+        self.assertEqual([(t["f"], t["res"]) for t in m["tb"]], [("rapid", [.5, 0])])
+        self.assertEqual(m["win"], "b")                                   # level, then the tiebreak
+        self.assertEqual(m["rating"], {"a": 2795, "b": 2788})
+        self.assertIsNone(played(saved, 1, 3, ids))                       # no such match in the data
+        b = before([saved], 1, m["start"])
+        self.assertEqual((b["games"], b["score"]), (2, 1.5))              # event 2 only: 1 is too old, 3 is the match
+        # The main page's line: the match of the year picked, or the newest on the rolling list.
+        matches = [{"year": 2023, "played": m, "a": {"id": 1, "short": "Nepo"}, "b": {"id": 2, "short": "Ding"}}]
+        pages = {1: {"modes": {"y2023": {"classical": {"tpr": 2748}}}}, 2: {"modes": {"y2023": {"classical": {"tpr": 2734}}}}}
+        lines = match_lines([{"id": "", "year": None}, {"id": "y2023", "year": 2023}, {"id": "y2022", "year": 2022}], matches, pages)
+        self.assertEqual(lines["y2023"]["a"], ["Nepo", 2748])
+        self.assertEqual(lines["y2023"]["href"], "/event/world-championship-2023")
+        self.assertNotIn("y2022", lines)
+
+    def test_names_are_shown_the_way_players_are_known(self):
+        from perfrating.names import exceptions, parts, plain
+        self.assertEqual(parts("Carlsen, Magnus", "NOR"), ["Magnus Carlsen", "Carlsen", "Magnus", "Magnus Carlsen"])
+        self.assertEqual(parts("Ding, Liren", "CHN")[0], "Ding Liren")          # family name first
+        self.assertEqual(parts("Li, Chao b", "CHN")[0], "Li Chao")              # FIDE's namesake mark dropped
+        self.assertEqual(parts("Erigaisi Arjun", "IND")[:2], ["Arjun Erigaisi", "Erigaisi"])
+        self.assertEqual(parts("Gukesh D", "IND")[1], "Gukesh")
+        # Only what the page can't work out itself goes to it.
+        self.assertEqual(set(exceptions([("Carlsen, Magnus", "NOR"), ("Wei, Yi", "CHN")])), {"Wei, Yi"})
+        self.assertEqual(plain("So, Wesley"), ["Wesley So", "So", "Wesley", "Wesley So"])
+
     def test_player_entries_cover_ranked_and_unranked_players(self):
         def ev(name, start, games):
             return {"name": name, "start": start, "end": start, "period": "2026-01-01",

@@ -83,7 +83,7 @@ function showFrame(i, animate = true) {
       el = document.createElement("div"); el.className = "race-row";
       // Full name on wide screens, surname on a phone: the surname is the part to keep.
       el.innerHTML = `<span class="rk"></span><a class="nm" data-player href="/player/${id}#${viewHash()}">` +
-        `<span class="f">${esc(p ? shortName(p.name) : id)}</span><span class="s">${esc(p ? p.name.split(", ")[0] : id)}</span></a>` +
+        `<span class="f">${esc(p ? shortName(p.name) : id)}</span><span class="s">${esc(p ? surname(p.name) : id)}</span></a>` +
         `<span class="tr"><span class="cn"></span><span class="rt"></span><span class="dt"></span></span><span class="vl"></span>`;
       el.style.opacity = 0; el.style.transform = `translateY(calc(var(--row) * ${rank}))`;
       plot.append(el); race.rows.set(id, el);

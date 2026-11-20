@@ -120,6 +120,26 @@ h1 {
 .more.on::after { color: var(--bg); }
 .formats.loading { opacity: .45; pointer-events: none; }
 .mode-note { margin: 0; font-size: 15px; color: var(--muted); text-wrap: pretty; }
+/* The match line: a World Championship match and its two players' classical TPR, the whole
+   line a link to the match page. It sits under the tabs, which decide what it shows, so the
+   tabs stay put when it comes and goes. */
+.evline { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 16px; padding: 9px 0; margin-top: 8px;
+  border-block: 1px solid var(--line); font-size: 15px; color: var(--ink); text-decoration: none; }
+.evline[hidden] { display: none; }
+.evline:hover { color: var(--ink); background: var(--accent-soft); }
+.evline .k { display: inline-flex; align-items: baseline; gap: 8px; font-weight: 600; font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.evline .crown { align-self: center; fill: var(--ink); flex: none; }
+.evline .p { white-space: nowrap; }
+.evline b { font-family: var(--display); font-weight: 800; font-size: 18px; font-variant-numeric: tabular-nums; }
+.evline .m { color: var(--muted); font-size: 13px; }
+.evline .go { margin-left: auto; font-weight: 600; white-space: nowrap; }
+/* When the width runs out the line drops the note on what the numbers are, not a line. */
+@media (max-width: 820px) { .evline .note { display: none; } }
+/* On a phone: the label on one line, the two players and the arrow on the next. */
+@media (max-width: 720px) {
+  .evline { gap: 0 9px; padding: 7px 0 8px; }
+  .evline .k { flex-basis: 100%; }
+}
 .mode-note strong { color: var(--ink); font-weight: 600; }
 
 /* Format switcher: the three top tens on one TPR axis. Each row is a tab. */
@@ -551,6 +571,8 @@ body.pview .lists-only, body:not(.pview) .pview-only { display: none !important;
   <div class="modebar lists-only">
     <div class="modes" role="tablist" aria-label="Period" id="modes"></div>
     <p class="mode-note" id="mode-note"></p>
+    <!-- The World Championship match of the period picked above, if it has one. -->
+    <a class="evline" id="evline" hidden></a>
   </div>
 
   <nav class="formats lists-only" role="tablist" aria-label="Format" id="formats"></nav>
@@ -664,7 +686,17 @@ const score = (x) => {
   const w = Math.floor(x), half = Math.abs(x - w - 0.5) < 1e-9;
   return half ? `${w || ""}½` : String(Math.round(x * 100) / 100);
 };
-const shortName = (n) => { const [last, first] = n.split(", "); return first ? `${first.split(" ")[0]} ${last}` : n; };
+// A FIDE name ("Family, Given") shown four ways: [full, surname, given, short]. Turned round
+// by default; the build sends the names that don't turn round (family name first, as in
+// China; no comma, as "Gukesh D"), from perfrating/names.py.
+function nameParts(n) {
+  if (DATA.names?.[n]) return DATA.names[n];
+  const i = n.indexOf(", ");
+  if (i < 0) return [n, n, "", n];
+  const last = n.slice(0, i), first = n.slice(i + 2);
+  return [`${first} ${last}`, last, first, `${first.split(" ")[0]} ${last}`];
+}
+const fullName = (n) => nameParts(n)[0], surname = (n) => nameParts(n)[1], givenName = (n) => nameParts(n)[2], shortName = (n) => nameParts(n)[3];
 const period = (p) => `${MON[+p.slice(5, 7) - 1]} ${p.slice(0, 4)}`;
 const signed = (v) => `${v > 0 ? "+" : v < 0 ? "−" : "±"}${Math.abs(v)}`;
 // An event's dates the way a bulletin prints them: "16–27 Sep 2026".
@@ -743,6 +775,16 @@ function renderModes() {
   }
   // On a phone the full account is cut from the note; this jumps to it, past the list.
   $("mode-note").insertAdjacentHTML("beforeend", ` <a class="how-link" href="#how" data-jump="how">How it works</a>`);
+  // The match line follows the tabs: the match a period has, or none (built in perfrating/matches.py).
+  const ev = DATA.matches?.[M.id], line = $("evline");
+  line.hidden = !ev;
+  if (ev) {
+    line.href = ev.href;
+    const who = ([name, tpr]) => `<span class="p">${esc(name)} <b>${tpr ?? "–"}</b></span>`;
+    const crown = `<svg class="crown" width="16" height="13" viewBox="0 0 16 13" aria-hidden="true"><path d="M1 3.5l3.6 3.2L8 1l3.4 5.7L15 3.5 13.8 10H2.2z"/><rect x="2.2" y="11" width="11.6" height="2"/></svg>`;
+    line.innerHTML = `<span class="k">${crown}${esc(ev.label)}</span>${who(ev.a)}<span class="m">vs</span>${who(ev.b)}` +
+      `<span class="m note">${esc(ev.note)}</span><span class="go" aria-hidden="true">→</span>`;
+  }
 }
 
 function renderMethod() {
@@ -794,7 +836,7 @@ function renderFormats() {
     const L = M.lists[f], rows = tops[i], top = rows[0];
     const marks = rows.slice(1).reverse().map((r) => `<i class="m" style="left:${pct(r.tpr)}%" data-r="${r.rank}" data-n="${esc(shortName(r.name))}" data-t="${r.tpr}"></i>`).join("") +
       (top ? `<i class="m lead" style="left:${pct(top.tpr)}%" data-r="${top.rank}" data-n="${esc(shortName(top.name))}" data-t="${top.tpr}"></i>` : "");
-    const who = top ? `${esc(top.name.split(", ")[0])} <b class="num">${top.tpr}</b>` : "";
+    const who = top ? `${esc(surname(top.name))} <b class="num">${top.tpr}</b>` : "";
     const lead = top ? `<span class="fmt-lead${pct(top.tpr) < 30 ? " start" : ""}" style="left:${pct(top.tpr)}%">${who}</span>` : `<span class="fmt-none">Nobody qualifies yet</span>`;
     const label = `${LABEL[f]}: ${L.qualified} qualify with ${M.min[f]} or more games` + (top ? `. Leader ${fullName(top.name)}, TPR ${top.tpr}` : "");
     return `<button class="fmt" role="tab" id="tab-${f}" aria-selected="${f === state.fmt}" data-f="${f}" aria-label="${esc(label)}">
@@ -847,7 +889,6 @@ function sortedRows() {
 // The table shows the kept players (chips) plus whatever the search field matches.
 const liveQ = () => state.q.trim().toLowerCase();
 const matches = (r, q) => r.name.toLowerCase().includes(q) || r.fed.toLowerCase() === q || shortName(r.name).toLowerCase().includes(q) || fullName(r.name).toLowerCase().includes(q);
-const fullName = (n) => { const [last, first] = n.split(", "); return first ? `${first} ${last}` : n; };
 const kept = (id) => state.picks.some((p) => p.id === id);
 
 // Every player in any list, so a chip can name the player even where they aren't ranked.
@@ -921,10 +962,10 @@ function renderBody() {
     const open = state.open.has(r.fide_id);
     const keepBtn = liveQ() && !kept(r.fide_id) && matches(r, liveQ()) ?
       `<button type="button" class="keep" data-keep="${r.fide_id}" aria-label="Keep ${esc(fullName(r.name))} in the table" title="Keep in the table">+</button>` : "";
-    const [sur, ...given] = r.name.split(", ");
+    const sur = surname(r.name), given = givenName(r.name);
     return `<tr class="row${open ? " open" : ""}" data-id="${r.fide_id}" tabindex="0" aria-expanded="${open}">
       <td class="rank num">${r.rank}.</td>
-      <td class="l pcell"><span class="player"><span class="chev" aria-hidden="true">›</span><a class="nm" href="/player/${r.fide_id}#${viewHash()}" data-player>${esc(sur)}</a><span class="sub">${given.length ? esc(given.join(", ")) + " · " : ""}<span class="fed">${esc(r.fed)}</span></span>${keepBtn}</span></td>
+      <td class="l pcell"><span class="player"><span class="chev" aria-hidden="true">›</span><a class="nm" href="/player/${r.fide_id}#${viewHash()}" data-player>${esc(sur)}</a><span class="sub">${given ? esc(given) + " · " : ""}<span class="fed">${esc(r.fed)}</span></span>${keepBtn}</span></td>
       <td class="tpr num">${r.tpr}</td>
       <td class="num hide-sm">${r.rating ?? "—"}</td>
       <td class="num">${r.delta == null ? `<span class="muted">—</span>` : signed(r.delta)}</td>
