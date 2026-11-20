@@ -5,7 +5,7 @@
 .race[hidden] { display: none; }
 .race-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
 .race h2 { margin: 0; font-family: var(--display); font-weight: 800; font-size: 20px; line-height: 1.2; }
-.race-month { font-family: var(--display); font-weight: 800; font-size: 24px; line-height: 1; font-variant-numeric: normal; }
+.race-month { font-family: var(--display); font-weight: 800; font-size: 24px; line-height: 1; }
 .race-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
 .race-key { display: flex; flex-wrap: wrap; gap: 2px 14px; margin-top: 8px; font-size: 13px; color: var(--muted); }
 .race-key span { display: inline-flex; align-items: center; gap: 6px; }
